@@ -58,8 +58,7 @@
 /*----------------------------------------------*\
 \*----------------------------------------------*/
 
-#include "lock.bitmap"
-#include "mask.bitmap"
+#include "aklock.h"
 
 /*------------------------------------------------------------------*\
     globals
@@ -89,6 +88,7 @@ void displayUsage() {
 "    -h      shows this little help\n"
 "    -v      shows the version number\n"
 "    -blank  hides the content of the screen\n"
+"    -cursor theme for the cursor\n"
 "\n"
 "when the screen is locked, just enter your password.\n");
 }
@@ -255,40 +255,22 @@ void checkAuth() {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-struct XInfo {
-    
-    Display* display;
-    Window   root;
-    Window   window;
-
-    Cursor   cursor;
-    
-    int width;
-    int height;
-};
-
-struct Opts {
-
-    char use_blank;
-
-    char* color_fg;
-    char* color_bg;
-};
-
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-void initOpts(struct Opts* opts) {
+void initOpts(struct akOpts* opts) {
     
     opts->use_blank = 0;
 
+    opts->cursor_name = "mini";
+    
     opts->color_bg = "steelblue3";
     opts->color_fg = "grey25";
     
 }
 
-void initXInfo(struct XInfo* xinfo, struct Opts* opts) {
+void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
 
 
     Display* dpy = XOpenDisplay(NULL);
@@ -299,7 +281,8 @@ void initXInfo(struct XInfo* xinfo, struct Opts* opts) {
     Pixmap pixmap_cursor;
     Pixmap pixmap_cursor_mask;
     XWindowAttributes xgwa;
-
+    struct akCursor* cursor;
+    
     if (!dpy) {
         perror("aklock: error, can't open connection to X");
         exit(1);
@@ -316,8 +299,16 @@ void initXInfo(struct XInfo* xinfo, struct Opts* opts) {
     xinfo->width = xgwa.width;
     xinfo->height = xgwa.height;
     
-    pixmap_cursor = XCreateBitmapFromData(dpy, xinfo->root, lock_bits, lock_width, lock_height);
-    pixmap_cursor_mask = XCreateBitmapFromData(dpy, xinfo->root, mask_bits, mask_width, mask_height);
+    for(cursor = ak_cursors; cursor->name != NULL; cursor++) {
+        if (!strcmp(cursor->name, opts->cursor_name))
+            break;
+    }
+
+    if (cursor == NULL)
+        cursor = ak_cursors;
+    
+    pixmap_cursor = XCreateBitmapFromData(dpy, xinfo->root, cursor->bits, cursor->width, cursor->height);
+    pixmap_cursor_mask = XCreateBitmapFromData(dpy, xinfo->root, cursor->mask, cursor->width, cursor->height);
     
     if((XAllocNamedColor(dpy, color_map, opts->color_bg, &tmp_color, &color_bg)) == 0)
         XAllocNamedColor(dpy, color_map, "black", &tmp_color, &color_bg);
@@ -327,7 +318,7 @@ void initXInfo(struct XInfo* xinfo, struct Opts* opts) {
     xinfo->cursor = XCreatePixmapCursor(dpy, 
                                         pixmap_cursor, pixmap_cursor_mask, 
                                         &color_fg, &color_bg,
-                                        lock_x_hot, lock_y_hot);
+                                        cursor->x_hot, cursor->y_hot);
 
     
 }
@@ -343,8 +334,8 @@ int main(int argc, char **argv) {
     XSetWindowAttributes xswa;
     long xsmask = 0;
     
-    struct XInfo xinfo;
-    struct Opts opts;
+    struct akXInfo xinfo;
+    struct akOpts opts;
     
     int arg = 0;
     
@@ -355,6 +346,14 @@ int main(int argc, char **argv) {
         for(arg = 1; arg <= argc; arg++) {
             if (!strcmp(argv[arg - 1], "-blank")) {
                 opts.use_blank = 1;
+            } else if (!strcmp(argv[arg - 1], "-cursor")) {
+                if (arg < argc)
+                    opts.cursor_name = argv[arg];
+                else {
+                    printf("aklock: error, missing argument\n");
+                    displayUsage();
+                    exit(1);
+                }
             } else if (!strcmp(argv[arg - 1], "-h")) {
                 displayUsage();
                 exit(0);

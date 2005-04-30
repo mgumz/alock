@@ -1,0 +1,6 @@
+#define mini_width 8
+#define mini_height 8
+#define mini_x_hot 3
+#define mini_y_hot 3
+static unsigned char mini_bits[] = {
+   0x3c, 0x42, 0x7e, 0x42, 0x5a, 0x42, 0x7e, 0x00};

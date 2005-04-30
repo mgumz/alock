@@ -7,13 +7,13 @@
 
 import sys
 
-aklock_version = '0.1'
+aklock_version = '0.2'
 aklock_optfile = 'scons.opts'
 
-aklock_distfiles = ['aklock.c',  
+aklock_distfiles = ['aklock.c', 'akcursors.c', 'aklock.h',
                     'lock.bitmap', 'mask.bitmap',
                     'SConstruct', 'README', 'CHANGELOG' ]
-aklock_sources = [ 'aklock.c' ]
+aklock_sources = [ 'aklock.c', 'akcursors.c' ]
 aklock_target = 'aklock'
 Default(aklock_target)
 
