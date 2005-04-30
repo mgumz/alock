@@ -1,7 +1,16 @@
+Version 0.2
+
+2005-04-30:
+
+	* added -cursor <theme>
+	* cursor-bitmap-themes are stored in bitmaps/
+	* started svn-usage
+
 Version 0.1
 
 2005-04-28: 
 	* first release (0.1)
 	* added pam-support (works ok with linux + freebsd so far)
 	* use scons for building the stuff
-	
+
+# vim:ft=changelog
