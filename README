@@ -1,0 +1,84 @@
+-+------------------------------------------------------------------+-
+    aklock - a slim screenlocker for X 
+-+------------------------------------------------------------------+-
+
+1. about
+2. installation
+3. usage
+4. todo
+5. author
+
+
+1. about
+--------
+
+    'aklock' locks your current session in X. its not a fullfeatured
+    screensaver-distribution like 'xlockmore' or 'xscreensaver' but just a
+    tiny locker: "uh, i need coffee .. lock" .. speaking of size: binary takes 
+    only 11kb. 'aklock' shows the content of the locked screen .. so you can
+    see whats going on, even when you are not able to modify what you see.
+    this is pretty usefull for public terminals where a demo should run which
+    shouldnt interupted (you know those little kids who press every button and
+    click everywhere ...).
+
+    an irc-friend of mine (izhirahider) is using 'xtrlock' and had some
+    problems with it .. no wonder, development stopped some years ago
+    and it doesnt support pam. since i like the minimalism of 'xtrlock' 
+    but wanted to add some minor things to it i "forked" 'aklock' from
+    'xtrlock' and modified it a bit :)
+
+2. installation
+---------------
+
+    to install / compile 'aklock' you need 'scons':
+
+        http://www.scons.org
+
+    its a clever buildsystem which i prefer over make/autotools.
+    after installing 'scons' you just type:
+
+        $> scons
+
+    and it should build your personal version of 'aklock'
+    you can influence the build-process by some variables, check
+
+        $> scons -h
+
+    to finally install it to your system use:
+
+        $> scons install
+
+    and thats it.
+
+    tested platforms (so far):
+
+        gentoo-linux (pc and ppc with gcc3.4.3) 
+        freebsd5.3 (pc gcc3.4.2)
+
+3. usage
+--------
+
+    aklock [-vh] [-blank]
+
+        -h       displays a little help
+        -v       displays version number
+
+        -blank   hides the content of the screen with a big, black area
+
+    after locking 'aklock' will show a modified mousecursor. you have to
+    enter your password blindly. if its the correct password the screen will
+    unlock
+
+4. todo
+-------
+
+    - check on irix, sun, hp etc etc
+    - users wants to specify lockcursor + background for -blank
+
+5. author
+---------
+
+    2005        mathias gumz aka akira < akira at fluxbox dot org>
+    1993 - 1994 ian jackson (xtrlock)
+
+   
