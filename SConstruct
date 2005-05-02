@@ -10,11 +10,8 @@ import sys
 aklock_version = '0.2'
 aklock_optfile = 'scons.opts'
 
-aklock_distfiles = ['aklock.c', 'akcursors.c', 'aklock.h',
-                    'lock.bitmap', 'mask.bitmap',
-                    'SConstruct', 'README', 'CHANGELOG' ]
-aklock_sources = [ 'aklock.c', 'akcursors.c' ]
-aklock_target = 'aklock'
+aklock_target = 'src/aklock'
+
 Default(aklock_target)
 
 
@@ -34,43 +31,51 @@ Help(aklock_options.GenerateHelpText(aklock_env))
 ###########################################################
 #
 #
-build = aklock_env.Copy()
 
 if sys.platform == "linux2" or sys.platform == "linux-i386":
-    build.AppendUnique(
+    aklock_env.AppendUnique(
         CPPDEFINES = [ 'LINUX' ])
 
-build.AppendUnique(
+aklock_env.AppendUnique(
         CPPDEFINES = [ 'VERSION=\\"'+aklock_version+'\\"' ],
         CPPFLAGS = [ '-Wall' ],
         CPPPATH = [ '/usr/X11R6/include' ],
         LIBPATH = ['/usr/X11R6/lib'],
         LIBS = [ 'X11', 'crypt' ])
 
-if build['debug']:
-    build.AppendUnique(
+if aklock_env['debug']:
+    aklock_env.AppendUnique(
             CPPDEFINES = [ 'DEBUG' ],
             LINKFLAGS = [ '-g' ],
             CPPFLAGS = [ '-g' ])
 
-if build['pam']:
-    build.AppendUnique(
+if aklock_env['pam']:
+    aklock_env.AppendUnique(
             CPPDEFINES = [ 'PAM_PWD' ],
             LIBS = [ 'pam' ])
 
     if sys.platform == 'linux2' or sys.platform == 'linux-i386':
-        build.AppendUnique(LIBS = ['pam_misc'])
+        aklock_env.AppendUnique(LIBS = ['pam_misc'])
     
 
-if build['shadow']:
-    build.AppendUnique(
+if aklock_env['shadow']:
+    aklock_env.AppendUnique(
             CPPDEFINES = [ 'SHADOW_PWD' ])
 
-aklock_program = build.Program(aklock_target, aklock_sources)
-build.AddPostAction(aklock_program, Chmod(aklock_target, 0755))
+aklock_program = SConscript(
+            'src/SConscript', 
+            exports = ['aklock_env']
+        )
 
-aklock_env.Install(aklock_env['prefix']+'/bin', aklock_program)
-aklock_env.Alias('install', aklock_env['prefix']+'/bin')
+aklock_env.Install(
+            aklock_env['prefix']+'/bin', 
+            aklock_program
+        )
+
+aklock_env.Alias(
+            'install', 
+            aklock_env['prefix']+'/bin'
+        )
 
 # TODO: add a "scons dist" command which builds a propper tarball
 #aklock_env.Alias('dist', aklock_env.Tar(aklock_target + '-' + aklock_version,

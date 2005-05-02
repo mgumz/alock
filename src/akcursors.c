@@ -24,11 +24,11 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
-#include "bitmaps/mini.bitmap"
-#include "bitmaps/mini_mask.bitmap"
+#include "../bitmaps/mini.bitmap"
+#include "../bitmaps/mini_mask.bitmap"
 
-#include "bitmaps/xtr.bitmap"
-#include "bitmaps/xtr_mask.bitmap"
+#include "../bitmaps/xtr.bitmap"
+#include "../bitmaps/xtr_mask.bitmap"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */

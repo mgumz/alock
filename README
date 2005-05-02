@@ -54,6 +54,7 @@
 
         gentoo-linux (pc and ppc with gcc3.4.3) 
         freebsd5.3 (pc gcc3.4.2)
+        slackware (pc, gcc3.3.5, shadow)
 
 3. usage
 --------

@@ -1,0 +1,19 @@
+#!/bin/env python
+##########################################################
+#
+# scons - buildsystem for aklock
+#
+##########################################################
+
+aklock_sources = [ 'aklock.c', 'akcursors.c' ]
+
+Import('aklock_env')
+
+build =  aklock_env.Copy()
+
+aklock = build.Program('aklock', aklock_sources)
+build.AddPostAction(aklock, Chmod(aklock, 0755))
+
+
+
+# vim:ft=python
