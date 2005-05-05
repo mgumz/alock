@@ -1,4 +1,20 @@
 Version 0.2
+
+2005-05-06:
+
+	* added -nolock
+	* discard all pending xevents after wrong password to prevent
+	  strange folks for blocking the current session by filling
+	  the eventqueue with wrong authentification and thus block
+	  the real authentification (kind of denial of service :)
+	* added suuport to load / have different cursor-shapes
+		+ -cursor theme|<format>:<filename>
+	* added support for xcursor
+	* restructuring
+		+ contrib/ -> for stuff coming from the "outside"
+		  contrib/xcursor-watch -> xcursor taken from 5532-BlueGlass-XCursors-3D-0.4.tar.bz2
+		+ src/
+
 2005-05-02:
 
 	* restructuring
