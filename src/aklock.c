@@ -1,14 +1,14 @@
 /*------------------------------------------------------------------*\
-   
+
     file: aklock.c
- 
+
         X Transparent Lock
- 
+
     copyright:
 
         Copyright (C)1993,1994 Ian Jackson   (xtrlock)
         Copyright (C)2005 Mathias Gumz (forked aklock)
- 
+
     license:
 
         This is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
         but WITHOUT ANY WARRANTY; without even the implied warranty of
         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
         GNU General Public License for more details.
- 
+
 \*------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------*\
@@ -30,6 +30,13 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
+
+#ifdef HAVE_XPM
+#   include <X11/xpm.h>
+#endif /* HAVE_XPM */
+#ifdef HAVE_XCURSOR
+#   include <X11/Xcursor/Xcursor.h>
+#endif /* HAVE_XCURSOR */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -83,14 +90,7 @@ struct passwd *pw;
 \*------------------------------------------------------------------*/
 
 void displayUsage() {
-
-    printf("\naklock [-hv] [-blank]\n\n"
-"    -h      shows this little help\n"
-"    -v      shows the version number\n"
-"    -blank  hides the content of the screen\n"
-"    -cursor theme for the cursor\n"
-"\n"
-"when the screen is locked, just enter your password.\n");
+    printf("\naklock [-h] [-v] [-blank] [-nolock] [-cursor <theme|xcursor:file>]\n");
 }
 
 
@@ -99,11 +99,11 @@ void displayUsage() {
 
 /*------------------------------------------------------------------*\
     pam-related stuff
-    
+
     taken from pure-ftpd's authstuff, but you can see similar stuff
     in xlockmore, openssh and basicly all pam-related apps :)
 \*------------------------------------------------------------------*/
-#ifdef PAM_PWD 
+#ifdef PAM_PWD
 #    define PAM_YN { \
                 if (PAM_error != 0 || pam_error != PAM_SUCCESS) { \
                     fprintf(stderr, "pam error:%s\n", pam_strerror(pam_handle, pam_error)); \
@@ -182,7 +182,7 @@ static int PAM_conv(int num_msg, const struct pam_message **msgs,
 static struct pam_conv PAM_conversation = {
     &PAM_conv, NULL
 };
-#endif /* PAM_PWD */ 
+#endif /* PAM_PWD */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -217,7 +217,7 @@ int passwordOk(const char *s) {
 }
 
 /*------------------------------------------------------------------*\
-    check if the system would be able to authentificate the user 
+    check if the system would be able to authentificate the user
 \*------------------------------------------------------------------*/
 void checkAuth() {
 
@@ -260,14 +260,15 @@ void checkAuth() {
 \*------------------------------------------------------------------*/
 
 void initOpts(struct akOpts* opts) {
-    
+
+    opts->dont_lock = 0;
     opts->use_blank = 0;
 
     opts->cursor_name = "mini";
-    
+
     opts->color_bg = "steelblue3";
     opts->color_fg = "grey25";
-    
+
 }
 
 void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
@@ -277,12 +278,11 @@ void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
     XColor color_fg;
     XColor color_bg;
     XColor tmp_color;
-    Colormap color_map;
     Pixmap pixmap_cursor;
     Pixmap pixmap_cursor_mask;
     XWindowAttributes xgwa;
-    struct akCursor* cursor;
-    
+    struct akCursor* cursor = NULL;
+
     if (!dpy) {
         perror("aklock: error, can't open connection to X");
         exit(1);
@@ -292,35 +292,70 @@ void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
     xinfo->window = 0;
 
     xinfo->root = DefaultRootWindow(dpy);
-    color_map = DefaultColormap(dpy, DefaultScreen(dpy));
-    
+    xinfo->colormap = DefaultColormap(dpy, DefaultScreen(dpy));
+
     XGetWindowAttributes(dpy, xinfo->root, &xgwa);
 
-    xinfo->width = xgwa.width;
-    xinfo->height = xgwa.height;
-    
-    for(cursor = ak_cursors; cursor->name != NULL; cursor++) {
-        if (!strcmp(cursor->name, opts->cursor_name))
-            break;
+    if (opts->use_blank) {
+        xinfo->width = xgwa.width;
+        xinfo->height = xgwa.height;
+    } else {
+        xinfo->width = 1;
+        xinfo->height = 1;
     }
 
-    if (cursor == NULL)
+    if((XAllocNamedColor(dpy, xinfo->colormap, opts->color_bg, &tmp_color, &color_bg)) == 0)
+        XAllocNamedColor(dpy, xinfo->colormap, "black", &tmp_color, &color_bg);
+    if((XAllocNamedColor(dpy, xinfo->colormap, opts->color_fg, &tmp_color, &color_fg)) == 0)
+        XAllocNamedColor(dpy, xinfo->colormap, "white", &tmp_color, &color_fg);
+
+    /* load cursors */
+#ifdef HAVE_XCURSOR
+    if (opts->cursor_name && (strstr(opts->cursor_name, "xcursor:"))) {
+        Cursor xcursor;
+        if ((xcursor = XcursorFilenameLoadCursor(dpy, &opts->cursor_name[8]))) {
+            xinfo->cursor = xcursor;
+            return;
+        } else {
+            printf("aklock: error, couldnt load [%s]\n", &opts->cursor_name[8]);
+        }
+    }
+#endif /* HAVE_XCURSOR */
+
+    /* TODO: doesnt work yet. */
+/*
+ * if (opts->cursor_name && (strstr(opts->cursor_name, "xbm:"))) {
+        unsigned int w, h, xhot, yhot;
+        if (XReadBitmapFile(dpy, xinfo->root, &opts->cursor_name[4],
+                            &w, &h, &pixmap_cursor, &xhot, &yhot)) {
+            xinfo->cursor = XCreatePixmapCursor(dpy,
+                                                pixmap_cursor, NULL,
+                                                &color_fg, &color_bg,
+                                                xhot, yhot);
+            return;
+        } else {
+            printf("aklock: error, couldnt load [%s]\n", &opts->cursor_name[4]);
+        }
+    }
+   */
+    /* look internal cursors */
+    for(cursor = ak_cursors; cursor->name != NULL; cursor++) {
+        if (!strcmp(cursor->name, opts->cursor_name))
+                break;
+    }
+
+    if (!cursor->name)
         cursor = ak_cursors;
-    
+
     pixmap_cursor = XCreateBitmapFromData(dpy, xinfo->root, cursor->bits, cursor->width, cursor->height);
     pixmap_cursor_mask = XCreateBitmapFromData(dpy, xinfo->root, cursor->mask, cursor->width, cursor->height);
-    
-    if((XAllocNamedColor(dpy, color_map, opts->color_bg, &tmp_color, &color_bg)) == 0)
-        XAllocNamedColor(dpy, color_map, "black", &tmp_color, &color_bg);
-    if((XAllocNamedColor(dpy, color_map, opts->color_fg, &tmp_color, &color_fg)) == 0)
-        XAllocNamedColor(dpy, color_map, "white", &tmp_color, &color_fg);
 
-    xinfo->cursor = XCreatePixmapCursor(dpy, 
-                                        pixmap_cursor, pixmap_cursor_mask, 
+    xinfo->cursor = XCreatePixmapCursor(dpy,
+                                        pixmap_cursor, pixmap_cursor_mask,
                                         &color_fg, &color_bg,
                                         cursor->x_hot, cursor->y_hot);
 
-    
+
 }
 
 int main(int argc, char **argv) {
@@ -330,15 +365,15 @@ int main(int argc, char **argv) {
     char cbuf[10], rbuf[50];
     int clen, rlen = 0;
     long goodwill = INITIALGOODWILL, timeout = 0;
-    
+
     XSetWindowAttributes xswa;
     long xsmask = 0;
-    
+
     struct akXInfo xinfo;
     struct akOpts opts;
-    
+
     int arg = 0;
-    
+
     initOpts(&opts);
 
     // parse options
@@ -346,6 +381,8 @@ int main(int argc, char **argv) {
         for(arg = 1; arg <= argc; arg++) {
             if (!strcmp(argv[arg - 1], "-blank")) {
                 opts.use_blank = 1;
+            } else if (!strcmp(argv[arg - 1], "-nolock")) {
+                opts.dont_lock = 1;
             } else if (!strcmp(argv[arg - 1], "-cursor")) {
                 if (arg < argc)
                     opts.cursor_name = argv[arg];
@@ -364,42 +401,62 @@ int main(int argc, char **argv) {
         }
     }
 
-    checkAuth();
+    if (!opts.dont_lock)
+        checkAuth();
 
     initXInfo(&xinfo, &opts);
-    
+
 
     /* create the windows */
     xswa.override_redirect = True;
     xsmask |= CWOverrideRedirect;
-    
+
     if (opts.use_blank) {
 
         xswa.background_pixel = BlackPixel(xinfo.display, DefaultScreen(xinfo.display));
+        xswa.colormap = xinfo.colormap;
         xsmask |= CWBackPixel;
-
-        xinfo.window = XCreateWindow(xinfo.display, xinfo.root,
-                              0, 0, xinfo.width, xinfo.height, 
-                              0, /* borderwidth */
-                              CopyFromParent, /* depth */
-                              InputOutput, /* class */
-                              CopyFromParent, /* visual */
-                              xsmask, &xswa);
-    } else {
-
-        xinfo.window = XCreateWindow(xinfo.display, xinfo.root,
-                              0, 0, 1, 1, 
-                              0, /* borderwidth */
-                              CopyFromParent, /* depth */
-                              InputOnly, /* class */
-                              CopyFromParent, /* visual */
-                              xsmask, &xswa);
+        xsmask |= CWColormap;
     }
+
+    xinfo.window = XCreateWindow(xinfo.display, xinfo.root,
+                          0, 0, xinfo.width, xinfo.height,
+                          0, /* borderwidth */
+                          CopyFromParent, /* depth */
+                          InputOutput, /* class */
+                          CopyFromParent, /* visual */
+                          xsmask, &xswa);
+
+
 
     XSelectInput(xinfo.display, xinfo.window, KeyPressMask|KeyReleaseMask);
     XMapWindow(xinfo.display, xinfo.window);
     XRaiseWindow(xinfo.display, xinfo.window);
- 
+    
+    /* TODO: -bg <blank|transparent|shaded> */
+    if (opts.use_blank) {
+        XImage* ximage;
+                
+        ximage = XGetImage (xinfo.display, xinfo.root, 0, 0,
+                    xinfo.width, xinfo.height, AllPlanes, ZPixmap);
+
+        if (ximage) {
+            GC gc;
+            XGCValues xgcv;
+            xgcv.background = BlackPixel(xinfo.display, DefaultScreen(xinfo.display));
+            xgcv.foreground = 0;
+            
+            gc = XCreateGC(xinfo.display, xinfo.window, GCForeground|GCBackground, &xgcv);
+
+            XPutImage(xinfo.display, xinfo.window, 
+                      gc, 
+                      ximage, 
+                      0, 0, 
+                      0, 0, xinfo.width, xinfo.height);
+            XDestroyImage(ximage);
+            XFreeGC(xinfo.display, gc);
+        }
+    }
     /* try to grab 2 times, another process (windowmanager) may have grabbed
      * the keyboard already */
     if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
@@ -424,10 +481,15 @@ int main(int argc, char **argv) {
         XNextEvent(xinfo.display, &ev);
         switch (ev.type) {
         case KeyPress:
+            
+            if (opts.dont_lock)
+                goto exit;
+
             if (ev.xkey.time < timeout) {
                 XBell(xinfo.display, 0);
                 break;
             }
+
             clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
             switch (ks) {
             case XK_Escape:
@@ -444,8 +506,11 @@ int main(int argc, char **argv) {
                 if (rlen == 0)
                     break;
                 rbuf[rlen] = 0;
+
                 if (passwordOk(rbuf))
                     goto exit;
+                
+                XSync(xinfo.display, True); /* discard pending events to start really fresh */
                 XBell(xinfo.display, 0);
                 rlen = 0;
                 if (timeout) {
@@ -474,6 +539,7 @@ int main(int argc, char **argv) {
 
 exit:
     XDestroyWindow(xinfo.display, xinfo.window);
+    XFreeCursor(xinfo.display, xinfo.cursor);
     XCloseDisplay(xinfo.display);
 
     return 0;

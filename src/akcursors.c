@@ -24,6 +24,8 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
+#include <X11/bitmaps/xlogo16>
+
 #include "../bitmaps/mini.bitmap"
 #include "../bitmaps/mini_mask.bitmap"
 
@@ -42,6 +44,10 @@ struct akCursor ak_cursors[] = {
     { "xtr",
       xtr_width, xtr_height, xtr_x_hot, xtr_y_hot,
       xtr_bits, xtr_mask_bits },
+
+    { "xlogo16",
+      xlogo16_width, xlogo16_height, xlogo16_width / 2, xlogo16_height / 2,
+      xlogo16_bits, xlogo16_bits },
 
     { NULL, 0, 0, 0, 0, NULL, NULL }
 };

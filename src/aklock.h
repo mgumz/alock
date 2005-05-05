@@ -38,6 +38,7 @@ struct akXInfo {
     Display* display;
     Window   root;
     Window   window;
+    Colormap colormap;
 
     Cursor   cursor;
     
@@ -47,6 +48,7 @@ struct akXInfo {
 
 struct akOpts {
 
+    char dont_lock;
     char use_blank;
 
     char* cursor_name;

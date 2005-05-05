@@ -8,7 +8,7 @@
 import sys
 
 aklock_version = '0.2'
-aklock_optfile = 'scons.opts'
+aklock_optfile = [ 'scons.opts', 'user.opts' ]
 
 aklock_target = 'src/aklock'
 
@@ -20,12 +20,16 @@ aklock_options.AddOptions(
         BoolOption('debug', 'build debug version', 0),
         BoolOption('shadow', 'support for shadowpasswords', 0),
         BoolOption('pam', 'support for pam', 1),
+
+        BoolOption('xcursor', 'support xcursor-themes', 1),
+        
         PathOption('prefix', 'install-path base', '/usr/local')
 )
 
 aklock_env = Environment(options = aklock_options, 
                          TARFLAGS = '-c -z',
                          TARSUFFIX = '.tgz')
+aklock_options.Update(aklock_env)
 Help(aklock_options.GenerateHelpText(aklock_env))
 
 ###########################################################
@@ -62,6 +66,19 @@ if aklock_env['shadow']:
     aklock_env.AppendUnique(
             CPPDEFINES = [ 'SHADOW_PWD' ])
 
+if aklock_env['xcursor']:
+    conf = aklock_env.Configure()
+    if conf.CheckLib('Xcursor', 'XcursorSupportsARGB', 1):
+        aklock_env.AppendUnique(
+                CPPDEFINES = [ 'HAVE_XCURSOR' ],
+                LIBS = [ 'Xcursor' ])
+    else:
+        aklock_env['xcursor'] = 0
+        print "sorry, no xcursor-support found."
+    conf.Finish()
+    
+aklock_options.Save('scons.opts', aklock_env)
+    
 aklock_program = SConscript(
             'src/SConscript', 
             exports = ['aklock_env']
