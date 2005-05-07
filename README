@@ -59,22 +59,25 @@
 3. usage
 --------
 
-    aklock [-vh] [-blank]
+    aklock [-vh] [-blank] [-cursor <theme|xcursor:file>]
+           [-auth list|<none|passwd|pam|md5:pwdhash>]
 
         -h       displays a little help
         -v       displays version number
 
         -blank   hides the content of the screen with a big, black area
+        -cursor  choose between multiple cursors
+        -auth    choose between different authmethods.
 
     after locking 'aklock' will show a modified mousecursor. you have to
     enter your password blindly. if its the correct password the screen will
-    unlock
+    unlock.
 
 4. todo
 -------
 
+    - better documentation, updated manpage
     - check on irix, sun, hp etc etc
-    - users wants to specify lockcursor + background for -blank
 
 5. author
 ---------

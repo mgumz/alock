@@ -18,8 +18,10 @@ Default(aklock_target)
 aklock_options = Options(aklock_optfile)
 aklock_options.AddOptions(
         BoolOption('debug', 'build debug version', 0),
+        BoolOption('passwd', 'support for classic passwd', 0),
         BoolOption('shadow', 'support for shadowpasswords', 0),
         BoolOption('pam', 'support for pam', 1),
+        BoolOption('md5', 'support for md5', 1),
 
         BoolOption('xcursor', 'support xcursor-themes', 1),
         
@@ -45,7 +47,7 @@ aklock_env.AppendUnique(
         CPPFLAGS = [ '-Wall' ],
         CPPPATH = [ '/usr/X11R6/include' ],
         LIBPATH = ['/usr/X11R6/lib'],
-        LIBS = [ 'X11', 'crypt' ])
+        LIBS = [ 'X11' ])
 
 if aklock_env['debug']:
     aklock_env.AppendUnique(
@@ -53,10 +55,15 @@ if aklock_env['debug']:
             LINKFLAGS = [ '-g' ],
             CPPFLAGS = [ '-g' ])
 
+if aklock_env['passwd']:
+    aklock_env.AppendUnique(
+            CPPDEFINES = [ 'PASSWD_PWD' ],
+            LIBS = [ 'crypt' ])
+    
 if aklock_env['pam']:
     aklock_env.AppendUnique(
             CPPDEFINES = [ 'PAM_PWD' ],
-            LIBS = [ 'pam' ])
+            LIBS = [ 'pam', 'crypt' ])
 
     if sys.platform == 'linux2' or sys.platform == 'linux-i386':
         aklock_env.AppendUnique(LIBS = ['pam_misc'])
@@ -66,6 +73,10 @@ if aklock_env['shadow']:
     aklock_env.AppendUnique(
             CPPDEFINES = [ 'SHADOW_PWD' ])
 
+if aklock_env['md5']:
+    aklock_env.AppendUnique(
+            CPPDEFINES = [ 'MD5_PWD' ])
+    
 if aklock_env['xcursor']:
     conf = aklock_env.Configure()
     if conf.CheckLib('Xcursor', 'XcursorSupportsARGB', 1):

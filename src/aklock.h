@@ -22,6 +22,13 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
+struct akAuth {
+    const char* name;
+    int (*init)(const char* args);
+    int (*auth)(const char* pass);
+    int (*deinit)();
+};
+
 struct akCursor {
     const char* name;
     unsigned int width;
@@ -33,22 +40,11 @@ struct akCursor {
     unsigned char* mask;
 };
 
-struct akXInfo {
-    
-    Display* display;
-    Window   root;
-    Window   window;
-    Colormap colormap;
 
-    Cursor   cursor;
-    
-    int width;
-    int height;
-};
 
 struct akOpts {
 
-    char dont_lock;
+    struct akAuth* auth;
     char use_blank;
 
     char* cursor_name;
@@ -62,6 +58,19 @@ struct akOpts {
 \*------------------------------------------------------------------*/
 extern struct akCursor ak_cursors[];
 
+
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
+extern struct akAuth aklock_auth_none;
+#ifdef MD5_PWD
+extern struct akAuth aklock_auth_md5;
+#endif /* MD5_PWD */
+#ifdef PASSWD_PWD
+extern struct akAuth aklock_auth_passwd;
+#endif /* PASSWD_PWD */
+#ifdef PAM_PWD
+extern struct akAuth aklock_auth_pam;
+#endif /* PAM_PWD */
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 #endif // _AKLOCK_H_

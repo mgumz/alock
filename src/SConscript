@@ -5,11 +5,18 @@
 #
 ##########################################################
 
-aklock_sources = [ 'aklock.c', 'akcursors.c' ]
+aklock_sources = [ 'aklock.c', 'akcursors.c', 'auth_none.c' ]
 
 Import('aklock_env')
 
 build =  aklock_env.Copy()
+
+if build['passwd']:
+    aklock_sources += [ 'auth_passwd.c' ]
+if build['md5']:
+    aklock_sources += [ 'auth_md5.c' ]
+if build['pam']:
+    aklock_sources += [ 'auth_pam.c' ]
 
 aklock = build.Program('aklock', aklock_sources)
 build.AddPostAction(aklock, Chmod(aklock, 0755))

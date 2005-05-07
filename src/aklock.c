@@ -40,33 +40,25 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <pwd.h>
-#include <grp.h>
-#include <limits.h>
 #include <string.h>
-#include <unistd.h>
-#include <math.h>
-#include <ctype.h>
-
-#ifdef SHADOW_PWD
-#    include <shadow.h>
-#endif /* SHADOW_PWD */
-
-#ifdef PAM_PWD
-#    include <security/pam_appl.h>
-#    ifdef LINUX
-#        include <security/pam_misc.h>
-#    endif
-#endif /* PAM_PWD */
 
 /*----------------------------------------------*\
 \*----------------------------------------------*/
 
 #include "aklock.h"
 
+struct akXInfo {
+    
+    Display* display;
+    Window   root;
+    Window   window;
+    Colormap colormap;
+
+    Cursor   cursor;
+    
+    int width;
+    int height;
+};
 /*------------------------------------------------------------------*\
     globals
 \*------------------------------------------------------------------*/
@@ -82,186 +74,34 @@
 #    define DBGMSG
 #endif // DEBUG
 
-struct passwd *pw;
-
-
+static struct akAuth* ak_authmodules[] = {
+    &aklock_auth_none,
+#ifdef MD5_PWD
+    &aklock_auth_md5,
+#endif /* MD5_PWD */
+#ifdef PASSWD_PWD
+    &aklock_auth_passwd,
+#endif /* PASSWD_PWD */
+#ifdef PAM_PWD
+    &aklock_auth_pam,
+#endif
+    NULL
+};
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
 void displayUsage() {
-    printf("\naklock [-h] [-v] [-blank] [-nolock] [-cursor <theme|xcursor:file>]\n");
+    printf("\naklock [-h] [-v] [-blank] [-cursor <theme|xcursor:file>]\n");
+    printf(" [-auth list|<none|passwd|pam|md5:pwdhash>]\n");
 }
-
-
-
-
-
-/*------------------------------------------------------------------*\
-    pam-related stuff
-
-    taken from pure-ftpd's authstuff, but you can see similar stuff
-    in xlockmore, openssh and basicly all pam-related apps :)
-\*------------------------------------------------------------------*/
-#ifdef PAM_PWD
-#    define PAM_YN { \
-                if (PAM_error != 0 || pam_error != PAM_SUCCESS) { \
-                    fprintf(stderr, "pam error:%s\n", pam_strerror(pam_handle, pam_error)); \
-                    pam_end(pam_handle, pam_error); \
-                    PAM_username = NULL; \
-                    PAM_password = NULL; \
-                return 0;\
-            } \
-     }
-
-#   define GET_MEM \
-       size += sizeof(struct pam_response); \
-       if ((reply = realloc(reply, size)) == NULL) { \
-           PAM_error = 1; \
-           return PAM_CONV_ERR; \
-       }
-
-static const char* PAM_username = NULL;
-static const char* PAM_password = NULL;
-static int PAM_error = 0;
-static int pam_error = PAM_SUCCESS;
-
-static int PAM_conv(int num_msg, const struct pam_message **msgs,
-	              struct pam_response **resp, void *appdata_ptr) {
-
-    int count = 0;
-    unsigned int replies = 0U;
-    struct pam_response *reply = NULL;
-    size_t size = (size_t) 0U;
-
-    (void) appdata_ptr;
-    *resp = NULL;
-    for (count = 0; count < num_msg; count++) {
-        switch (msgs[count]->msg_style) {
-        case PAM_PROMPT_ECHO_ON:
-            GET_MEM;
-            memset(&reply[replies], 0, sizeof reply[replies]);
-            if ((reply[replies].resp = strdup(PAM_username)) == NULL) {
-#    ifdef PAM_BUF_ERR
-                reply[replies].resp_retcode = PAM_BUF_ERR;
-#    endif
-                PAM_error = 1;
-                return PAM_CONV_ERR;
-            }
-            reply[replies++].resp_retcode = PAM_SUCCESS;
-            /* PAM frees resp */
-            break;
-        case PAM_PROMPT_ECHO_OFF:
-            GET_MEM;
-            memset(&reply[replies], 0, sizeof reply[replies]);
-            if ((reply[replies].resp = strdup(PAM_password)) == NULL) {
-#    ifdef PAM_BUF_ERR
-                reply[replies].resp_retcode = PAM_BUF_ERR;
-#    endif
-                PAM_error = 1;
-                return PAM_CONV_ERR;
-            }
-            reply[replies++].resp_retcode = PAM_SUCCESS;
-            /* PAM frees resp */
-            break;
-        case PAM_TEXT_INFO:
-            /* ignore it... */
-            break;
-        case PAM_ERROR_MSG:
-        default:
-            /* Must be an error of some sort... */
-            free(reply);
-            PAM_error = 1;
-            return PAM_CONV_ERR;
-        }
-    }
-    *resp = reply;
-    return PAM_SUCCESS;
-}
-
-static struct pam_conv PAM_conversation = {
-    &PAM_conv, NULL
-};
-#endif /* PAM_PWD */
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
-int passwordOk(const char *s) {
-#if 0
-    char key[3];
-    char *encr;
-
-    key[0] = *(pw->pw_passwd);
-    key[1] = (pw->pw_passwd)[1];
-    key[2] = 0;
-    encr = crypt(s, key);
-    return !strcmp(encr, pw->pw_passwd);
-#else
-    /* simpler, and should work with crypt() algorithms using longer
-       salt strings (like the md5-based one on freebsd).  --marekm */
-#ifdef PAM_PWD
-    pam_handle_t* pam_handle = NULL;
-    PAM_username = pw->pw_name;
-    PAM_password = s;
-    pam_error = pam_start("login", PAM_username, &PAM_conversation, &pam_handle);
-    PAM_YN;
-    pam_error = pam_authenticate(pam_handle, 0);
-    PAM_YN;
-    pam_error = pam_end(pam_handle, pam_error);
-    PAM_YN;
-    return 1;
-#else
-    return !strcmp(crypt(s, pw->pw_passwd), pw->pw_passwd);
-#endif /* PAM_PWD */
-#endif /* 0 */
-}
-
-/*------------------------------------------------------------------*\
-    check if the system would be able to authentificate the user
-\*------------------------------------------------------------------*/
-void checkAuth() {
-
-#ifdef SHADOW_PWD
-    struct spwd *sp;
-#endif
-
-    errno = 0;
-    pw = getpwuid(getuid());
-    if (!pw) {
-        perror("password entry for uid not found");
-        exit(1);
-    }
-
-#ifdef SHADOW_PWD
-    sp = getspnam(pw->pw_name);
-    if (sp)
-        pw->pw_passwd = sp->sp_pwdp;
-    endspent();
-#endif
-    /* we can be installed setuid root to support shadow passwords,
-       and we don't need root privileges any longer.  --marekm */
-    setuid(getuid());
-#ifndef PAM_PWD
-    if (strlen(pw->pw_passwd) < 13) {
-        perror("aklock: password entry has no pwd\n");
-        exit(1);
-    }
-#endif /* PAM_PWD */
-
-}
-
-
-
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
 void initOpts(struct akOpts* opts) {
 
-    opts->dont_lock = 0;
+    opts->auth = ak_authmodules[0];
     opts->use_blank = 0;
 
     opts->cursor_name = "mini";
@@ -376,13 +216,47 @@ int main(int argc, char **argv) {
 
     initOpts(&opts);
 
-    // parse options
+    /*  parse options */
     if (argc != 1) {
         for(arg = 1; arg <= argc; arg++) {
             if (!strcmp(argv[arg - 1], "-blank")) {
                 opts.use_blank = 1;
-            } else if (!strcmp(argv[arg - 1], "-nolock")) {
-                opts.dont_lock = 1;
+            } else if (!strcmp(argv[arg - 1], "-auth")) {
+                if (arg < argc) {
+                    
+                    char* char_tmp;
+                    struct akAuth* auth_tmp = NULL;
+                    struct akAuth** i;
+                    if (!strcmp(argv[arg], "list")) {
+                        for(i = ak_authmodules; *i; ++i) {
+                            printf("%s\n", (*i)->name);
+                        }
+                        exit(0);
+                    }
+
+                    for(i = ak_authmodules; *i; ++i) {
+                        char_tmp = strstr(argv[arg], (*i)->name);
+                        if(char_tmp && char_tmp == argv[arg]) {
+                            auth_tmp = (*i);
+                            if (!auth_tmp->init(argv[arg])) {
+                                fprintf(stderr, "aklock: error, failed init of [%s].\n", auth_tmp->name);
+                                exit(1);
+                            }
+                            opts.auth = auth_tmp;
+                            break;
+                        }
+                    }
+
+                    if (!auth_tmp) {
+                        fprintf(stderr, "aklock: error, couldnt find the auth module you specified.\n");
+                        exit(1);
+                    }
+                        
+                } else {
+                    fprintf(stderr, "aklock, error, missing argument\n");
+                    displayUsage();
+                    exit(1);
+                }
             } else if (!strcmp(argv[arg - 1], "-cursor")) {
                 if (arg < argc)
                     opts.cursor_name = argv[arg];
@@ -401,11 +275,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!opts.dont_lock)
-        checkAuth();
-
     initXInfo(&xinfo, &opts);
-
 
     /* create the windows */
     xswa.override_redirect = True;
@@ -434,7 +304,7 @@ int main(int argc, char **argv) {
     XRaiseWindow(xinfo.display, xinfo.window);
     
     /* TODO: -bg <blank|transparent|shaded> */
-    if (opts.use_blank) {
+ /*   if (opts.use_blank) {
         XImage* ximage;
                 
         ximage = XGetImage (xinfo.display, xinfo.root, 0, 0,
@@ -456,7 +326,7 @@ int main(int argc, char **argv) {
             XDestroyImage(ximage);
             XFreeGC(xinfo.display, gc);
         }
-    }
+    } */
     /* try to grab 2 times, another process (windowmanager) may have grabbed
      * the keyboard already */
     if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
@@ -482,9 +352,6 @@ int main(int argc, char **argv) {
         switch (ev.type) {
         case KeyPress:
             
-            if (opts.dont_lock)
-                goto exit;
-
             if (ev.xkey.time < timeout) {
                 XBell(xinfo.display, 0);
                 break;
@@ -507,7 +374,7 @@ int main(int argc, char **argv) {
                     break;
                 rbuf[rlen] = 0;
 
-                if (passwordOk(rbuf))
+                if (opts.auth->auth(rbuf))
                     goto exit;
                 
                 XSync(xinfo.display, True); /* discard pending events to start really fresh */
@@ -538,6 +405,9 @@ int main(int argc, char **argv) {
     }
 
 exit:
+
+    opts.auth->deinit();
+
     XDestroyWindow(xinfo.display, xinfo.window);
     XFreeCursor(xinfo.display, xinfo.cursor);
     XCloseDisplay(xinfo.display);
