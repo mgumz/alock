@@ -1,13 +1,13 @@
 /*------------------------------------------------------------------*\
 
-    file: aklock.c
+    file: alock.c
 
         X Transparent Lock
 
     copyright:
 
         Copyright (C)1993,1994 Ian Jackson   (xtrlock)
-        Copyright (C)2005 Mathias Gumz (forked aklock)
+        Copyright (C)2005 Mathias Gumz (forked alock)
 
     license:
 
@@ -45,9 +45,9 @@
 /*----------------------------------------------*\
 \*----------------------------------------------*/
 
-#include "aklock.h"
+#include "alock.h"
 
-struct akXInfo {
+struct aXInfo {
 
     Display* display;
     Window   root;
@@ -74,17 +74,17 @@ struct akXInfo {
 #    define DBGMSG
 #endif // DEBUG
 
-static struct akAuth* ak_authmodules[] = {
-    &aklock_auth_none,
+static struct aAuth* alock_authmodules[] = {
+    &alock_auth_none,
 #ifdef HASH_PWD
-    &aklock_auth_md5,
-    &aklock_auth_sha1,
+    &alock_auth_md5,
+    &alock_auth_sha1,
 #endif /* HASH_PWD */
 #ifdef PASSWD_PWD
-    &aklock_auth_passwd,
+    &alock_auth_passwd,
 #endif /* PASSWD_PWD */
 #ifdef PAM_PWD
-    &aklock_auth_pam,
+    &alock_auth_pam,
 #endif
     NULL
 };
@@ -94,7 +94,7 @@ static struct akAuth* ak_authmodules[] = {
 
 void displayUsage() {
     printf("\n");
-    printf("aklock [-h] [-v] [-blank] [-cursor <theme|xcursor:file>]\n");
+    printf("alock [-h] [-v] [-blank] [-cursor <theme|xcursor:file>]\n");
     printf("       [-auth list|<none");
 #ifdef PASSWD_PWD
     printf("|passwd");
@@ -111,9 +111,9 @@ void displayUsage() {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-void initOpts(struct akOpts* opts) {
+void initOpts(struct aOpts* opts) {
 
-    opts->auth = ak_authmodules[0];
+    opts->auth = alock_authmodules[0];
     opts->use_blank = 0;
 
     opts->cursor_name = "mini";
@@ -123,7 +123,7 @@ void initOpts(struct akOpts* opts) {
 
 }
 
-void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
+void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
 
 
     Display* dpy = XOpenDisplay(NULL);
@@ -133,10 +133,10 @@ void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
     Pixmap pixmap_cursor;
     Pixmap pixmap_cursor_mask;
     XWindowAttributes xgwa;
-    struct akCursor* cursor = NULL;
+    struct aCursor* cursor = NULL;
 
     if (!dpy) {
-        perror("aklock: error, can't open connection to X");
+        perror("alock: error, can't open connection to X");
         exit(1);
     }
 
@@ -169,7 +169,7 @@ void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
             xinfo->cursor = xcursor;
             return;
         } else {
-            printf("aklock: error, couldnt load [%s]\n", &opts->cursor_name[8]);
+            printf("alock: error, couldnt load [%s]\n", &opts->cursor_name[8]);
         }
     }
 #endif /* HAVE_XCURSOR */
@@ -186,18 +186,18 @@ void initXInfo(struct akXInfo* xinfo, struct akOpts* opts) {
                                                 xhot, yhot);
             return;
         } else {
-            printf("aklock: error, couldnt load [%s]\n", &opts->cursor_name[4]);
+            printf("alock: error, couldnt load [%s]\n", &opts->cursor_name[4]);
         }
     }
    */
     /* look internal cursors */
-    for(cursor = ak_cursors; cursor->name != NULL; cursor++) {
+    for(cursor = alock_cursors; cursor->name != NULL; cursor++) {
         if (!strcmp(cursor->name, opts->cursor_name))
                 break;
     }
 
     if (!cursor->name)
-        cursor = ak_cursors;
+        cursor = alock_cursors;
 
     pixmap_cursor = XCreateBitmapFromData(dpy, xinfo->root, cursor->bits, cursor->width, cursor->height);
     pixmap_cursor_mask = XCreateBitmapFromData(dpy, xinfo->root, cursor->mask, cursor->width, cursor->height);
@@ -221,8 +221,8 @@ int main(int argc, char **argv) {
     XSetWindowAttributes xswa;
     long xsmask = 0;
 
-    struct akXInfo xinfo;
-    struct akOpts opts;
+    struct aXInfo xinfo;
+    struct aOpts opts;
 
     int arg = 0;
 
@@ -237,21 +237,21 @@ int main(int argc, char **argv) {
                 if (arg < argc) {
 
                     char* char_tmp;
-                    struct akAuth* auth_tmp = NULL;
-                    struct akAuth** i;
+                    struct aAuth* auth_tmp = NULL;
+                    struct aAuth** i;
                     if (!strcmp(argv[arg], "list")) {
-                        for(i = ak_authmodules; *i; ++i) {
+                        for(i = alock_authmodules; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
                         exit(0);
                     }
 
-                    for(i = ak_authmodules; *i; ++i) {
+                    for(i = alock_authmodules; *i; ++i) {
                         char_tmp = strstr(argv[arg], (*i)->name);
                         if(char_tmp && char_tmp == argv[arg]) {
                             auth_tmp = (*i);
                             if (!auth_tmp->init(argv[arg])) {
-                                fprintf(stderr, "aklock: error, failed init of [%s].\n", auth_tmp->name);
+                                fprintf(stderr, "alock: error, failed init of [%s].\n", auth_tmp->name);
                                 exit(1);
                             }
                             opts.auth = auth_tmp;
@@ -261,12 +261,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (!auth_tmp) {
-                        fprintf(stderr, "aklock: error, couldnt find the auth module you specified.\n");
+                        fprintf(stderr, "alock: error, couldnt find the auth module you specified.\n");
                         exit(1);
                     }
 
                 } else {
-                    fprintf(stderr, "aklock, error, missing argument\n");
+                    fprintf(stderr, "alock, error, missing argument\n");
                     displayUsage();
                     exit(1);
                 }
@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
                 if (arg < argc)
                     opts.cursor_name = argv[arg];
                 else {
-                    printf("aklock: error, missing argument\n");
+                    printf("alock: error, missing argument\n");
                     displayUsage();
                     exit(1);
                 }
@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
                 displayUsage();
                 exit(0);
             } else if (!strcmp(argv[arg - 1], "-v")) {
-                printf("aklock-%s by m.gumz 2005\n", VERSION);
+                printf("alock-%s by m.gumz 2005\n", VERSION);
                 exit(0);
             }
         }
@@ -347,7 +347,7 @@ int main(int argc, char **argv) {
         sleep(1);
         if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
                         CurrentTime)) != GrabSuccess) {
-            perror("aklock: couldnt grab the keyboard.\n");
+            perror("alock: couldnt grab the keyboard.\n");
             exit(1);
         }
     }
@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
     if (XGrabPointer(xinfo.display, xinfo.window, False, (KeyPressMask|KeyReleaseMask) & 0,
                      GrabModeAsync, GrabModeAsync, None, xinfo.cursor, CurrentTime) != GrabSuccess) {
         XUngrabKeyboard(xinfo.display, CurrentTime);
-        perror("aklock: couldnt grab the pointer.\n");
+        perror("alock: couldnt grab the pointer.\n");
         exit(1);
     }
 

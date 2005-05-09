@@ -1,5 +1,5 @@
 -+------------------------------------------------------------------+-
-    aklock - a slim screenlocker for X 
+    alock - a slim screenlocker for X 
 -+------------------------------------------------------------------+-
 
 1. about
@@ -12,10 +12,10 @@
 1. about
 --------
 
-    'aklock' locks your current session in X. its not a fullfeatured
+    'alock' locks your current session in X. its not a fullfeatured
     screensaver-distribution like 'xlockmore' or 'xscreensaver' but just a
     tiny locker: "uh, i need coffee .. lock" .. speaking of size: binary takes 
-    only 11kb. 'aklock' shows the content of the locked screen .. so you can
+    only 11kb. 'alock' shows the content of the locked screen .. so you can
     see whats going on, even when you are not able to modify what you see.
     this is pretty usefull for public terminals where a demo should run which
     shouldnt interupted (you know those little kids who press every button and
@@ -24,13 +24,13 @@
     an irc-friend of mine (izhirahider) is using 'xtrlock' and had some
     problems with it .. no wonder, development stopped some years ago
     and it doesnt support pam. since i like the minimalism of 'xtrlock' 
-    but wanted to add some minor things to it i "forked" 'aklock' from
+    but wanted to add some minor things to it i "forked" 'alock' from
     'xtrlock' and modified it a bit :)
 
 2. installation
 ---------------
 
-    to install / compile 'aklock' you need 'scons':
+    to install / compile 'alock' you need 'scons':
 
         http://www.scons.org
 
@@ -39,7 +39,7 @@
 
         $> scons
 
-    and it should build your personal version of 'aklock'
+    and it should build your personal version of 'alock'
     you can influence the build-process by some variables, check
 
         $> scons -h
@@ -59,7 +59,7 @@
 3. usage
 --------
 
-    aklock [-vh] [-blank] [-cursor <theme|xcursor:file>]
+    alock [-vh] [-blank] [-cursor <theme|xcursor:file>]
            [-auth list|<none|passwd|pam|md5:pwdhash>]
 
         -h       displays a little help
@@ -69,7 +69,7 @@
         -cursor  choose between multiple cursors
         -auth    choose between different authmethods.
 
-    after locking 'aklock' will show a modified mousecursor. you have to
+    after locking 'alock' will show a modified mousecursor. you have to
     enter your password blindly. if its the correct password the screen will
     unlock.
 

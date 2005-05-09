@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #ifndef STAND_ALONE
-#include "aklock.h"
+#include "alock.h"
 #endif /* STAND_ALONE */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
@@ -331,7 +331,7 @@ static int auth(const char* pass) {
     return !strcmp(stringdigest, userhash);
 }
 
-struct akAuth aklock_auth_md5 = {
+struct aAuth alock_auth_md5 = {
     "md5",
     init,
     auth,
@@ -342,15 +342,20 @@ struct akAuth aklock_auth_md5 = {
 \* ---------------------------------------------------------------- */
 #else 
 
-int main() {
+int main(int argc, char* argv[]) {
     
     unsigned char digest[MD5_DIGEST_LENGTH];
     unsigned int i;
     unsigned char c;
     md5Context md5;
     
+    if (argc > 1) {
+        printf("amd5 - reads from stdin to calculate a md5-hash.\n");
+        exit(0);
+    }
+    
     md5_init(&md5);
-    while((c = fgetc(stdin)) != 255) {
+    while((c = fgetc(stdin)) != (unsigned char)EOF) {
         md5_update(&md5, &c, 1);
     }
     md5_final(digest, &md5);

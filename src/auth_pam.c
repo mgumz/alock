@@ -36,7 +36,7 @@
 #    include <security/pam_misc.h>
 #endif /* LINUX */
 
-#include "aklock.h"
+#include "alock.h"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
@@ -168,7 +168,7 @@ static int auth(const char* pass) {
     return 1;
 }
 
-struct akAuth aklock_auth_pam = {
+struct aAuth alock_auth_pam = {
     "pam",
     init, 
     auth,

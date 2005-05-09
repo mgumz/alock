@@ -1,6 +1,6 @@
 
-#ifndef _AKLOCK_H_
-#define _AKLOCK_H_
+#ifndef _ALOCK_H_
+#define _ALOCK_H_
 
 /* ---------------------------------------------------------------- *\
 
@@ -22,14 +22,14 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
-struct akAuth {
+struct aAuth {
     const char* name;
     int (*init)(const char* args);
     int (*auth)(const char* pass);
     int (*deinit)();
 };
 
-struct akCursor {
+struct aCursor {
     const char* name;
     unsigned int width;
     unsigned int height;
@@ -42,9 +42,9 @@ struct akCursor {
 
 
 
-struct akOpts {
+struct aOpts {
 
-    struct akAuth* auth;
+    struct aAuth* auth;
     char use_blank;
 
     char* cursor_name;
@@ -56,23 +56,23 @@ struct akOpts {
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
-extern struct akCursor ak_cursors[];
+extern struct aCursor alock_cursors[];
 
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
-extern struct akAuth aklock_auth_none;
+extern struct aAuth alock_auth_none;
 #ifdef HASH_PWD
-extern struct akAuth aklock_auth_md5;
-extern struct akAuth aklock_auth_sha1;
+extern struct aAuth alock_auth_md5;
+extern struct aAuth alock_auth_sha1;
 #endif /* HASH_PWD */
 #ifdef PASSWD_PWD
-extern struct akAuth aklock_auth_passwd;
+extern struct aAuth alock_auth_passwd;
 #endif /* PASSWD_PWD */
 #ifdef PAM_PWD
-extern struct akAuth aklock_auth_pam;
+extern struct aAuth alock_auth_pam;
 #endif /* PAM_PWD */
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-#endif // _AKLOCK_H_
+#endif // _ALOCK_H_
 

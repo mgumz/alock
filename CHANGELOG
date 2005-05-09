@@ -1,7 +1,14 @@
 Version 0.5
 
+2005-05-09:
+
+	* changed project-name to 'alock':
+		+ simpler, better name
+		+ i want to dedicate it to my gf: anja
+	* minor fixes
+
 2005-05-08:
- 
+
 	* changed the auth_md5.c - code to the openbsd-version (public domain)
 	* added auth_sha1.c - also from openbsd-codebase, also public domain
 	* added two stand-alone programs to calculate md5/sha1 hashs:

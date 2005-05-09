@@ -32,7 +32,7 @@
 #    include <shadow.h>
 #endif /* SHADOW_PWD */
 
-#include "aklock.h"
+#include "alock.h"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
@@ -98,7 +98,7 @@ static int auth(const char* pass) {
 #endif /* 0 */
 }
 
-struct akAuth aklock_auth_passwd = {
+struct aAuth aklock_auth_passwd = {
     "passwd",
     init,
     auth,

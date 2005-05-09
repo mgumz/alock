@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #ifndef STAND_ALONE
-#include "aklock.h"
+#include "alock.h"
 #endif /* STAND_ALONE */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
@@ -267,7 +267,7 @@ static int auth(const char* pass) {
     return !strcmp(stringdigest, userhash);
 }
 
-struct akAuth aklock_auth_sha1 = {
+struct aAuth alock_auth_sha1 = {
     "sha1",
     init,
     auth,
@@ -278,15 +278,20 @@ struct akAuth aklock_auth_sha1 = {
 \* ---------------------------------------------------------------- */
 #else 
 
-int main() {
+int main(int argc, char* argv[]) {
     
     unsigned char digest[SHA1_DIGEST_LENGTH];
     unsigned int i;
     unsigned char c;
     sha1Context sha1;
     
+    if (argc > 1) {
+        printf("asha1 - reads from stdin to calculate a sha1-hash.\n");
+        exit(0);
+    }
+
     sha1_init(&sha1);
-    while((c = fgetc(stdin)) != 255) {
+    while((c = fgetc(stdin)) != (unsigned char)EOF) {
         sha1_update(&sha1, &c, 1);
     }
     sha1_final(digest, &sha1);

@@ -1,21 +1,21 @@
 #!/bin/env python
 ##########################################################
 #
-# scons - buildsystem for aklock
+# scons - buildsystem for alock
 #
 ##########################################################
 
 import sys
 
-aklock_version = '0.5'
-aklock_optfile = [ 'scons.opts', 'user.opts' ]
+alock_version = '0.5'
+alock_optfile = [ 'scons.opts', 'user.opts' ]
 
-aklock_target = 'src/aklock'
+alock_target = 'src/alock'
 
-Default(aklock_target)
+Default(alock_target)
 
-aklock_options = Options(aklock_optfile)
-aklock_options.AddOptions(
+alock_options = Options(alock_optfile)
+alock_options.AddOptions(
         BoolOption('debug', 'build debug version', 0),
         BoolOption('passwd', 'support for classic passwd', 0),
         BoolOption('shadow', 'support for shadowpasswords', 0),
@@ -30,95 +30,95 @@ aklock_options.AddOptions(
         PathOption('prefix', 'install-path base', '/usr/local')
 )
 
-aklock_env = Environment(options = aklock_options,
+alock_env = Environment(options = alock_options,
                          TARFLAGS = '-c -z',
                          TARSUFFIX = '.tgz')
-aklock_options.Update(aklock_env)
-Help(aklock_options.GenerateHelpText(aklock_env))
+alock_options.Update(alock_env)
+Help(alock_options.GenerateHelpText(alock_env))
 
 ###########################################################
 #
 #
 
 if sys.platform == "linux2" or sys.platform == "linux-i386":
-    aklock_env.AppendUnique(
+    alock_env.AppendUnique(
         CPPDEFINES = [ 'LINUX' ])
 
-aklock_env.AppendUnique(
-        CPPDEFINES = [ 'VERSION=\\"'+aklock_version+'\\"' ],
+alock_env.AppendUnique(
+        CPPDEFINES = [ 'VERSION=\\"'+alock_version+'\\"' ],
         CPPFLAGS = [ '-Wall' ],
         CPPPATH = [ '/usr/X11R6/include' ],
         LIBPATH = ['/usr/X11R6/lib'],
         LIBS = [ 'X11' ])
 
-if aklock_env['debug']:
-    aklock_env.AppendUnique(
+if alock_env['debug']:
+    alock_env.AppendUnique(
             CPPDEFINES = [ 'DEBUG' ],
             LINKFLAGS = [ '-g' ],
             CPPFLAGS = [ '-g' ])
 
-if aklock_env['passwd']:
-    aklock_env.AppendUnique(
+if alock_env['passwd']:
+    alock_env.AppendUnique(
             CPPDEFINES = [ 'PASSWD_PWD' ],
             LIBS = [ 'crypt' ])
 
-if aklock_env['pam']:
-    aklock_env.AppendUnique(
+if alock_env['pam']:
+    alock_env.AppendUnique(
             CPPDEFINES = [ 'PAM_PWD' ],
             LIBS = [ 'pam', 'crypt' ])
 
     if sys.platform == 'linux2' or sys.platform == 'linux-i386':
-        aklock_env.AppendUnique(LIBS = ['pam_misc'])
+        alock_env.AppendUnique(LIBS = ['pam_misc'])
 
 
-if aklock_env['shadow']:
-    aklock_env.AppendUnique(
+if alock_env['shadow']:
+    alock_env.AppendUnique(
             CPPDEFINES = [ 'SHADOW_PWD' ])
 
-if aklock_env['hash']:
-    aklock_env.AppendUnique(
+if alock_env['hash']:
+    alock_env.AppendUnique(
             CPPDEFINES = [ 'HASH_PWD' ])
 
-if aklock_env['xcursor']:
-    conf = aklock_env.Configure()
+if alock_env['xcursor']:
+    conf = alock_env.Configure()
     if conf.CheckLib('Xcursor', 'XcursorSupportsARGB', 1):
-        aklock_env.AppendUnique(
+        alock_env.AppendUnique(
                 CPPDEFINES = [ 'HAVE_XCURSOR' ],
                 LIBS = [ 'Xcursor' ])
     else:
-        aklock_env['xcursor'] = 0
+        alock_env['xcursor'] = 0
         print "sorry, no xcursor-support found."
     conf.Finish()
 
 
-default_targets = [ aklock_target ]
-if aklock_env['amd5']:
+default_targets = [ alock_target ]
+if alock_env['amd5']:
     default_targets += [ 'src/amd5' ]
 
-if aklock_env['asha1']:
+if alock_env['asha1']:
     default_targets += [ 'src/asha1' ]
 
 Default(default_targets)
 
-aklock_options.Save('scons.opts', aklock_env)
+alock_options.Save('scons.opts', alock_env)
 
-aklock_program = SConscript(
+alock_program = SConscript(
             'src/SConscript',
-            exports = ['aklock_env']
+            exports = ['alock_env']
         )
 
-aklock_env.Install(
-            aklock_env['prefix']+'/bin',
-            aklock_program
+alock_env.Install(
+            alock_env['prefix']+'/bin',
+            alock_program
         )
 
-aklock_env.Alias(
+alock_env.Alias(
             'install',
-            aklock_env['prefix']+'/bin'
+            alock_env['prefix']+'/bin'
         )
 
 # TODO: add a "scons dist" command which builds a propper tarball
-#aklock_env.Alias('dist', aklock_env.Tar(aklock_target + '-' + aklock_version,
-#                                        aklock_distfiles))
+#alock_env.Alias('dist', alock_env.Tar(alock_target + '-' + alock_version,
+#                                        alock_distfiles))
 
 # vim:ft=python
