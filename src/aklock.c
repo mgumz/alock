@@ -48,14 +48,14 @@
 #include "aklock.h"
 
 struct akXInfo {
-    
+
     Display* display;
     Window   root;
     Window   window;
     Colormap colormap;
 
     Cursor   cursor;
-    
+
     int width;
     int height;
 };
@@ -76,9 +76,10 @@ struct akXInfo {
 
 static struct akAuth* ak_authmodules[] = {
     &aklock_auth_none,
-#ifdef MD5_PWD
+#ifdef HASH_PWD
     &aklock_auth_md5,
-#endif /* MD5_PWD */
+    &aklock_auth_sha1,
+#endif /* HASH_PWD */
 #ifdef PASSWD_PWD
     &aklock_auth_passwd,
 #endif /* PASSWD_PWD */
@@ -92,8 +93,19 @@ static struct akAuth* ak_authmodules[] = {
 \*------------------------------------------------------------------*/
 
 void displayUsage() {
-    printf("\naklock [-h] [-v] [-blank] [-cursor <theme|xcursor:file>]\n");
-    printf(" [-auth list|<none|passwd|pam|md5:pwdhash>]\n");
+    printf("\n");
+    printf("aklock [-h] [-v] [-blank] [-cursor <theme|xcursor:file>]\n");
+    printf("       [-auth list|<none");
+#ifdef PASSWD_PWD
+    printf("|passwd");
+#endif /* PASSWD_PWD */
+#ifdef PAM_PWD
+    printf("|pam");
+#endif /* PAM_PWD */
+#ifdef HASH_PWD
+    printf("|md5:pwdhash|sha1:pwdhash");
+#endif /* HASH_PWD */
+    printf(">]\n");
 }
 
 /*------------------------------------------------------------------*\
@@ -223,7 +235,7 @@ int main(int argc, char **argv) {
                 opts.use_blank = 1;
             } else if (!strcmp(argv[arg - 1], "-auth")) {
                 if (arg < argc) {
-                    
+
                     char* char_tmp;
                     struct akAuth* auth_tmp = NULL;
                     struct akAuth** i;
@@ -243,6 +255,7 @@ int main(int argc, char **argv) {
                                 exit(1);
                             }
                             opts.auth = auth_tmp;
+                            ++arg;
                             break;
                         }
                     }
@@ -251,7 +264,7 @@ int main(int argc, char **argv) {
                         fprintf(stderr, "aklock: error, couldnt find the auth module you specified.\n");
                         exit(1);
                     }
-                        
+
                 } else {
                     fprintf(stderr, "aklock, error, missing argument\n");
                     displayUsage();

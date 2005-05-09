@@ -9,7 +9,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Sa 30 Apr 2005 11:51:52 CEST
 
 \* ---------------------------------------------------------------- */
@@ -48,7 +48,7 @@ struct akOpts {
     char use_blank;
 
     char* cursor_name;
-    
+
     char* color_fg;
     char* color_bg;
 };
@@ -62,9 +62,10 @@ extern struct akCursor ak_cursors[];
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 extern struct akAuth aklock_auth_none;
-#ifdef MD5_PWD
+#ifdef HASH_PWD
 extern struct akAuth aklock_auth_md5;
-#endif /* MD5_PWD */
+extern struct akAuth aklock_auth_sha1;
+#endif /* HASH_PWD */
 #ifdef PASSWD_PWD
 extern struct akAuth aklock_auth_passwd;
 #endif /* PASSWD_PWD */

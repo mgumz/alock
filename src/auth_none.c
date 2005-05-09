@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Sa 07 Mai 2005 16:41:28 CEST
 
 \* ---------------------------------------------------------------- */
@@ -23,7 +23,7 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
-static int init(const unsigned char* args) {
+static int init(const char* args) {
     return 1;
 }
 
@@ -31,7 +31,7 @@ static int deinit() {
     return 1;
 }
 
-static int auth(const unsigned char* passwd) {
+static int auth(const char* passwd) {
     return 1;
 }
 
