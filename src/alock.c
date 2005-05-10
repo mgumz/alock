@@ -6,8 +6,8 @@
 
     copyright:
 
-        Copyright (C)1993,1994 Ian Jackson   (xtrlock)
         Copyright (C)2005 Mathias Gumz (forked alock)
+        Copyright (C)1993,1994 Ian Jackson   (xtrlock)
 
     license:
 
@@ -30,6 +30,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
+#include <X11/cursorfont.h>
 
 #ifdef HAVE_XPM
 #   include <X11/xpm.h>
@@ -75,17 +76,17 @@ struct aXInfo {
 #endif // DEBUG
 
 static struct aAuth* alock_authmodules[] = {
-    &alock_auth_none,
+#ifdef PAM_PWD
+    &alock_auth_pam,
+#endif
+#ifdef PASSWD_PWD
+    &alock_auth_passwd,
+#endif /* PASSWD_PWD */
 #ifdef HASH_PWD
     &alock_auth_md5,
     &alock_auth_sha1,
 #endif /* HASH_PWD */
-#ifdef PASSWD_PWD
-    &alock_auth_passwd,
-#endif /* PASSWD_PWD */
-#ifdef PAM_PWD
-    &alock_auth_pam,
-#endif
+    &alock_auth_none,
     NULL
 };
 
@@ -173,7 +174,17 @@ void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
         }
     }
 #endif /* HAVE_XCURSOR */
+    /* create cursor from X11/cursorfont.h */
+    if (opts->cursor_name && (strstr(opts->cursor_name, "font:"))) {
+        Cursor fcursor;
+        if ((fcursor = XCreateFontCursor(dpy, atoi(&opts->cursor_name[5])))) {
+            XRecolorCursor(dpy, fcursor, &color_fg, &color_bg);
+            xinfo->cursor = fcursor;
+            return;
+        } else
+            printf("alock: error, couldnt creat fontcursor [%d].\n", atoi(&opts->cursor_name[5]));
 
+    }
     /* TODO: doesnt work yet. */
 /*
  * if (opts->cursor_name && (strstr(opts->cursor_name, "xbm:"))) {
