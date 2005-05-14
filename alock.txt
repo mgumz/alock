@@ -1,0 +1,65 @@
+ALOCK(1)
+========
+Mathias Gumz <akira@fluxbox.org>
+v0.5, ?? May 2005
+
+NAME
+----
+alock - locks the local X display until a password is entered.
+
+SYNOPSIS
+--------
+'alock' [-h] [-v] [-bg type:opts] [-cursor type:opts] [-auth type:opts]
+
+DESCRIPTION
+-----------
+alock locks the X server till the user enters a password at the
+keyboard. If the authentification was successful the X server is 
+unlocked and the user can continue to work.
+
+alock does not provide fancy animations like 'xlock' and 'xscreensaver' 
+and never will. Its just for locking the current X session.
+
+OPTIONS
+-------
+-h ::
+    Print a short help
+-v ::
+    Print the version number
+
+-auth type:options ::
+    Define the type of the authentification, depends strongly on
+    how alock was built:
+
+      'list'      - Displays a list of available types
+      'passwd'    - Tries to authentificate against the users system-password.
+                    On systems using 'shadow' alock needs the suid-flag set.
+      'pam'       - Tries to authentificate against the users system-password
+                    using the 'pam-login'-module.
+      'md5:hash'  - alock creates a md5-hash from the entered unlockpassword
+                    and compares it with the hash provided as option
+      'sha1:hash' - alock creates a sha1-hash from the entered unlockpassword
+                    and compares it with the hash provided as option
+      'none'      - Every 'password' is valid                
+
+-bg type:options ::
+    Define the type of alock should handle the background:
+
+      'none' - you can see everything like it is
+      'blank'
+-cursor type:options ::
+    Define the look-a-like of the cursor/mouse pointer
+
+AUTHOR
+------
+Written by Mathias Gumz <akira at fluxbox dot org>
+
+RESOURCES
+---------
+
+Web site: http://darkshed.net
+
+COPYING
+-------
+Copyright (C) 2005 Mathias Gumz. Free use of this software is
+granted under the terms of the GNU General Public License (GPL).

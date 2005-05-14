@@ -1,5 +1,9 @@
 Version 0.5
 
+2005-05-14:
+
+	* started documention, using asciidoc
+
 2005-05-09:
 
 	* changed project-name to 'alock':

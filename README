@@ -14,8 +14,8 @@
 
     'alock' locks your current session in X. its not a fullfeatured
     screensaver-distribution like 'xlockmore' or 'xscreensaver' but just a
-    tiny locker: "uh, i need coffee .. lock" .. speaking of size: binary takes 
-    only 11kb. 'alock' shows the content of the locked screen .. so you can
+    tiny locker: "uh, i need coffee .. so i need a lock" .. speaking of size: 
+    binary takes only 11kb. 'alock' shows the content of the locked screen .. so you can
     see whats going on, even when you are not able to modify what you see.
     this is pretty usefull for public terminals where a demo should run which
     shouldnt interupted (you know those little kids who press every button and
