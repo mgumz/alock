@@ -59,19 +59,8 @@
 3. usage
 --------
 
-    alock [-vh] [-blank] [-cursor <theme|xcursor:file>]
-           [-auth list|<none|passwd|pam|md5:pwdhash>]
-
-        -h       displays a little help
-        -v       displays version number
-
-        -blank   hides the content of the screen with a big, black area
-        -cursor  choose between multiple cursors
-        -auth    choose between different authmethods.
-
-    after locking 'alock' will show a modified mousecursor. you have to
-    enter your password blindly. if its the correct password the screen will
-    unlock.
+    you find more info about how to use 'alock' in the alock.txt-file. that
+    file is used to create all the other documentation-formats provided.
 
 4. todo
 -------
