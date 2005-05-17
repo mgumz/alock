@@ -13,7 +13,7 @@
 
   about :
 
-    pam-authentification for aklock
+    provide -auth pam, pam-authentification for alock
     
     taken from pure-ftpd's authstuff, but you can see similar stuff
     in xlockmore, openssh and basicly all pam-related apps :)
@@ -24,6 +24,7 @@
   includes
 \* ---------------------------------------------------------------- */
 
+#include <X11/Xlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
@@ -127,7 +128,7 @@ static struct pam_conv PAM_conversation = {
 static struct passwd* pwd_entry = NULL;
 
 
-static int init(const char* args) {
+static int alock_auth_pam_init(const char* args) {
     errno = 0;
     pwd_entry = getpwuid(getuid());
     if (!pwd_entry) {
@@ -142,14 +143,14 @@ static int init(const char* args) {
     return 1;
 }
 
-static int deinit() {
+static int alock_auth_pam_deinit() {
     
     pwd_entry = NULL;
     
     return 0;
 }
 
-static int auth(const char* pass) {
+static int alock_auth_pam_auth(const char* pass) {
 
     pam_handle_t* pam_handle = NULL;
 
@@ -170,9 +171,9 @@ static int auth(const char* pass) {
 
 struct aAuth alock_auth_pam = {
     "pam",
-    init, 
-    auth,
-    deinit
+    alock_auth_pam_init, 
+    alock_auth_pam_auth,
+    alock_auth_pam_deinit
 };
 
 /* ---------------------------------------------------------------- *\

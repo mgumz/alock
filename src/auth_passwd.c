@@ -13,11 +13,15 @@
 
   about :
 
+    provide -auth passwd, normal unix-login, either with or without
+    shadowsupport
+
 \* ---------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
+#include <X11/Xlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,7 +43,7 @@
 
 static struct passwd* pwd_entry = NULL;
 
-static int init(const char* args) {
+static int alock_auth_passwd_init(const char* args) {
 
 #ifdef SHADOW_PWD
     struct spwd* sp = NULL;
@@ -71,11 +75,11 @@ static int init(const char* args) {
     return 1;
 }
 
-static int deinit() { 
+static int alock_auth_passwd_deinit() { 
     return 1;
 }
 
-static int auth(const char* pass) {
+static int alock_auth_passwd_auth(const char* pass) {
 #if 0
     char key[3];
     char *encr;
@@ -100,9 +104,9 @@ static int auth(const char* pass) {
 
 struct aAuth aklock_auth_passwd = {
     "passwd",
-    init,
-    auth,
-    deinit
+    alock_auth_passwd_init,
+    alock_auth_passwd_auth,
+    alock_auth_passwd_deinit
 };
 
 /* ---------------------------------------------------------------- *\

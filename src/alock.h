@@ -22,6 +22,18 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
+
+
+struct aXInfo {
+
+    Display* display;
+    Window   root;
+    Colormap colormap;
+    
+    Window   window;
+    Cursor   cursor;
+};
+
 struct aAuth {
     const char* name;
     int (*init)(const char* args);
@@ -31,34 +43,27 @@ struct aAuth {
 
 struct aCursor {
     const char* name;
-    unsigned int width;
-    unsigned int height;
-    unsigned int x_hot;
-    unsigned int y_hot;
-
-    unsigned char* bits;
-    unsigned char* mask;
+    int (*init)(const char* args, struct aXInfo* xinfo);
+    int (*deinit)(struct aXInfo* xinfo);
 };
 
-
+struct aBackground {
+    const char* name;
+    int (*init)(const char* args, struct aXInfo* xinfo);
+    int (*deinit)(struct aXInfo* xinfo);
+};
 
 struct aOpts {
-
     struct aAuth* auth;
-    char use_blank;
-
-    char* cursor_name;
-
-    char* color_fg;
-    char* color_bg;
+    struct aCursor* cursor;
+    struct aBackground* background;
 };
 
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
-extern struct aCursor alock_cursors[];
-
-
+extern struct aBackground alock_bg_none;
+extern struct aBackground alock_bg_blank;
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 extern struct aAuth alock_auth_none;
@@ -72,6 +77,14 @@ extern struct aAuth alock_auth_passwd;
 #ifdef PAM_PWD
 extern struct aAuth alock_auth_pam;
 #endif /* PAM_PWD */
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
+extern struct aCursor alock_cursor_none;
+extern struct aCursor alock_cursor_theme;
+extern struct aCursor alock_cursor_font;
+#ifdef HAVE_XCURSOR
+extern struct aCursor alock_cursor_xcursor;
+#endif /* HAVE_XCURSOR */
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 #endif // _ALOCK_H_

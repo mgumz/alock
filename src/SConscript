@@ -5,19 +5,28 @@
 #
 ##########################################################
 
-alock_sources = [ 'alock.c', 'cursors.c', 'auth_none.c' ]
+alock_sources = [ 'alock.c' ]
+
+auth_sources = [ 'auth_none.c' ]
+bg_sources = [ 'bg_none.c', 'bg_blank.c' ]
+cursor_sources = [ 'cursor_none.c', 'cursor_theme.c', 'cursor_font.c' ]
 
 Import('alock_env')
 
 build =  alock_env.Copy()
 
 if build['passwd']:
-    alock_sources += [ 'auth_passwd.c' ]
+    auth_sources += [ 'auth_passwd.c' ]
 if build['hash']:
-    alock_sources += [ 'auth_md5.c', 'auth_sha1.c' ]
+    auth_sources += [ 'auth_md5.c', 'auth_sha1.c' ]
 if build['pam']:
-    alock_sources += [ 'auth_pam.c' ]
+    auth_sources += [ 'auth_pam.c' ]
 
+if build['xcursor']:
+    cursor_sources += [ 'cursor_xcursor.c' ]
+
+
+alock_sources += auth_sources + bg_sources + cursor_sources
 
 alock = build.Program('alock', alock_sources)
 build.AddPostAction(alock, Chmod(alock, 0755))

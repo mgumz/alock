@@ -17,6 +17,8 @@
 
   about :
 
+    provide -auth sha1:hash
+
 \* ---------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------- *\
@@ -29,7 +31,8 @@
 #include <stdio.h>
 #include <string.h>
 #ifndef STAND_ALONE
-#include "alock.h"
+#    include <X11/Xlib.h>
+#    include "alock.h"
 #endif /* STAND_ALONE */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
@@ -47,11 +50,11 @@ typedef struct {
 } sha1Context;
 
 
-void sha1_init(sha1Context *);
-void sha1_pad(sha1Context *);
-void sha1_transform(u_int32_t [5], const u_int8_t [SHA1_BLOCK_LENGTH]);
-void sha1_update(sha1Context *, const u_int8_t *, size_t);
-void sha1_final(u_int8_t [SHA1_DIGEST_LENGTH], sha1Context *);
+static void sha1_init(sha1Context *);
+static void sha1_pad(sha1Context *);
+static void sha1_transform(u_int32_t [5], const u_int8_t [SHA1_BLOCK_LENGTH]);
+static void sha1_update(sha1Context *, const u_int8_t *, size_t);
+static void sha1_final(u_int8_t [SHA1_DIGEST_LENGTH], sha1Context *);
 
 #define HTONDIGEST(x) do {              \
         x[0] = htonl(x[0]);             \
@@ -97,7 +100,7 @@ void sha1_final(u_int8_t [SHA1_DIGEST_LENGTH], sha1Context *);
 /*------------------------------------------------------------------*\
    Hash a single 512-bit block. This is the core of the algorithm.
 \*------------------------------------------------------------------*/
-void sha1_transform(u_int32_t state[5], const u_int8_t buffer[SHA1_BLOCK_LENGTH]) {
+static void sha1_transform(u_int32_t state[5], const u_int8_t buffer[SHA1_BLOCK_LENGTH]) {
     u_int32_t a, b, c, d, e;
     u_int8_t workspace[SHA1_BLOCK_LENGTH];
     typedef union {
@@ -151,7 +154,7 @@ void sha1_transform(u_int32_t state[5], const u_int8_t buffer[SHA1_BLOCK_LENGTH]
 /*------------------------------------------------------------------*\
    Initialize new context
 \*------------------------------------------------------------------*/
-void sha1_init(sha1Context *context) {
+static void sha1_init(sha1Context *context) {
 
     /* SHA1 initialization constants */
     context->count = 0;
@@ -165,7 +168,7 @@ void sha1_init(sha1Context *context) {
 /*------------------------------------------------------------------*\
    Run your data through this.
 \*------------------------------------------------------------------*/
-void sha1_update(sha1Context *context, const u_int8_t *data, size_t len) {
+static void sha1_update(sha1Context *context, const u_int8_t *data, size_t len) {
 
     size_t i, j;
 
@@ -186,7 +189,7 @@ void sha1_update(sha1Context *context, const u_int8_t *data, size_t len) {
 /*------------------------------------------------------------------*\
    Add padding and return the message digest.
 \*------------------------------------------------------------------*/
-void sha1_pad(sha1Context *context) {
+static void sha1_pad(sha1Context *context) {
 
     u_int8_t finalcount[8];
     u_int i;
@@ -201,7 +204,7 @@ void sha1_pad(sha1Context *context) {
     sha1_update(context, finalcount, 8); /* rsShould cause a sha1_transform() */
 }
 
-void sha1_final(u_int8_t digest[SHA1_DIGEST_LENGTH], sha1Context *context) {
+static void sha1_final(u_int8_t digest[SHA1_DIGEST_LENGTH], sha1Context *context) {
 
     u_int i;
 
@@ -221,16 +224,16 @@ void sha1_final(u_int8_t digest[SHA1_DIGEST_LENGTH], sha1Context *context) {
 
 static const char* userhash = NULL;
 
-static int init(const char* args) {
+static int alock_auth_sha1_init(const char* args) {
     if (args) {
         char* check = strstr(args, "sha1:");
         if (!check || check != args) {
-            fprintf(stderr, "aklock: error, missing arguments for [sha1].\n");
+            fprintf(stderr, "alock: error, missing arguments for [sha1].\n");
             return 0;
         }
 
         if (strlen(&args[5]) != SHA1_DIGEST_STRING_LENGTH - 1) {
-            fprintf(stderr, "aklock: error, invalid sha1-hash.\n");
+            fprintf(stderr, "alock: error, invalid sha1-hash.\n");
             return 0;
         }
 
@@ -241,11 +244,11 @@ static int init(const char* args) {
     return 0;
 }
 
-static int deinit() {
+static int alock_auth_sha1_deinit() {
     return 1;
 }
 
-static int auth(const char* pass) {
+static int alock_auth_sha1_auth(const char* pass) {
 
     unsigned char digest[SHA1_DIGEST_LENGTH];
     unsigned char stringdigest[SHA1_DIGEST_STRING_LENGTH];
@@ -269,9 +272,9 @@ static int auth(const char* pass) {
 
 struct aAuth alock_auth_sha1 = {
     "sha1",
-    init,
-    auth,
-    deinit
+    alock_auth_sha1_init,
+    alock_auth_sha1_auth,
+    alock_auth_sha1_deinit
 };
 
 /* ---------------------------------------------------------------- *\

@@ -7,7 +7,7 @@
 
 import sys
 
-alock_version = '0.5'
+alock_version = '0.9'
 alock_optfile = [ 'scons.opts', 'user.opts' ]
 
 alock_target = 'src/alock'

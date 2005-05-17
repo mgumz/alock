@@ -23,6 +23,8 @@
 
   about :
 
+    provide -auth md5:hash
+
 \* ---------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------- *\
@@ -33,7 +35,8 @@
 #include <stdio.h>
 #include <string.h>
 #ifndef STAND_ALONE
-#include "alock.h"
+#   include <X11/Xlib.h>
+#   include "alock.h"
 #endif /* STAND_ALONE */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
@@ -52,11 +55,11 @@ typedef struct {
     u_int8_t buffer[MD5_BLOCK_LENGTH];  /* input buffer */
 } md5Context;
 
-void md5_init(md5Context*);
-void md5_update(md5Context*, const u_int8_t*, size_t);
-void md5_pad(md5Context*);
-void md5_final(u_int8_t [MD5_DIGEST_LENGTH], md5Context*);
-void md5_transform(u_int32_t [4], const u_int8_t [MD5_BLOCK_LENGTH]);
+static void md5_init(md5Context*);
+static void md5_update(md5Context*, const u_int8_t*, size_t);
+static void md5_pad(md5Context*);
+static void md5_final(u_int8_t [MD5_DIGEST_LENGTH], md5Context*);
+static void md5_transform(u_int32_t [4], const u_int8_t [MD5_BLOCK_LENGTH]);
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
@@ -87,7 +90,7 @@ static u_int8_t PADDING[MD5_BLOCK_LENGTH] = {
    Start MD5 accumulation.  Set bit count to 0 and buffer to
    mysterious initialization constants.
 \*------------------------------------------------------------------*/
-void md5_init(md5Context* ctx) {
+static void md5_init(md5Context* ctx) {
     ctx->count = 0;
     ctx->state[0] = 0x67452301;
     ctx->state[1] = 0xefcdab89;
@@ -98,7 +101,7 @@ void md5_init(md5Context* ctx) {
    Update context to reflect the concatenation of another buffer
    full of bytes.
 \*------------------------------------------------------------------*/
-void md5_update(md5Context* ctx, const unsigned char* input, size_t len) {
+static void md5_update(md5Context* ctx, const unsigned char* input, size_t len) {
 
     size_t have, need;
 
@@ -135,7 +138,7 @@ void md5_update(md5Context* ctx, const unsigned char* input, size_t len) {
   Pad pad to 64-byte boundary with the bit pattern
   1 0* (64-bit count of bits processed, MSB-first)
 \*------------------------------------------------------------------*/
-void md5_pad(md5Context *ctx)
+static void md5_pad(md5Context *ctx)
 {
     u_int8_t count[8];
     size_t padlen;
@@ -155,7 +158,7 @@ void md5_pad(md5Context *ctx)
 /*------------------------------------------------------------------*\
    Final wrapup--call MD5Pad, fill in digest and zero out ctx.
 \*------------------------------------------------------------------*/
-void md5_final(unsigned char digest[MD5_DIGEST_LENGTH], md5Context *ctx) {
+static void md5_final(unsigned char digest[MD5_DIGEST_LENGTH], md5Context *ctx) {
     int i;
 
     md5_pad(ctx);
@@ -184,7 +187,7 @@ void md5_final(unsigned char digest[MD5_DIGEST_LENGTH], md5Context *ctx) {
    the data and converts bytes into longwords for this routine.
 
 \*------------------------------------------------------------------*/
-void md5_transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH]) {
+static void md5_transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH]) {
     u_int32_t a, b, c, d, in[MD5_BLOCK_LENGTH / 4];
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -285,16 +288,16 @@ void md5_transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH]) {
 
 static const char* userhash = NULL;
 
-static int init(const char* args) {
+static int alock_auth_md5_init(const char* args) {
     if (args) {
         char* check = strstr(args, "md5:");
         if (!check || check != args) {
-            fprintf(stderr, "aklock: error, missing arguments for [md5].\n");
+            fprintf(stderr, "alock: error, missing arguments for [md5].\n");
             return 0;
         }
 
         if (strlen(&args[4]) != MD5_DIGEST_STRING_LENGTH - 1) {
-            fprintf(stderr, "aklock: error, invalid md5-hash.\n");
+            fprintf(stderr, "alock: error, invalid md5-hash.\n");
             return 0;
         }
 
@@ -305,11 +308,11 @@ static int init(const char* args) {
     return 0;
 }
 
-static int deinit() {
+static int alock_auth_md5_deinit() {
     return 1;
 }
 
-static int auth(const char* pass) {
+static int alock_auth_md5_auth(const char* pass) {
 
     unsigned char digest[MD5_DIGEST_LENGTH];
     unsigned char stringdigest[MD5_DIGEST_STRING_LENGTH];
@@ -333,9 +336,9 @@ static int auth(const char* pass) {
 
 struct aAuth alock_auth_md5 = {
     "md5",
-    init,
-    auth,
-    deinit
+    alock_auth_md5_init,
+    alock_auth_md5_auth,
+    alock_auth_md5_deinit
 };
 
 /* ---------------------------------------------------------------- *\

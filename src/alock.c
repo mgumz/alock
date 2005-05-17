@@ -30,15 +30,10 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
-#include <X11/cursorfont.h>
 
 #ifdef HAVE_XPM
 #   include <X11/xpm.h>
 #endif /* HAVE_XPM */
-#ifdef HAVE_XCURSOR
-#   include <X11/Xcursor/Xcursor.h>
-#endif /* HAVE_XCURSOR */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,18 +43,6 @@
 
 #include "alock.h"
 
-struct aXInfo {
-
-    Display* display;
-    Window   root;
-    Window   window;
-    Colormap colormap;
-
-    Cursor   cursor;
-
-    int width;
-    int height;
-};
 /*------------------------------------------------------------------*\
     globals
 \*------------------------------------------------------------------*/
@@ -90,51 +73,36 @@ static struct aAuth* alock_authmodules[] = {
     NULL
 };
 
+static struct aBackground* alock_backgrounds[] = {
+    &alock_bg_none,
+    &alock_bg_blank,
+    NULL
+};
+
+static struct aCursor* alock_cursors[] = {
+    &alock_cursor_theme,
+    &alock_cursor_none,
+    &alock_cursor_font,
+#ifdef HAVE_XCURSOR
+    &alock_cursor_xcursor,
+#endif /* HAVE_XCURSOR */
+    NULL
+};
+
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
 void displayUsage() {
-    printf("\n");
-    printf("alock [-h] [-v] [-blank] [-cursor <theme|xcursor:file>]\n");
-    printf("       [-auth list|<none");
-#ifdef PASSWD_PWD
-    printf("|passwd");
-#endif /* PASSWD_PWD */
-#ifdef PAM_PWD
-    printf("|pam");
-#endif /* PAM_PWD */
-#ifdef HASH_PWD
-    printf("|md5:pwdhash|sha1:pwdhash");
-#endif /* HASH_PWD */
-    printf(">]\n");
+    printf("alock [-hv] [-bg type:options] [-cursor type:options] ");
+    printf("[-auth type:options]\n");
 }
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-void initOpts(struct aOpts* opts) {
-
-    opts->auth = alock_authmodules[0];
-    opts->use_blank = 0;
-
-    opts->cursor_name = "mini";
-
-    opts->color_bg = "steelblue3";
-    opts->color_fg = "grey25";
-
-}
-
 void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
 
-
     Display* dpy = XOpenDisplay(NULL);
-    XColor color_fg;
-    XColor color_bg;
-    XColor tmp_color;
-    Pixmap pixmap_cursor;
-    Pixmap pixmap_cursor_mask;
-    XWindowAttributes xgwa;
-    struct aCursor* cursor = NULL;
 
     if (!dpy) {
         perror("alock: error, can't open connection to X");
@@ -146,45 +114,7 @@ void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
 
     xinfo->root = DefaultRootWindow(dpy);
     xinfo->colormap = DefaultColormap(dpy, DefaultScreen(dpy));
-
-    XGetWindowAttributes(dpy, xinfo->root, &xgwa);
-
-    if (opts->use_blank) {
-        xinfo->width = xgwa.width;
-        xinfo->height = xgwa.height;
-    } else {
-        xinfo->width = 1;
-        xinfo->height = 1;
-    }
-
-    if((XAllocNamedColor(dpy, xinfo->colormap, opts->color_bg, &tmp_color, &color_bg)) == 0)
-        XAllocNamedColor(dpy, xinfo->colormap, "black", &tmp_color, &color_bg);
-    if((XAllocNamedColor(dpy, xinfo->colormap, opts->color_fg, &tmp_color, &color_fg)) == 0)
-        XAllocNamedColor(dpy, xinfo->colormap, "white", &tmp_color, &color_fg);
-
-    /* load cursors */
-#ifdef HAVE_XCURSOR
-    if (opts->cursor_name && (strstr(opts->cursor_name, "xcursor:"))) {
-        Cursor xcursor;
-        if ((xcursor = XcursorFilenameLoadCursor(dpy, &opts->cursor_name[8]))) {
-            xinfo->cursor = xcursor;
-            return;
-        } else {
-            printf("alock: error, couldnt load [%s]\n", &opts->cursor_name[8]);
-        }
-    }
-#endif /* HAVE_XCURSOR */
-    /* create cursor from X11/cursorfont.h */
-    if (opts->cursor_name && (strstr(opts->cursor_name, "font:"))) {
-        Cursor fcursor;
-        if ((fcursor = XCreateFontCursor(dpy, atoi(&opts->cursor_name[5])))) {
-            XRecolorCursor(dpy, fcursor, &color_fg, &color_bg);
-            xinfo->cursor = fcursor;
-            return;
-        } else
-            printf("alock: error, couldnt creat fontcursor [%d].\n", atoi(&opts->cursor_name[5]));
-
-    }
+    
     /* TODO: doesnt work yet. */
 /*
  * if (opts->cursor_name && (strstr(opts->cursor_name, "xbm:"))) {
@@ -201,24 +131,6 @@ void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
         }
     }
    */
-    /* look internal cursors */
-    for(cursor = alock_cursors; cursor->name != NULL; cursor++) {
-        if (!strcmp(cursor->name, opts->cursor_name))
-                break;
-    }
-
-    if (!cursor->name)
-        cursor = alock_cursors;
-
-    pixmap_cursor = XCreateBitmapFromData(dpy, xinfo->root, cursor->bits, cursor->width, cursor->height);
-    pixmap_cursor_mask = XCreateBitmapFromData(dpy, xinfo->root, cursor->mask, cursor->width, cursor->height);
-
-    xinfo->cursor = XCreatePixmapCursor(dpy,
-                                        pixmap_cursor, pixmap_cursor_mask,
-                                        &color_fg, &color_bg,
-                                        cursor->x_hot, cursor->y_hot);
-
-
 }
 
 int main(int argc, char **argv) {
@@ -229,21 +141,54 @@ int main(int argc, char **argv) {
     int clen, rlen = 0;
     long goodwill = INITIALGOODWILL, timeout = 0;
 
-    XSetWindowAttributes xswa;
-    long xsmask = 0;
-
     struct aXInfo xinfo;
     struct aOpts opts;
 
     int arg = 0;
+    const char* cursor_args = NULL;
+    const char* background_args = NULL;
 
-    initOpts(&opts);
+    opts.auth = alock_authmodules[0];
+    opts.cursor = alock_cursors[0];
+    opts.background = alock_backgrounds[0];
 
     /*  parse options */
     if (argc != 1) {
         for(arg = 1; arg <= argc; arg++) {
-            if (!strcmp(argv[arg - 1], "-blank")) {
-                opts.use_blank = 1;
+            if (!strcmp(argv[arg - 1], "-bg")) {
+                if (arg < argc) {
+
+                    char* char_tmp;
+                    struct aBackground* bg_tmp = NULL;
+                    struct aBackground** i;
+                    if (!strcmp(argv[arg], "list")) {
+                        for(i = alock_backgrounds; *i; ++i) {
+                            printf("%s\n", (*i)->name);
+                        }
+                        exit(0);
+                    }
+
+                    for(i = alock_backgrounds; *i; ++i) {
+                        char_tmp = strstr(argv[arg], (*i)->name);
+                        if(char_tmp && char_tmp == argv[arg]) {
+                            background_args = char_tmp;
+                            bg_tmp = *i;
+                            opts.background = bg_tmp;
+                            ++arg;
+                            break;
+                        }
+                    }
+
+                    if (!bg_tmp) {
+                        fprintf(stderr, "alock: error, couldnt find the bg-module you specified.\n");
+                        exit(1);
+                    }
+
+                } else {
+                    fprintf(stderr, "alock, error, missing argument\n");
+                    displayUsage();
+                    exit(1);
+                }
             } else if (!strcmp(argv[arg - 1], "-auth")) {
                 if (arg < argc) {
 
@@ -272,7 +217,7 @@ int main(int argc, char **argv) {
                     }
 
                     if (!auth_tmp) {
-                        fprintf(stderr, "alock: error, couldnt find the auth module you specified.\n");
+                        fprintf(stderr, "alock: error, couldnt find the auth-module you specified.\n");
                         exit(1);
                     }
 
@@ -282,10 +227,36 @@ int main(int argc, char **argv) {
                     exit(1);
                 }
             } else if (!strcmp(argv[arg - 1], "-cursor")) {
-                if (arg < argc)
-                    opts.cursor_name = argv[arg];
-                else {
-                    printf("alock: error, missing argument\n");
+                if (arg < argc) {
+
+                    char* char_tmp;
+                    struct aCursor* cursor_tmp = NULL;
+                    struct aCursor** i;
+                    if (!strcmp(argv[arg], "list")) {
+                        for(i = alock_cursors; *i; ++i) {
+                            printf("%s\n", (*i)->name);
+                        }
+                        exit(0);
+                    }
+
+                    for(i = alock_cursors; *i; ++i) {
+                        char_tmp = strstr(argv[arg], (*i)->name);
+                        if(char_tmp && char_tmp == argv[arg]) {
+                            cursor_args = char_tmp;
+                            cursor_tmp = *i;
+                            opts.cursor= cursor_tmp;
+                            ++arg;
+                            break;
+                        }
+                    }
+
+                    if (!cursor_tmp) {
+                        fprintf(stderr, "alock: error, couldnt find the cursor-module you specified.\n");
+                        exit(1);
+                    }
+
+                } else {
+                    fprintf(stderr, "alock, error, missing argument\n");
                     displayUsage();
                     exit(1);
                 }
@@ -301,27 +272,19 @@ int main(int argc, char **argv) {
 
     initXInfo(&xinfo, &opts);
 
-    /* create the windows */
-    xswa.override_redirect = True;
-    xsmask |= CWOverrideRedirect;
-
-    if (opts.use_blank) {
-
-        xswa.background_pixel = BlackPixel(xinfo.display, DefaultScreen(xinfo.display));
-        xswa.colormap = xinfo.colormap;
-        xsmask |= CWBackPixel;
-        xsmask |= CWColormap;
+    if (!opts.background->init(background_args, &xinfo)) {
+        printf("alock: error, couldnt init [%s] with [%s].\n", 
+               opts.background->name,
+               background_args);
+        exit(1);
     }
 
-    xinfo.window = XCreateWindow(xinfo.display, xinfo.root,
-                          0, 0, xinfo.width, xinfo.height,
-                          0, /* borderwidth */
-                          CopyFromParent, /* depth */
-                          InputOutput, /* class */
-                          CopyFromParent, /* visual */
-                          xsmask, &xswa);
-
-
+    if (!opts.cursor->init(cursor_args, &xinfo)) {
+        printf("alock: error, couldnt init [%s] with [%s].\n", 
+               opts.cursor->name,
+               cursor_args);
+        exit(1);
+    }
 
     XSelectInput(xinfo.display, xinfo.window, KeyPressMask|KeyReleaseMask);
     XMapWindow(xinfo.display, xinfo.window);
@@ -424,18 +387,17 @@ int main(int argc, char **argv) {
             }
             break;
         default:
-                break;
+            break;
         }
     }
 
 exit:
 
     opts.auth->deinit();
-
-    XDestroyWindow(xinfo.display, xinfo.window);
-    XFreeCursor(xinfo.display, xinfo.cursor);
+    opts.cursor->deinit(&xinfo);
+    opts.background->deinit(&xinfo);
     XCloseDisplay(xinfo.display);
-
+    
     return 0;
 }
 

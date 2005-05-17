@@ -1,19 +1,19 @@
 /* ---------------------------------------------------------------- *\
 
-  file    : auth_none.c
+  file    : cursor_none.c
   author  : m. gumz <akira at fluxbox dot org>
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-
-  start   : Sa 07 Mai 2005 16:41:28 CEST
+  
+  start   : Di 17 Mai 2005 12:10:35 CEST
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
 
-  about : 
-    
-    provide -auth none, any "password" is accepted
+  about :
+
+    provide -cursor none
 
 \* ---------------------------------------------------------------- */
 
@@ -26,25 +26,24 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
-static int alock_auth_none_init(const char* args) {
+static int alock_cursor_none_init(const char* args, struct aXInfo* xinfo) {
+    xinfo->cursor = None;
     return 1;
 }
 
-static int alock_auth_none_deinit() {
+static int alock_cursor_none_deinit(struct aXInfo* xinfo) {
     return 1;
 }
 
-static int alock_auth_none_auth(const char* passwd) {
-    return 1;
-}
-
-struct aAuth alock_auth_none = {
+struct aCursor alock_cursor_none = {
     "none",
-    alock_auth_none_init,
-    alock_auth_none_deinit,
-    alock_auth_none_auth
+    alock_cursor_none_init, 
+    alock_cursor_none_deinit
 };
+
+
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
+
 
