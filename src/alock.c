@@ -31,6 +31,7 @@
     globals
 \*------------------------------------------------------------------*/
 static struct aAuth* alock_authmodules[] = {
+    &alock_auth_none,
 #ifdef PAM_PWD
     &alock_auth_pam,
 #endif
@@ -41,7 +42,6 @@ static struct aAuth* alock_authmodules[] = {
     &alock_auth_md5,
     &alock_auth_sha1,
 #endif /* HASH_PWD */
-    &alock_auth_none,
     NULL
 };
 
