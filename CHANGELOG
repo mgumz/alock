@@ -8,7 +8,7 @@ Version 0.9
 		- center - centering image
 		- tile - tile image
 		- color=<color> - use <color> as bg-color for centering
-	
+	* -bg blank uses the color-option now
 
 2005-05-17:
 
