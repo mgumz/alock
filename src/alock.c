@@ -55,8 +55,8 @@ static struct aBackground* alock_backgrounds[] = {
 };
 
 static struct aCursor* alock_cursors[] = {
-    &alock_cursor_theme,
     &alock_cursor_none,
+    &alock_cursor_theme,
     &alock_cursor_font,
 #ifdef HAVE_XCURSOR
     &alock_cursor_xcursor,
@@ -175,6 +175,8 @@ int main(int argc, char **argv) {
     opts.cursor = alock_cursors[0];
     opts.background = alock_backgrounds[0];
 
+    opts.auth->init(NULL);
+    
     /*  parse options */
     if (argc != 1) {
         for(arg = 1; arg <= argc; arg++) {

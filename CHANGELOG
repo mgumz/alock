@@ -2,6 +2,7 @@ Version 0.9
 
 2005-05-18:
 
+	* fixed minor issues with defaults
 	* deleted fancy contrib/xcursor-watch (too big)
 	* added even more fancy contrib/xcursor-fluxbox
 	* added -bg image:
