@@ -100,21 +100,21 @@ if alock_env['xcursor']:
 if alock_env['imlib2']:
     conf = alock_env.Configure()
     if not conf.env.WhereIs('imlib2-config'):
-        print "cant find 'imlib2-config. exit."
-        Exit(1)
-
-    imlib2_env = Environment()
-    imlib2_env.ParseConfig('imlib2-config --cflags --libs')
-    if not imlib2_env.Dictionary()['LIBS']:
-        print "missing imlib2, install it."
-        Exit(1)
-
-    alock_env.AppendUnique(
-        CPPDEFINES = [ 'HAVE_IMLIB2' ],
-        LIBPATH = imlib2_env.Dictionary()['LIBPATH'],
-	    CPPAPTH = imlib2_env.Dictionary()['CPPPATH'],
-        LIBS = imlib2_env.Dictionary()['LIBS']
-    )
+        print "cant find 'imlib2-config."
+        alock_env['imlib2'] = 0
+    else:
+        imlib2_env = Environment()
+        imlib2_env.ParseConfig('imlib2-config --cflags --libs')
+        if not imlib2_env.Dictionary()['LIBS']:
+            print "missing imlib2, install it."
+            alock_env['imlib2'] = 0
+        else:
+            alock_env.AppendUnique(
+                CPPDEFINES = [ 'HAVE_IMLIB2' ],
+                LIBPATH = imlib2_env.Dictionary()['LIBPATH'],
+                CPPAPTH = imlib2_env.Dictionary()['CPPPATH'],
+                LIBS = imlib2_env.Dictionary()['LIBS']
+            )
 
 
 ############################################################################
