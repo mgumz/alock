@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <crypt.h>
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
@@ -102,7 +103,7 @@ static int alock_auth_passwd_auth(const char* pass) {
 #endif /* 0 */
 }
 
-struct aAuth aklock_auth_passwd = {
+struct aAuth alock_auth_passwd = {
     "passwd",
     alock_auth_passwd_init,
     alock_auth_passwd_auth,
