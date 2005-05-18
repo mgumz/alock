@@ -2,6 +2,8 @@ Version 0.9
 
 2005-05-18:
 
+	* deleted fancy contrib/xcursor-watch (too big)
+	* added even more fancy contrib/xcursor-fluxbox
 	* added -bg image:
 		- name - name of the image
 		- scale - scaling image
