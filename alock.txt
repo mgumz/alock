@@ -44,14 +44,18 @@ OPTIONS
 -bg type:options ::
     Define the type of alock should handle the background:
     - list         - Displays a list of available types
-    - none         - you can see everything like it is
-    - blank:color  - fill the background with color
+    - none         - You can see everything like it is
+    - blank:color  - Fill the background with color
+    - image:name,center,scale,tile,color=<color> - Use the image <name> and puts it as 
+    the background.
 
 -cursor type:options ::
     Define the look-a-like of the cursor/mouse pointer:
     - list         - Displays a list of available types
-    - theme:name,bg=color,fg=color
-                   - Use the given internal cursor
+    - theme:name,bg=<color>,fg=<color> - Use the given internal cursor, if name == "list" it lists
+                     the available themes
+    - font:name,bg=<color>,fg=<color> - Use the given glyph of the "cursor"-font, if name ==
+                   "list" it lists the available glyphnames
     - xcursor:file - Use the given cursorfile in xcursor-format
     - none         - no change to the current cursor
 

@@ -25,6 +25,8 @@ if build['pam']:
 if build['xcursor']:
     cursor_sources += [ 'cursor_xcursor.c' ]
 
+if build['imlib2']:
+    bg_sources += [ 'bg_imlib2.c' ]
 
 alock_sources += auth_sources + bg_sources + cursor_sources
 

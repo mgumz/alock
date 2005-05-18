@@ -153,11 +153,11 @@ static int alock_cursor_font_init(const char* args, struct aXInfo* xinfo) {
                     free(arguments);
                     exit(0);
                 }
-                if (strstr(arg, "fg=") == arg && strlen(&arg[3])) {
+                if (strstr(arg, "fg=") == arg && strlen(arg) > 3 && strlen(&arg[3])) {
                     free(color_fg_name);
                     color_fg_name = strdup(&arg[3]);
                 }
-                else if (strstr(arg, "bg=") == arg && strlen(&arg[3])) {
+                else if (strstr(arg, "bg=") == arg && strlen(arg) > 3 && strlen(&arg[3])) {
                     free(color_bg_name);
                     color_bg_name = strdup(&arg[3]);
                 }

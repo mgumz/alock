@@ -21,8 +21,13 @@
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-
-
+#ifdef DEBUG
+#    define DBGMSG fprintf(stderr, "%s : %d\n", __FUNCTION__, __LINE__); fflush(stderr)
+#else
+#    define DBGMSG
+#endif // DEBUG
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
 
 struct aXInfo {
 
@@ -64,6 +69,9 @@ struct aOpts {
 \*------------------------------------------------------------------*/
 extern struct aBackground alock_bg_none;
 extern struct aBackground alock_bg_blank;
+#ifdef HAVE_IMLIB2
+extern struct aBackground alock_bg_imlib2;
+#endif /* HAVE_IMLIB2 */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 extern struct aAuth alock_auth_none;

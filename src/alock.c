@@ -1,27 +1,15 @@
-/*------------------------------------------------------------------*\
 
-    file: alock.c
+/* ---------------------------------------------------------------- *\
 
-        X Transparent Lock
+  file    : alock.c
+  author  : m. gumz <akira at fluxbox dot org>
+  copyr   : copyright (c) 2005 by m. gumz
 
-    copyright:
+  license : see LICENSE
+  
+  start   : Sa 30 April 2005 14:19:44 CEST
 
-        Copyright (C)2005 Mathias Gumz (forked alock)
-        Copyright (C)1993,1994 Ian Jackson   (xtrlock)
-
-    license:
-
-        This is free software; you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation; either version 2, or (at your option)
-        any later version.
-
-        This is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-\*------------------------------------------------------------------*/
+\* ---------------------------------------------------------------- */
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
@@ -30,10 +18,6 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
-
-#ifdef HAVE_XPM
-#   include <X11/xpm.h>
-#endif /* HAVE_XPM */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -46,18 +30,6 @@
 /*------------------------------------------------------------------*\
     globals
 \*------------------------------------------------------------------*/
-
-#define TIMEOUTPERATTEMPT 30000
-#define MAXGOODWILL  (TIMEOUTPERATTEMPT*5)
-#define INITIALGOODWILL MAXGOODWILL
-#define GOODWILLPORTION 0.3
-
-#ifdef DEBUG
-#    define DBGMSG fprintf(stderr, "%s : %d\n", __FUNCTION__, __LINE__); fflush(stderr)
-#else
-#    define DBGMSG
-#endif // DEBUG
-
 static struct aAuth* alock_authmodules[] = {
 #ifdef PAM_PWD
     &alock_auth_pam,
@@ -76,6 +48,9 @@ static struct aAuth* alock_authmodules[] = {
 static struct aBackground* alock_backgrounds[] = {
     &alock_bg_none,
     &alock_bg_blank,
+#ifdef HAVE_IMLIB2
+    &alock_bg_imlib2,
+#endif /* HAVE_IMLIB2 */
     NULL
 };
 
@@ -88,7 +63,6 @@ static struct aCursor* alock_cursors[] = {
 #endif /* HAVE_XCURSOR */
     NULL
 };
-
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -114,32 +88,81 @@ void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
 
     xinfo->root = DefaultRootWindow(dpy);
     xinfo->colormap = DefaultColormap(dpy, DefaultScreen(dpy));
-    
-    /* TODO: doesnt work yet. */
-/*
- * if (opts->cursor_name && (strstr(opts->cursor_name, "xbm:"))) {
-        unsigned int w, h, xhot, yhot;
-        if (XReadBitmapFile(dpy, xinfo->root, &opts->cursor_name[4],
-                            &w, &h, &pixmap_cursor, &xhot, &yhot)) {
-            xinfo->cursor = XCreatePixmapCursor(dpy,
-                                                pixmap_cursor, NULL,
-                                                &color_fg, &color_bg,
-                                                xhot, yhot);
-            return;
-        } else {
-            printf("alock: error, couldnt load [%s]\n", &opts->cursor_name[4]);
-        }
-    }
-   */
 }
 
-int main(int argc, char **argv) {
-
+int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
+    
     XEvent ev;
     KeySym ks;
     char cbuf[10], rbuf[50];
     int clen, rlen = 0;
-    long goodwill = INITIALGOODWILL, timeout = 0;
+
+    long goodwill = 5 * 30000;
+    long timeout = 0;
+
+    for(;;) {
+        XNextEvent(xinfo->display, &ev);
+        switch (ev.type) {
+        case KeyPress:
+            
+            if (ev.xkey.time < timeout) {
+                XBell(xinfo->display, 0);
+                break;
+            }
+
+            clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
+            switch (ks) {
+            case XK_Escape:
+            case XK_Clear:
+                rlen = 0;
+                break;
+            case XK_Delete:
+            case XK_BackSpace:
+                if (rlen > 0)
+                    rlen--;
+                break;
+            case XK_Linefeed:
+            case XK_Return:
+                if (rlen == 0)
+                    break;
+                if (rlen < sizeof(rbuf))
+                    rbuf[rlen] = 0;
+
+                if (opts->auth->auth(rbuf))
+                    return 1;
+                
+                XSync(xinfo->display, True); /* discard pending events to start really fresh */
+                XBell(xinfo->display, 0);
+                rlen = 0;
+                if (timeout) {
+                    goodwill += ev.xkey.time - timeout;
+                    if (goodwill > 5 * 30000) {
+                        goodwill = 5 * 30000;
+                    }
+                }
+                timeout = -goodwill * 0.3;
+                goodwill += timeout;
+                timeout += ev.xkey.time + 30000;
+                break;
+            default:
+                if (clen != 1)
+                    break;
+                if (rlen < sizeof(rbuf))
+                    rbuf[rlen] = cbuf[0];
+                rlen++;
+                break;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    return 0;
+}
+
+int main(int argc, char **argv) {
+
 
     struct aXInfo xinfo;
     struct aOpts opts;
@@ -180,12 +203,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (!bg_tmp) {
-                        fprintf(stderr, "alock: error, couldnt find the bg-module you specified.\n");
+                        printf("alock: error, couldnt find the bg-module you specified.\n");
                         exit(1);
                     }
 
                 } else {
-                    fprintf(stderr, "alock, error, missing argument\n");
+                    printf("alock, error, missing argument\n");
                     displayUsage();
                     exit(1);
                 }
@@ -207,7 +230,7 @@ int main(int argc, char **argv) {
                         if(char_tmp && char_tmp == argv[arg]) {
                             auth_tmp = (*i);
                             if (!auth_tmp->init(argv[arg])) {
-                                fprintf(stderr, "alock: error, failed init of [%s].\n", auth_tmp->name);
+                                printf("alock: error, failed init of [%s].\n", auth_tmp->name);
                                 exit(1);
                             }
                             opts.auth = auth_tmp;
@@ -217,12 +240,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (!auth_tmp) {
-                        fprintf(stderr, "alock: error, couldnt find the auth-module you specified.\n");
+                        printf("alock: error, couldnt find the auth-module you specified.\n");
                         exit(1);
                     }
 
                 } else {
-                    fprintf(stderr, "alock, error, missing argument\n");
+                    printf("alock, error, missing argument\n");
                     displayUsage();
                     exit(1);
                 }
@@ -251,12 +274,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (!cursor_tmp) {
-                        fprintf(stderr, "alock: error, couldnt find the cursor-module you specified.\n");
+                        printf("alock: error, couldnt find the cursor-module you specified.\n");
                         exit(1);
                     }
 
                 } else {
-                    fprintf(stderr, "alock, error, missing argument\n");
+                    printf("alock, error, missing argument\n");
                     displayUsage();
                     exit(1);
                 }
@@ -290,30 +313,6 @@ int main(int argc, char **argv) {
     XMapWindow(xinfo.display, xinfo.window);
     XRaiseWindow(xinfo.display, xinfo.window);
     
-    /* TODO: -bg <blank|transparent|shaded> */
- /*   if (opts.use_blank) {
-        XImage* ximage;
-                
-        ximage = XGetImage (xinfo.display, xinfo.root, 0, 0,
-                    xinfo.width, xinfo.height, AllPlanes, ZPixmap);
-
-        if (ximage) {
-            GC gc;
-            XGCValues xgcv;
-            xgcv.background = BlackPixel(xinfo.display, DefaultScreen(xinfo.display));
-            xgcv.foreground = 0;
-            
-            gc = XCreateGC(xinfo.display, xinfo.window, GCForeground|GCBackground, &xgcv);
-
-            XPutImage(xinfo.display, xinfo.window, 
-                      gc, 
-                      ximage, 
-                      0, 0, 
-                      0, 0, xinfo.width, xinfo.height);
-            XDestroyImage(ximage);
-            XFreeGC(xinfo.display, gc);
-        }
-    } */
     /* try to grab 2 times, another process (windowmanager) may have grabbed
      * the keyboard already */
     if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
@@ -321,7 +320,7 @@ int main(int argc, char **argv) {
         sleep(1);
         if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
                         CurrentTime)) != GrabSuccess) {
-            perror("alock: couldnt grab the keyboard.\n");
+            printf("alock: couldnt grab the keyboard.\n");
             exit(1);
         }
     }
@@ -329,69 +328,11 @@ int main(int argc, char **argv) {
     if (XGrabPointer(xinfo.display, xinfo.window, False, (KeyPressMask|KeyReleaseMask) & 0,
                      GrabModeAsync, GrabModeAsync, None, xinfo.cursor, CurrentTime) != GrabSuccess) {
         XUngrabKeyboard(xinfo.display, CurrentTime);
-        perror("alock: couldnt grab the pointer.\n");
+        printf("alock: couldnt grab the pointer.\n");
         exit(1);
     }
 
-    /* eventhandling */
-    for(;;) {
-        XNextEvent(xinfo.display, &ev);
-        switch (ev.type) {
-        case KeyPress:
-            
-            if (ev.xkey.time < timeout) {
-                XBell(xinfo.display, 0);
-                break;
-            }
-
-            clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
-            switch (ks) {
-            case XK_Escape:
-            case XK_Clear:
-                rlen = 0;
-                break;
-            case XK_Delete:
-            case XK_BackSpace:
-                if (rlen > 0)
-                    rlen--;
-                break;
-            case XK_Linefeed:
-            case XK_Return:
-                if (rlen == 0)
-                    break;
-                rbuf[rlen] = 0;
-
-                if (opts.auth->auth(rbuf))
-                    goto exit;
-                
-                XSync(xinfo.display, True); /* discard pending events to start really fresh */
-                XBell(xinfo.display, 0);
-                rlen = 0;
-                if (timeout) {
-                    goodwill += ev.xkey.time - timeout;
-                    if (goodwill > MAXGOODWILL) {
-                        goodwill = MAXGOODWILL;
-                    }
-                }
-                timeout = -goodwill * GOODWILLPORTION;
-                goodwill += timeout;
-                timeout += ev.xkey.time + TIMEOUTPERATTEMPT;
-                break;
-            default:
-                if (clen != 1)
-                    break;
-                if (rlen < sizeof(rbuf))
-                    rbuf[rlen] = cbuf[0];
-                rlen++;
-                break;
-            }
-            break;
-        default:
-            break;
-        }
-    }
-
-exit:
+    event_loop(&opts, &xinfo);
 
     opts.auth->deinit();
     opts.cursor->deinit(&xinfo);

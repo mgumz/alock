@@ -22,6 +22,7 @@ alock_options.AddOptions(
         BoolOption('pam', 'support for pam', 1),
         BoolOption('hash', 'support for hashs(sha1,md5)', 1),
 
+        BoolOption('imlib2', 'support imagereading via imlib2', 1),
         BoolOption('xcursor', 'support xcursor-themes', 1),
 
         BoolOption('amd5', 'build a little md5-helper', 0),
@@ -51,6 +52,12 @@ alock_env.AppendUnique(
         LIBPATH = ['/usr/X11R6/lib'],
         LIBS = [ 'X11' ])
 
+conf = alock_env.Configure()
+if not conf.CheckLibWithHeader('X11', 'X11/Xlib.h', 'C', 'XOpenDisplay(0);', 1):
+    print "sorry, no headers or libs for X11 found, cant build alock."
+    Exit(1)
+conf.Finish()
+    
 if alock_env['debug']:
     alock_env.AppendUnique(
             CPPDEFINES = [ 'DEBUG' ],
@@ -90,7 +97,30 @@ if alock_env['xcursor']:
         print "sorry, no xcursor-support found."
     conf.Finish()
 
+if alock_env['imlib2']:
+    conf = alock_env.Configure()
+    if not conf.env.WhereIs('imlib2-config'):
+        print "cant find 'imlib2-config. exit."
+        Exit(1)
 
+    imlib2_env = Environment()
+    imlib2_env.ParseConfig('imlib2-config --cflags --libs')
+    if not imlib2_env.Dictionary()['LIBS']:
+        print "missing imlib2, install it."
+        Exit(1)
+
+    alock_env.AppendUnique(
+        CPPDEFINES = [ 'HAVE_IMLIB2' ],
+        LIBPATH = imlib2_env.Dictionary()['LIBPATH'],
+	    CPPAPTH = imlib2_env.Dictionary()['CPPPATH'],
+        LIBS = imlib2_env.Dictionary()['LIBS']
+    )
+
+
+############################################################################
+#
+#
+    
 default_targets = [ alock_target ]
 if alock_env['amd5']:
     default_targets += [ 'src/amd5' ]

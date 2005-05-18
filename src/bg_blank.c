@@ -21,31 +21,55 @@
   includes
 \* ---------------------------------------------------------------- */
 #include <X11/Xlib.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "alock.h"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
 static Window window = 0;
+static XColor color;
 
 static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
 
     XWindowAttributes xgwa;
     XSetWindowAttributes xswa;
     long xsmask = 0;
+    XColor tmp_color;
+    char* color_name = strdup("black");
     
-    if (!xinfo)
+    if (!xinfo || !args)
         return 0;
 
-    /* TODO: parse args for color */
+    if (strstr(args, "blank:") == args && strlen(&args[6]) > 0) {
+        char* arguments = strdup(&args[6]);
+        char* tmp;
+        char* arg = NULL;
+        for (tmp = arguments; tmp; ) {
+            arg = strsep(&tmp, ",");
+            if (arg) {
+                if (strstr(arg, "color=") == arg && strlen(arg) > 6 && strlen(&arg[6])) {
+                    free(color_name);
+                    color_name = strdup(&arg[6]);
+                }
+            }
+        }
+        free(arguments);
+    }
+    
+    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_name, &tmp_color, &color)) == 0)
+        XAllocNamedColor(xinfo->display, xinfo->colormap, "black", &tmp_color, &color);
+ 
+    free(color_name);
     
     XGetWindowAttributes(xinfo->display, xinfo->root, &xgwa);
 
     xswa.override_redirect = True;
     xswa.colormap = xinfo->colormap;
-    xswa.background_pixel = BlackPixel(xinfo->display, 
-                                       DefaultScreen(xinfo->display));
-    
+    xswa.background_pixel = color.pixel;
+
     xsmask |= CWOverrideRedirect;
     xsmask |= CWBackPixel;
     xsmask |= CWColormap;
@@ -57,6 +81,7 @@ static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
                           InputOutput, /* class */
                           CopyFromParent, /* visual */
                           xsmask, &xswa);
+
 
     if (window)
         xinfo->window = window;

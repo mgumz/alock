@@ -22,6 +22,7 @@
 \* ---------------------------------------------------------------- */
 #include <X11/Xlib.h>
 #include <X11/Xcursor/Xcursor.h>
+#include <string.h>
 #include "alock.h"
 
 /* ---------------------------------------------------------------- *\
@@ -34,13 +35,13 @@ static int alock_cursor_xcursor_init(const char* args, struct aXInfo* xinfo) {
     if (!xinfo)
         return 0;
 
-    if (!args) {
+    if (!args || strlen(args) < 8) {
         printf("alock: error, missing arguments for [xcursor]\n");
         return 0;
     }
     
-    if (!(cursor = XcursorFilenameLoadCursor(xinfo->display, args))) {
-        printf("alock: error, couldnt load [%s]\n", args);
+    if (!(cursor = XcursorFilenameLoadCursor(xinfo->display, &args[8]))) {
+        printf("alock: error, couldnt load [%s]\n", &args[8]);
         return 0;
     }
     
