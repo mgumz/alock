@@ -72,6 +72,9 @@ extern struct aBackground alock_bg_blank;
 #ifdef HAVE_IMLIB2
 extern struct aBackground alock_bg_imlib2;
 #endif /* HAVE_IMLIB2 */
+#ifdef HAVE_XRENDER
+extern struct aBackground alock_bg_shade;
+#endif /* HAVE_XRENDER */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 extern struct aAuth alock_auth_none;

@@ -1,5 +1,11 @@
 Version 0.9
 
+2005-05-20:
+
+	* added -bg shade:
+		- shade=<perc> - percentage, 0 - 100
+		- color=<color> - tint with <color>, default is "black"
+
 2005-05-18:
 
 	* fixed minor issues with defaults

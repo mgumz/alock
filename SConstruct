@@ -17,13 +17,16 @@ Default(alock_target)
 alock_options = Options(alock_optfile)
 alock_options.AddOptions(
         BoolOption('debug', 'build debug version', 0),
-        BoolOption('passwd', 'support for classic passwd', 0),
-        BoolOption('shadow', 'support for shadowpasswords', 0),
-        BoolOption('pam', 'support for pam', 1),
-        BoolOption('hash', 'support for hashs(sha1,md5)', 1),
 
-        BoolOption('imlib2', 'support imagereading via imlib2', 1),
-        BoolOption('xcursor', 'support xcursor-themes', 1),
+        BoolOption('passwd', 'support for -auth passwd', 0),
+        BoolOption('shadow', 'support for -auth passwd with shadow', 0),
+        BoolOption('pam', 'support for -auth pam', 1),
+        BoolOption('hash', 'support for -auth <md5|sha1>', 1),
+
+        BoolOption('imlib2', 'support for -bg image via imlib2', 1),
+        BoolOption('xrender', 'support for -bg shade via xrender', 1),
+
+        BoolOption('xcursor', 'support for -bg xcursor:<file>', 1),
 
         BoolOption('amd5', 'build a little md5-helper', 0),
         BoolOption('asha1', 'build a little sha1-helper', 0),
@@ -99,6 +102,7 @@ if alock_env['xcursor']:
 
 if alock_env['imlib2']:
     conf = alock_env.Configure()
+    print "Checking for Imlib2... ",
     if not conf.env.WhereIs('imlib2-config'):
         print "cant find 'imlib2-config."
         alock_env['imlib2'] = 0
@@ -109,14 +113,30 @@ if alock_env['imlib2']:
             print "missing imlib2, install it."
             alock_env['imlib2'] = 0
         else:
+            print "yes"
             alock_env.AppendUnique(
                 CPPDEFINES = [ 'HAVE_IMLIB2' ],
                 LIBPATH = imlib2_env.Dictionary()['LIBPATH'],
                 CPPAPTH = imlib2_env.Dictionary()['CPPPATH'],
                 LIBS = imlib2_env.Dictionary()['LIBS']
             )
+    conf.Finish()
 
+if alock_env['xrender']:
+    conf = alock_env.Configure()
+    if conf.CheckLib('Xrender', 'XRenderCreatePicture', 1):
+        alock_env.AppendUnique(
+            CPPDEFINES = [ 'HAVE_XRENDER' ],
+            LIBS = [ 'Xrender' ]
+        )
+    else:
+        print "sorry, no xrender-support found."
+        alock_env['xrender'] = 0
+    conf.Finish()
 
+        
+
+            
 ############################################################################
 #
 #

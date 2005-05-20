@@ -46,6 +46,8 @@ OPTIONS
     - list         - Displays a list of available types
     - none         - You can see everything like it is
     - blank:color  - Fill the background with color
+    - shade:shade=<perc>,color=<color> - Dims content of the screen and
+    recolors it.
     - image:name,center,scale,tile,color=<color> - Use the image <name> and puts it as 
     the background.
 

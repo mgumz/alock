@@ -51,6 +51,9 @@ static struct aBackground* alock_backgrounds[] = {
 #ifdef HAVE_IMLIB2
     &alock_bg_imlib2,
 #endif /* HAVE_IMLIB2 */
+#ifdef HAVE_XRENDER
+    &alock_bg_shade,
+#endif /* HAVE_XRENDER */
     NULL
 };
 
