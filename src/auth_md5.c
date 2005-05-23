@@ -23,7 +23,7 @@
 
   about :
 
-    provide -auth md5:hash
+    provide -auth md5:hash=<hash>,file=<filename>
 
 \* ---------------------------------------------------------------- */
 
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #ifndef STAND_ALONE
 #   include <X11/Xlib.h>
 #   include "alock.h"
@@ -286,29 +287,81 @@ static void md5_transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LEN
 
 #ifndef STAND_ALONE
 
-static const char* userhash = NULL;
+static char* userhash = NULL;
 
 static int alock_auth_md5_init(const char* args) {
-    if (args) {
-        char* check = strstr(args, "md5:");
-        if (!check || check != args) {
-            fprintf(stderr, "alock: error, missing arguments for [md5].\n");
-            return 0;
-        }
 
-        if (strlen(&args[4]) != MD5_DIGEST_STRING_LENGTH - 1) {
-            fprintf(stderr, "alock: error, invalid md5-hash.\n");
-            return 0;
-        }
-
-        userhash = &args[4];
-        return 1;
+    if (!args) {
+        fprintf(stderr, "alock: error, missing arguments for [md5].\n");
+        return 0;
     }
 
-    return 0;
+    if (strstr(args, "md5:") == args && strlen(&args[4]) > 0) {
+        char* arguments = strdup(&args[4]);
+        char* tmp;
+        char* arg = NULL;
+        for (tmp = arguments; tmp; ) {
+            arg = strsep(&tmp, ",");
+            if (arg && !userhash) {
+                if (strstr(arg, "hash=") == arg && strlen(arg) > 5) {
+                    if (strlen(&arg[5]) == MD5_DIGEST_STRING_LENGTH - 1) {
+                        if (!userhash)
+                            userhash = strdup(&arg[5]);
+                    } else {
+                        printf("alock: error, missing or incorrect hash for [md5].\n");
+                        free(arguments);
+                        return 0;
+                    }    
+                } else if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
+                    char* tmp_hash = NULL;
+                    FILE* hashfile = fopen(&arg[5], "r");
+                    if (hashfile) {
+                        int c;
+                        unsigned int i = 0;
+                        tmp_hash = (char*)malloc(MD5_DIGEST_STRING_LENGTH);
+                        memset(tmp_hash, 0, MD5_DIGEST_STRING_LENGTH);
+                        for(i = 0, c = fgetc(hashfile);
+                            i < MD5_DIGEST_STRING_LENGTH - 1 && c != EOF; i++, c = fgetc(hashfile)) {
+                            tmp_hash[i] = tolower(c);
+                        }
+                        fclose(hashfile);
+                    } else {
+                        printf("alock: error, couldnt read [%s] for [md5].\n", 
+                                &arg[5]);
+                        free(arguments);
+                        return 0;
+                    }
+
+                    if (!tmp_hash || strlen(tmp_hash) != MD5_DIGEST_STRING_LENGTH - 1) {
+                        printf("alock: error, given file [%s] doesnt contain a valid hash for [md5].\n",
+                                &arg[5]);
+                        free(arguments);
+                        return 0;
+                    }
+
+                    userhash = tmp_hash;
+                }
+            }
+        }
+        free(arguments);
+    } else {
+        fprintf(stderr, "alock: error, missing arguments for [md5].\n");
+        return 0;
+    }
+
+    if (!userhash) {
+        printf("alock: error, missing hash for [md5].\n");
+        return 0;
+    }
+    
+    alock_string2lower(userhash);
+    
+    return 1;
 }
 
 static int alock_auth_md5_deinit() {
+    if (userhash)
+        free(userhash);
     return 1;
 }
 

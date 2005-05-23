@@ -41,7 +41,7 @@ static Window window = 0;
 static Pixmap pixmap = 0;
 static XColor color;
 
-static int alock_bg_imlib2_init(const char* args, struct aXInfo* xinfo) {
+static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
         
     XWindowAttributes xgwa;
     XSetWindowAttributes xswa;
@@ -77,13 +77,15 @@ static int alock_bg_imlib2_init(const char* args, struct aXInfo* xinfo) {
                     } else {
                         printf("alock: error, shade not in range [1, 99] for [image].\n");
                         free(color_name);
+                        if (filename)
+                            free(filename);
                         free(arguments);
                         return 0;
                     }
                     
-                } else {
+                } else if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
                     if (!filename)
-                        filename = strdup(arg);
+                        filename = strdup(&arg[5]);
                 }
             }
         }
@@ -235,7 +237,7 @@ static int alock_bg_imlib2_init(const char* args, struct aXInfo* xinfo) {
 }
 
 
-static int alock_bg_imlib2_deinit(struct aXInfo* xinfo) {
+static int alock_bg_image_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !window)
         return 0;
     XDestroyWindow(xinfo->display, window);
@@ -243,10 +245,10 @@ static int alock_bg_imlib2_deinit(struct aXInfo* xinfo) {
     return 1;
 }
 
-struct aBackground alock_bg_imlib2 = {
+struct aBackground alock_bg_image = {
     "image",
-    alock_bg_imlib2_init,
-    alock_bg_imlib2_deinit
+    alock_bg_image_init,
+    alock_bg_image_deinit
 };
 
 /* ---------------------------------------------------------------- *\

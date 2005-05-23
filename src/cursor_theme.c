@@ -78,7 +78,6 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
 
     char* color_bg_name = strdup("steelblue3");
     char* color_fg_name = strdup("grey25");
-    XColor tmp_color;
     Pixmap pixmap_cursor;
     Pixmap pixmap_cursor_mask;
     const struct ThemeCursor* theme = cursors;
@@ -103,18 +102,15 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
                     free(color_bg_name);
                     free(arguments);
                     exit(0);
-                }
-                if (strstr(arg, "fg=") == arg && strlen(arg) > 3 && strlen(&arg[3])) {
+                } else if (strstr(arg, "fg=") == arg && strlen(arg) > 4) {
                     free(color_fg_name);
                     color_fg_name = strdup(&arg[3]);
-                }
-                else if (strstr(arg, "bg=") == arg && strlen(arg) > 3 && strlen(&arg[3])) {
+                } else if (strstr(arg, "bg=") == arg && strlen(arg) > 4) {
                     free(color_bg_name);
                     color_bg_name = strdup(&arg[3]);
-                }
-                else {
+                } else if (strstr(arg, "name=") == arg && strlen(arg) > 6) {
                     for (cursor_theme_name = cursors; cursor_theme_name->name; ++cursor_theme_name) {
-                        if(!strcmp(cursor_theme_name->name, arg)) {
+                        if(!strcmp(cursor_theme_name->name, &arg[5])) {
                             theme = cursor_theme_name;
                             break;
                         }
@@ -132,11 +128,9 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
         free(arguments);
     }
 
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_bg_name, &tmp_color, &color_bg)) == 0)
-        XAllocNamedColor(xinfo->display, xinfo->colormap, "black", &tmp_color, &color_bg);
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_fg_name, &tmp_color, &color_fg)) == 0)
-        XAllocNamedColor(xinfo->display, xinfo->colormap, "white", &tmp_color, &color_fg);
-
+    alock_alloc_color(xinfo, color_fg_name, "white", &color_fg);
+    alock_alloc_color(xinfo, color_bg_name, "blank", &color_bg);
+    
     free(color_fg_name);
     free(color_bg_name);
     

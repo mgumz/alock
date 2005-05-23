@@ -1,5 +1,12 @@
 Version 1.0
 
+2005-05-24:
+
+	* more consistency in the ui, updated documentation
+	* added -auth md5:file=<filename>
+	* added -auth sha1:file=<filename>
+	* rename -cursor font to -cursor glyph
+
 2005-05-23:
 
 	* added -bg image:shade=<perc>

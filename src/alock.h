@@ -67,6 +67,7 @@ struct aOpts {
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
+void alock_string2lower(char* string);
 int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
         const char* fallback_name, XColor* result);
 int alock_check_xrender(const struct aXInfo* xinfo);
@@ -84,7 +85,7 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
 extern struct aBackground alock_bg_none;
 extern struct aBackground alock_bg_blank;
 #ifdef HAVE_IMLIB2
-extern struct aBackground alock_bg_imlib2;
+extern struct aBackground alock_bg_image;
 #endif /* HAVE_IMLIB2 */
 #ifdef HAVE_XRENDER
 extern struct aBackground alock_bg_shade;
@@ -106,7 +107,7 @@ extern struct aAuth alock_auth_pam;
 \*------------------------------------------------------------------*/
 extern struct aCursor alock_cursor_none;
 extern struct aCursor alock_cursor_theme;
-extern struct aCursor alock_cursor_font;
+extern struct aCursor alock_cursor_glyph;
 #ifdef HAVE_XCURSOR
 extern struct aCursor alock_cursor_xcursor;
 #endif /* HAVE_XCURSOR */

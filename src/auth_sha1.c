@@ -17,7 +17,7 @@
 
   about :
 
-    provide -auth sha1:hash
+    provide -auth sha1:hash=<hash>,file=<filename>
 
 \* ---------------------------------------------------------------- */
 
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #ifndef STAND_ALONE
 #    include <X11/Xlib.h>
 #    include "alock.h"
@@ -222,29 +223,81 @@ static void sha1_final(u_int8_t digest[SHA1_DIGEST_LENGTH], sha1Context *context
 \* ---------------------------------------------------------------- */
 #ifndef STAND_ALONE
 
-static const char* userhash = NULL;
+static char* userhash = NULL;
 
 static int alock_auth_sha1_init(const char* args) {
-    if (args) {
-        char* check = strstr(args, "sha1:");
-        if (!check || check != args) {
-            fprintf(stderr, "alock: error, missing arguments for [sha1].\n");
-            return 0;
-        }
 
-        if (strlen(&args[5]) != SHA1_DIGEST_STRING_LENGTH - 1) {
-            fprintf(stderr, "alock: error, invalid sha1-hash.\n");
-            return 0;
-        }
-
-        userhash = &args[5];
-        return 1;
+    if (!args) {
+        fprintf(stderr, "alock: error, missing arguments for [sha1].\n");
+        return 0;
     }
 
-    return 0;
+    if (strstr(args, "sha1:") == args && strlen(&args[5]) > 0) {
+        char* arguments = strdup(&args[5]);
+        char* tmp;
+        char* arg = NULL;
+        for (tmp = arguments; tmp; ) {
+            arg = strsep(&tmp, ",");
+            if (arg && !userhash) {
+                if (strstr(arg, "hash=") == arg && strlen(arg) > 5) {
+                    if (strlen(&arg[5]) == SHA1_DIGEST_STRING_LENGTH - 1) {
+                        if (!userhash)
+                            userhash = strdup(&arg[5]);
+                    } else {
+                        printf("alock: error, missing or incorrect hash for [sha1].\n");
+                        free(arguments);
+                        return 0;
+                    }    
+                } else if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
+                    char* tmp_hash = NULL;
+                    FILE* hashfile = fopen(&arg[5], "r");
+                    if (hashfile) {
+                        int c;
+                        unsigned int i = 0;
+                        tmp_hash = (char*)malloc(SHA1_DIGEST_STRING_LENGTH);
+                        memset(tmp_hash, 0, SHA1_DIGEST_STRING_LENGTH);
+                        for(i = 0, c = fgetc(hashfile);
+                            i < SHA1_DIGEST_STRING_LENGTH - 1 && c != EOF; i++, c = fgetc(hashfile)) {
+                            tmp_hash[i] = tolower(c);
+                        }
+                        fclose(hashfile);
+                    } else {
+                        printf("alock: error, couldnt read [%s] for [md5].\n", 
+                                &arg[5]);
+                        free(arguments);
+                        return 0;
+                    }
+
+                    if (!tmp_hash || strlen(tmp_hash) != SHA1_DIGEST_STRING_LENGTH - 1) {
+                        printf("alock: error, given file [%s] doesnt contain a valid hash for [sha1].\n",
+                                &arg[5]);
+                        free(arguments);
+                        return 0;
+                    }
+
+                    userhash = tmp_hash;
+                }
+            }
+        }
+        free(arguments);
+    } else {
+        fprintf(stderr, "alock: error, missing arguments for [sha1].\n");
+        return 0;
+    }
+
+    if (!userhash) {
+        printf("alock: error, missing hash for [sha1].\n");
+        return 0;
+    }
+    
+    alock_string2lower(userhash);
+    
+    return 1;
 }
 
 static int alock_auth_sha1_deinit() {
+    if (userhash)
+        free(userhash);
     return 1;
 }
 

@@ -49,7 +49,7 @@ static struct aBackground* alock_backgrounds[] = {
     &alock_bg_none,
     &alock_bg_blank,
 #ifdef HAVE_IMLIB2
-    &alock_bg_imlib2,
+    &alock_bg_image,
 #endif /* HAVE_IMLIB2 */
 #ifdef HAVE_XRENDER
     &alock_bg_shade,
@@ -60,7 +60,7 @@ static struct aBackground* alock_backgrounds[] = {
 static struct aCursor* alock_cursors[] = {
     &alock_cursor_none,
     &alock_cursor_theme,
-    &alock_cursor_font,
+    &alock_cursor_glyph,
 #ifdef HAVE_XCURSOR
     &alock_cursor_xcursor,
 #endif /* HAVE_XCURSOR */

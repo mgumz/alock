@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v0.5, ?? May 2005
+v1.0, ?? May 2005
 
 NAME
 ----
@@ -13,11 +13,11 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-alock locks the X server till the user enters a password at the
+'alock' locks the X server till the user enters a password at the
 keyboard. If the authentification was successful the X server is
 unlocked and the user can continue to work.
 
-alock does not provide fancy animations like 'xlock' and 'xscreensaver'
+'alock' does not provide fancy animations like 'xlock' and 'xscreensaver'
 and never will. Its just for locking the current X session.
 
 OPTIONS
@@ -30,36 +30,52 @@ OPTIONS
 -auth type:options ::
     Define the type of the authentification, depends strongly on
     how alock was built:
-    - list         - Displays a list of available types
-    - passwd       - Tries to authentificate against the users system-password.
-                     On systems using 'shadow' alock needs the suid-flag set.
-    - pam          - Tries to authentificate against the users system-password
-                     using the 'pam-login'-module.
-    - md5:hash     - alock creates a md5-hash from the entered unlockpassword
-                     and compares it with the hash provided as option
-    - sha1:hash    - alock creates a sha1-hash from the entered unlockpassword
-                     and compares it with the hash provided as option
-    - none         - Every 'password' is valid
+    - list - Displays a list of available types
+    - passwd - Tries to authentificate against the users system-password.
+               On systems using 'shadow' alock needs the suid-flag set.
+    - pam - Tries to authentificate against the users system-password
+            using the 'pam-login'-module.
+    - md5 - alock creates a md5-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename>  - use content of <filename> as reference
+
+    - sha1 - alock creates a sha1-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
 
 -bg type:options ::
     Define the type of alock should handle the background:
-    - list         - Displays a list of available types
-    - none         - You can see everything like it is
-    - blank:color  - Fill the background with color
-    - shade:shade=<perc>,color=<color> - Dims content of the screen and
-    recolors it.
-    - image:name,center,scale,tile,color=<color>,shade=<perc> - Use the image <name> and puts it as 
-    the background.
+    - list - Displays a list of available types
+    - none - You can see everything like it is
+    - blank - Fill the background with color
+        * color=<color> - Use <color>
+    - shade - Dims content of the screen and recolors it.
+        * shade=<perc> - Valid from 1 to 99
+        * color=<color> - Use <color>
+    - image - Use the image <filename> and puts it as the background
+        * file=<filename>
+        * center
+        * scale
+        * tile
+        * color=<color> - Use <color>
+        * shade=<perc> - Valid from 1 to 99
 
 -cursor type:options ::
     Define the look-a-like of the cursor/mouse pointer:
-    - list         - Displays a list of available types
-    - theme:name,bg=<color>,fg=<color> - Use the given internal cursor, if name == "list" it lists
-                     the available themes
-    - font:name,bg=<color>,fg=<color> - Use the given glyph of the "cursor"-font, if name ==
-                   "list" it lists the available glyphnames
-    - xcursor:file - Use the given cursorfile in xcursor-format
-    - none         - no change to the current cursor
+    - list - Displays a list of available types
+    - theme - Use the given internal cursor
+        * list - Display all possible themes
+        * name=<name>
+        * bg=<color> - Use forground-color
+        * fg=<color> - Use background-color
+    - glyph - Use the given glyph of the "cursor"-font
+        * list - Display all possible glyph-names
+        * name=<name>
+        * bg=<color>
+        * fg=<color>
+    - xcursor - Use the given <filename> in xcursor-format
+        * file=<filename> 
+    - none - No change to the current cursor
 
 AUTHOR
 ------
@@ -69,7 +85,7 @@ RESOURCES
 ---------
 
 Web site: http://darkshed.net
-Other lockers::
+Other lockers ::
     - xlockmore http://www.tux.org/~bagleyd/xlockmore.html
     - xscreensaver http://www.jwz.org/xscreensaver/
     - xtrlock ftp://ftp.debian.org/debian/dists/stable/main/source/x11/

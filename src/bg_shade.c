@@ -80,7 +80,7 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
         free(color_name);
         return 0;
     }
-    
+
     /* get a color from color_name */
     alock_alloc_color(xinfo, color_name, "black", &color);
     free(color_name);
@@ -97,7 +97,6 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
         Window root = xinfo->root;
         int scrnr = DefaultScreen(dpy);
         int depth = DefaultDepth(dpy, scrnr);
-        Visual* vis = DefaultVisual(dpy, scrnr);
         GC gc = DefaultGC(dpy, scrnr);
 
         { /* grab whats on the screen */

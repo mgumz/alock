@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------- *\
 
-  file    : cursor_font.c
+  file    : cursor_glyph.c
   author  : m. gumz <akira at fluxbox dot org>
   copyr   : copyright (c) 2005 by m. gumz
 
@@ -125,9 +125,8 @@ static Cursor cursor = 0;
 static XColor color_fg;
 static XColor color_bg;
 
-static int alock_cursor_font_init(const char* args, struct aXInfo* xinfo) {
+static int alock_cursor_glyph_init(const char* args, struct aXInfo* xinfo) {
 
-    XColor tmp_color;
     char* color_bg_name = strdup("steelblue3");
     char* color_fg_name = strdup("grey25");
     unsigned int shape = 0; /* XC_X_cursor */
@@ -135,42 +134,38 @@ static int alock_cursor_font_init(const char* args, struct aXInfo* xinfo) {
     if (!xinfo || !args)
         return 0;
 
-    if (strstr(args, "font:") == args && strlen(&args[5]) > 0) {
-        char* arguments = strdup(&args[5]);
+    if (strstr(args, "glyph:") == args && strlen(&args[6]) > 0) {
+        char* arguments = strdup(&args[6]);
         char* tmp;
         char* arg = NULL;
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
             if (arg) {
-                const struct CursorFontName* cursor_font_name;
+                const struct CursorFontName* cursor_glyph_name;
                     
                 if (!strcmp(arg, "list")) {
-                    for (cursor_font_name = cursor_names; cursor_font_name->name; ++cursor_font_name) {
-                        printf("%s\n", cursor_font_name->name);
+                    for (cursor_glyph_name = cursor_names; cursor_glyph_name->name; ++cursor_glyph_name) {
+                        printf("%s\n", cursor_glyph_name->name);
                     }
                     free(color_fg_name);
                     free(color_bg_name);
                     free(arguments);
                     exit(0);
-                }
-                if (strstr(arg, "fg=") == arg && strlen(arg) > 3 && strlen(&arg[3])) {
+                } else if (strstr(arg, "fg=") == arg && strlen(arg) > 4) {
                     free(color_fg_name);
                     color_fg_name = strdup(&arg[3]);
-                }
-                else if (strstr(arg, "bg=") == arg && strlen(arg) > 3 && strlen(&arg[3])) {
+                } else if (strstr(arg, "bg=") == arg && strlen(arg) > 4) {
                     free(color_bg_name);
                     color_bg_name = strdup(&arg[3]);
-                }
-                else {
-                    /* TODO: accept  <int> as well -> strtol */
-                    for (cursor_font_name = cursor_names; cursor_font_name->name; ++cursor_font_name) {
-                        if(!strcmp(cursor_font_name->name, arg)) {
-                            shape = cursor_font_name->shape;
+                } else if (strstr(arg, "name=") == arg && strlen(arg) > 6) {
+                    for (cursor_glyph_name = cursor_names; cursor_glyph_name->name; ++cursor_glyph_name) {
+                        if(!strcmp(cursor_glyph_name->name, &arg[5])) {
+                            shape = cursor_glyph_name->shape;
                             break;
                         }
                     }
-                    if (!cursor_font_name->name) {
-                        printf("alock: error, couldnt find [%s]\n", arg);
+                    if (!cursor_glyph_name->name) {
+                        printf("alock: error, couldnt find [%s]\n", &arg[5]);
                         free(color_bg_name);
                         free(color_fg_name);
                         free(arguments);
@@ -182,10 +177,8 @@ static int alock_cursor_font_init(const char* args, struct aXInfo* xinfo) {
         free(arguments);
     }
     
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_bg_name, &tmp_color, &color_bg)) == 0)
-        XAllocNamedColor(xinfo->display, xinfo->colormap, "black", &tmp_color, &color_bg);
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_fg_name, &tmp_color, &color_fg)) == 0)
-        XAllocNamedColor(xinfo->display, xinfo->colormap, "white", &tmp_color, &color_fg);
+    alock_alloc_color(xinfo, color_bg_name, "black", &color_bg);
+    alock_alloc_color(xinfo, color_fg_name, "white", &color_fg);
 
     free(color_fg_name);
     free(color_bg_name);
@@ -202,7 +195,7 @@ static int alock_cursor_font_init(const char* args, struct aXInfo* xinfo) {
     return 1;
 }
 
-static int alock_cursor_font_deinit(struct aXInfo* xinfo) {
+static int alock_cursor_glyph_deinit(struct aXInfo* xinfo) {
 
     if (!xinfo || !cursor)
         return 0;
@@ -212,10 +205,10 @@ static int alock_cursor_font_deinit(struct aXInfo* xinfo) {
 }
 
 
-struct aCursor alock_cursor_font = {
-    "font",
-    alock_cursor_font_init,
-    alock_cursor_font_deinit 
+struct aCursor alock_cursor_glyph = {
+    "glyph",
+    alock_cursor_glyph_init,
+    alock_cursor_glyph_deinit 
 };
 
 

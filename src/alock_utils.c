@@ -23,7 +23,17 @@
 #    include <X11/extensions/Xrender.h>
 #endif /* HAVE_XRENDER */
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include "alock.h"
+
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
+void alock_string2lower(char* string) {
+    static unsigned int i;
+    for(i = strlen(string) - 1; i; --i)
+        tolower(string[i]);
+}
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
@@ -91,6 +101,7 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
 
     { /* fill the alpha-picture */ 
         Pixmap alpha_pm = None;
+        
         XRenderColor alpha_color;
         XRenderPictureAttributes alpha_attr;
 
