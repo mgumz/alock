@@ -35,13 +35,18 @@ static int alock_cursor_xcursor_init(const char* args, struct aXInfo* xinfo) {
     if (!xinfo)
         return 0;
 
-    if (!args || strlen(args) < 8) {
-        printf("alock: error, missing arguments for [xcursor]\n");
+    if (!args || strlen(args) < 13) {
+        printf("alock: error, missing arguments for [xcursor].\n");
         return 0;
     }
     
-    if (!(cursor = XcursorFilenameLoadCursor(xinfo->display, &args[8]))) {
-        printf("alock: error, couldnt load [%s]\n", &args[8]);
+    if (strstr(args, "xcursor:") != args || strstr(&args[8], "file=") != &args[8]) {
+        printf("alock: error, wrong arguments for [xcursor].\n");
+        return 0;
+    }
+    
+    if (!(cursor = XcursorFilenameLoadCursor(xinfo->display, &args[13]))) {
+        printf("alock: error, couldnt load [%s]\n", &args[13]);
         return 0;
     }
     
