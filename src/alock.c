@@ -98,7 +98,7 @@ int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
     XEvent ev;
     KeySym ks;
     char cbuf[10], rbuf[50];
-    int clen, rlen = 0;
+    unsigned int clen, rlen = 0;
 
     long goodwill = 5 * 30000;
     long timeout = 0;

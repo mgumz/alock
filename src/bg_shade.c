@@ -76,24 +76,14 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
         free(arguments);
     }
     
-    { /* check for RENDER-extension */
-        int major_opcode, first_event, first_error;
-        if (XQueryExtension(xinfo->display, "RENDER",
-                            &major_opcode,
-                            &first_event, &first_error) == False) {
-            printf("alock: error, no xrender-support found\n");
-            free(color_name);
-            return 0;
-        }
-    }
-
-    { /* get a color from color_name */
-        XColor tmp_color;
-        if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_name, &tmp_color, &color)) == 0)
-            XAllocNamedColor(xinfo->display, xinfo->colormap, "black", &tmp_color, &color);
- 
+    if (!alock_check_xrender(xinfo)) {
         free(color_name);
+        return 0;
     }
+    
+    /* get a color from color_name */
+    alock_alloc_color(xinfo, color_name, "black", &color);
+    free(color_name);
     
     { /* get dimension of the screen */
         XWindowAttributes xgwa;
@@ -119,7 +109,7 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
 
         dst_pm = XCreatePixmap(dpy, root, width, height, depth);
 
-        { /* tint the src */
+        { /* tint the dst*/
             GC tintgc;
             XGCValues tintval;
 
@@ -129,55 +119,7 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
             XFreeGC(dpy, tintgc);
         }
 
-        { /* now do the "hot" stuff */
-            Picture alpha_pic = None;
-            XRenderPictFormat* format = None;
-            XRenderPictFormat alpha_format;
-
-            alpha_format.type = PictTypeDirect;
-            alpha_format.depth = 8;
-            alpha_format.direct.alpha = 0;
-            alpha_format.direct.alphaMask = 0xff;
-
-            format = XRenderFindStandardFormat(dpy, PictStandardA8);
-            if (!format) {
-                printf("error, couldnt find valid format for alpha.\n");
-                XFreePixmap(dpy, dst_pm);
-                XFreePixmap(dpy, src_pm);
-                return 0;
-            }
-
-            { /* fill the alpha-picture */ 
-                Pixmap alpha_pm = None;
-                XRenderColor alpha_color;
-                XRenderPictureAttributes alpha_attr;
-
-                alpha_color.alpha = 0xffff * (shade)/100;
-
-                alpha_attr.repeat = True;
-                //alpha_attr.component_alpha = True;
-
-                alpha_pm = XCreatePixmap(dpy, src_pm, 1, 1, 8);
-                alpha_pic = XRenderCreatePicture(dpy, alpha_pm, format, CPRepeat/*|CPComponentAlpha*/, &alpha_attr);
-                XRenderFillRectangle(dpy, PictOpSrc, alpha_pic, &alpha_color, 0, 0, 1, 1);
-                XFreePixmap(dpy, alpha_pm);
-            }
-            
-            { /* blend all together */
-                Picture src_pic;
-                Picture dst_pic;
-                
-                format = XRenderFindVisualFormat(dpy, vis);
-
-                src_pic = XRenderCreatePicture(dpy, src_pm, format, 0, 0);
-                dst_pic = XRenderCreatePicture(dpy, dst_pm, format, 0, 0);
-
-                XRenderComposite(dpy, PictOpOver, src_pic, alpha_pic, dst_pic, 0, 0, 0, 0, 0, 0, width, height);
-                XRenderFreePicture(dpy, src_pic);
-                XRenderFreePicture(dpy, dst_pic);
-            }
-        }
-
+        alock_shade_pixmap(xinfo, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
     }
 
     { /* create final window */

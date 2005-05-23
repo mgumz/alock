@@ -48,7 +48,7 @@ OPTIONS
     - blank:color  - Fill the background with color
     - shade:shade=<perc>,color=<color> - Dims content of the screen and
     recolors it.
-    - image:name,center,scale,tile,color=<color> - Use the image <name> and puts it as 
+    - image:name,center,scale,tile,color=<color>,shade=<perc> - Use the image <name> and puts it as 
     the background.
 
 -cursor type:options ::
@@ -69,6 +69,12 @@ RESOURCES
 ---------
 
 Web site: http://darkshed.net
+Other lockers::
+    - xlockmore http://www.tux.org/~bagleyd/xlockmore.html
+    - xscreensaver http://www.jwz.org/xscreensaver/
+    - xtrlock ftp://ftp.debian.org/debian/dists/stable/main/source/x11/
+    - vlock ftp://ftp.ibiblio.org/pub/Linux/utils/console/
+    - lockvc ftp://ftp.ibiblio.org/pub/Linux/utils/console/
 
 COPYING
 -------

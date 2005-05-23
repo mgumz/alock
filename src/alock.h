@@ -67,6 +67,20 @@ struct aOpts {
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
+int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
+        const char* fallback_name, XColor* result);
+int alock_check_xrender(const struct aXInfo* xinfo);
+int alock_shade_pixmap(const struct aXInfo* xinfo, 
+        const Pixmap src_pm, 
+        Pixmap dst_pm, 
+        unsigned char shade,
+        int src_x, int src_y, 
+        int dst_x, int dst_y,
+        unsigned int width,
+        unsigned int height);
+
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
 extern struct aBackground alock_bg_none;
 extern struct aBackground alock_bg_blank;
 #ifdef HAVE_IMLIB2

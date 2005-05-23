@@ -59,9 +59,7 @@ static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
         free(arguments);
     }
     
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_name, &tmp_color, &color)) == 0)
-        XAllocNamedColor(xinfo->display, xinfo->colormap, "black", &tmp_color, &color);
- 
+    alock_alloc_color(xinfo, color_name, "black", &color);
     free(color_name);
     
     XGetWindowAttributes(xinfo->display, xinfo->root, &xgwa);
