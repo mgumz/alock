@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------- *\
 
-  file    : bg_imlib2.c
+  file    : bg_image.c
   author  : m. gumz <akira at fluxbox dot org>
   copyr   : copyright (c) 2005 by m. gumz
 

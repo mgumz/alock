@@ -26,7 +26,7 @@ if build['xcursor']:
     cursor_sources += [ 'cursor_xcursor.c' ]
 
 if build['imlib2']:
-    bg_sources += [ 'bg_imlib2.c' ]
+    bg_sources += [ 'bg_image.c' ]
 if build['xrender']:
     bg_sources += [ 'bg_shade.c']
 

@@ -3,6 +3,9 @@ Version 1.0
 2005-05-23:
 
 	* added -bg image:shade=<perc>
+	* little restructuring:
+		- added alock_utils.c for shared code
+		- mv bg_imlib2.c bg_image.c
 
 2005-05-20:
 
