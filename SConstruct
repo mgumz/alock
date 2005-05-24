@@ -6,13 +6,31 @@
 ##########################################################
 
 import sys
+import os
 
-alock_version = '0.9'
+alock_name = 'alock'
+alock_version = '1.0'
 alock_optfile = [ 'scons.opts', 'user.opts' ]
 
 alock_target = 'src/alock'
 
+alock_meta_files = [ 
+    'README', 
+    'CHANGELOG', 
+    'LICENSE', 
+    'alock.txt',
+    'alock.html' ]
+alock_contrib_files = [ 
+    'contrib/README', 
+    'contrib/xcursor-fluxbox',
+    'contrib/xcursor-pekwm' ]
+alock_manpage = 'alock.1'
+alock_doc_files = [ 
+    'alock.html', 
+    'alock.1' ]
+
 Default(alock_target)
+SConsignFile()
 
 alock_options = Options(alock_optfile)
 alock_options.AddOptions(
@@ -31,7 +49,8 @@ alock_options.AddOptions(
         BoolOption('amd5', 'build a little md5-helper', 0),
         BoolOption('asha1', 'build a little sha1-helper', 0),
 
-        PathOption('prefix', 'install-path base', '/usr/local')
+        PathOption('PREFIX', 'install-path base', '/usr/local'),
+        PathOption('DESTDIR', 'install to $DESTDIR/$PREFIX', '/')
 )
 
 alock_env = Environment(options = alock_options,
@@ -42,7 +61,17 @@ Help(alock_options.GenerateHelpText(alock_env))
 
 ###########################################################
 #
+# installpaths
+alock_instdir = os.path.join('$DESTDIR','$PREFIX')
+alock_instdir_bin = os.path.join(alock_instdir,'bin')
+alock_instdir_data = os.path.join(alock_instdir,'share')
+alock_instdir_meta = os.path.join(alock_instdir_data, alock_name + '-' + alock_version)
+alock_instdir_meta_contrib = os.path.join(alock_instdir_meta, 'contrib')
+alock_instdir_man = os.path.join(alock_instdir_data, os.path.join('man', 'man1'))
+
+###########################################################
 #
+# configuring
 
 if sys.platform == "linux2" or sys.platform == "linux-i386":
     alock_env.AppendUnique(
@@ -152,23 +181,45 @@ Default(default_targets)
 
 alock_options.Save('scons.opts', alock_env)
 
-alock_program = SConscript(
-            'src/SConscript',
-            exports = ['alock_env']
-        )
 
-alock_env.Install(
-            alock_env['prefix']+'/bin',
-            alock_program
-        )
+############################################################################
+#
+# building
 
-alock_env.Alias(
-            'install',
-            alock_env['prefix']+'/bin'
-        )
+alock_program = SConscript( 'src/SConscript', exports = ['alock_env'])
+
+
+def createManPage(target, source, env):
+    os.system('asciidoc -d manpage -b docbook -o alock.xml ' + str(source[0]))
+    os.system('xmlto man alock.xml')
+    os.remove('alock.xml')
+    return None
+
+def createHtml(target, source, env):
+    os.system('asciidoc -d manpage -b xhtml -o ' + str(target[0]) + ' ' +
+            str(source[0]))
+
+alock_env.Command('alock.1', 'alock.txt', createManPage)
+alock_env.Command('alock.html', 'alock.txt', createHtml)
+
+############################################################################
+# 
+# installing
+alock_env.Install(alock_instdir_bin, alock_target)
+alock_env.Install(alock_instdir_meta, alock_meta_files)
+alock_env.Install(alock_instdir_man, alock_manpage)
+alock_env.Install(alock_instdir_meta_contrib, alock_contrib_files)
 
 # TODO: add a "scons dist" command which builds a propper tarball
 #alock_env.Alias('dist', alock_env.Tar(alock_target + '-' + alock_version,
 #                                        alock_distfiles))
+
+
+############################################################################
+#
+# aliases
+
+alock_env.Alias('docs', alock_doc_files)
+alock_env.Alias('install', alock_instdir)
 
 # vim:ft=python

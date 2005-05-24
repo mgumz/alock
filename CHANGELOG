@@ -2,6 +2,9 @@ Version 1.0
 
 2005-05-24:
 
+	* updated documentation
+	* updated buildsystem, scons install works
+	* rewritten README to be also in asciidoc-format
 	* more consistency in the ui, updated documentation
 	* added -auth md5:file=<filename>
 	* added -auth sha1:file=<filename>

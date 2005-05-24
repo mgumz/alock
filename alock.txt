@@ -84,15 +84,17 @@ Written by Mathias Gumz <akira at fluxbox dot org>
 RESOURCES
 ---------
 
-Web site: http://darkshed.net
-Other lockers ::
-    - xlockmore http://www.tux.org/~bagleyd/xlockmore.html
-    - xscreensaver http://www.jwz.org/xscreensaver/
-    - xtrlock ftp://ftp.debian.org/debian/dists/stable/main/source/x11/
-    - vlock ftp://ftp.ibiblio.org/pub/Linux/utils/console/
-    - lockvc ftp://ftp.ibiblio.org/pub/Linux/utils/console/
+link:http://darkshed.net[Home]
+
+Other Lockers ::
+- link:http://www.tux.org/~bagleyd/xlockmore.html[xlockmore]
+- link:http://www.jwz.org/xscreensaver/[xscreensaver]
+- link:ftp://ftp.debian.org/debian/dists/stable/main/source/x11/[xtrlock]
+- link:ftp://ftp.ibiblio.org/pub/Linux/utils/console/[vlock]
+- link:ftp://ftp.ibiblio.org/pub/Linux/utils/console/[lockvc]
 
 COPYING
 -------
 Copyright (C) 2005 Mathias Gumz. Free use of this software is
-granted under the terms of the GNU General Public License (GPL).
+granted under the terms of the MIT. See LICENSE provided in the
+distribution.
