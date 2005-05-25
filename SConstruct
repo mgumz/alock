@@ -7,6 +7,7 @@
 
 import sys
 import os
+from scons_alock import *
 
 alock_name = 'alock'
 alock_version = '1.0'
@@ -30,7 +31,7 @@ alock_doc_files = [
     'alock.1' ]
 
 Default(alock_target)
-SConsignFile()
+SConsignFile('SConsign')
 
 alock_options = Options(alock_optfile)
 alock_options.AddOptions(
@@ -55,7 +56,8 @@ alock_options.AddOptions(
 
 alock_env = Environment(options = alock_options,
                          TARFLAGS = '-c -z',
-                         TARSUFFIX = '.tgz')
+                         TARSUFFIX = '.tgz' 
+                       )
 alock_options.Update(alock_env)
 Help(alock_options.GenerateHelpText(alock_env))
 
@@ -67,7 +69,7 @@ alock_instdir_bin = os.path.join(alock_instdir,'bin')
 alock_instdir_data = os.path.join(alock_instdir,'share')
 alock_instdir_meta = os.path.join(alock_instdir_data, alock_name + '-' + alock_version)
 alock_instdir_meta_contrib = os.path.join(alock_instdir_meta, 'contrib')
-alock_instdir_man = os.path.join(alock_instdir_data, os.path.join('man', 'man1'))
+alock_instdir_man = os.path.join(alock_instdir, os.path.join('man', 'man1'))
 
 ###########################################################
 #
@@ -164,8 +166,6 @@ if alock_env['xrender']:
     conf.Finish()
 
         
-
-            
 ############################################################################
 #
 #
@@ -187,20 +187,13 @@ alock_options.Save('scons.opts', alock_env)
 # building
 
 alock_program = SConscript( 'src/SConscript', exports = ['alock_env'])
-
-
-def createManPage(target, source, env):
-    os.system('asciidoc -d manpage -b docbook -o alock.xml ' + str(source[0]))
-    os.system('xmlto man alock.xml')
-    os.remove('alock.xml')
-    return None
-
-def createHtml(target, source, env):
-    os.system('asciidoc -d manpage -b xhtml -o ' + str(target[0]) + ' ' +
-            str(source[0]))
-
 alock_env.Command('alock.1', 'alock.txt', createManPage)
 alock_env.Command('alock.html', 'alock.txt', createHtml)
+
+alock_env.AddPostAction(alock_target, Chmod(alock_target, 0755))
+alock_env.AddPostAction('alock.txt', Chmod('alock.txt', 0644))
+alock_env.AddPostAction('alock.1', Chmod('alock.1', 0644))
+alock_env.AddPostAction('alock.html', Chmod('alock.html', 0644))
 
 ############################################################################
 # 

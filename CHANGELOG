@@ -1,5 +1,10 @@
 Version 1.0
 
+2005-05-25:
+	
+	* solved problems install-problems: use at least scons 0.96.90
+	* minor tweaks to buildsystem
+
 2005-05-24:
 
 	* updated documentation

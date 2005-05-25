@@ -33,7 +33,6 @@ if build['xrender']:
 alock_sources += auth_sources + bg_sources + cursor_sources
 
 alock = build.Program('alock', alock_sources)
-build.AddPostAction(alock, Chmod(alock, 0755))
 
 if build['amd5']:
     md5 = alock_env.Copy()
