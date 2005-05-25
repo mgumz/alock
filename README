@@ -21,7 +21,8 @@ To install / compile 'alock' you need 'scons':
 
 * link:http://www.scons.org[scons]
 
-It's a clever buildsystem which i prefer over make/autotools.
+It's a clever buildsystem which i prefer over make/autotools. Be sure you
+grab the latest (0.96.90) version installed to avoid problems at install-time.
 After installing 'scons' you just type:
 
     $> scons
