@@ -9,6 +9,9 @@ import sys
 import os
 from scons_alock import *
 
+from SCons.Script.SConscript import SConsEnvironment # just do this once
+SConsEnvironment.InstallAsMode = alock_installAs
+
 alock_name = 'alock'
 alock_version = '1.0'
 alock_optfile = [ 'scons.opts', 'user.opts' ]
@@ -43,7 +46,8 @@ alock_options.AddOptions(
         BoolOption('hash', 'support for -auth <md5|sha1>', 1),
 
         BoolOption('imlib2', 'support for -bg image via imlib2', 1),
-        BoolOption('xrender', 'support for -bg shade via xrender', 1),
+        BoolOption('xrender', 'support for -bg shade via xrender or -cursor image', 1),
+        BoolOption('xpm', 'support for reading images via libxpm', 1),
 
         BoolOption('xcursor', 'support for -bg xcursor:<file>', 1),
 
@@ -131,6 +135,11 @@ if alock_env['xcursor']:
         print "sorry, no xcursor-support found."
     conf.Finish()
 
+if alock_env['xpm']:
+    alock_env.AppendUnique(
+            CPPDEFINES = ['HAVE_XPM'],
+            LIBS = [ 'Xpm' ])
+
 if alock_env['imlib2']:
     conf = alock_env.Configure()
     print "Checking for Imlib2... ",
@@ -198,10 +207,10 @@ alock_env.AddPostAction('alock.html', Chmod('alock.html', 0644))
 ############################################################################
 # 
 # installing
-alock_env.Install(alock_instdir_bin, alock_target)
-alock_env.Install(alock_instdir_meta, alock_meta_files)
-alock_env.Install(alock_instdir_man, alock_manpage)
-alock_env.Install(alock_instdir_meta_contrib, alock_contrib_files)
+#alock_env.InstallAs(prefixCombiner(alock_instdir_bin, ['alock'], os.sep), [alock_target], 0755)
+#alock_env.InstallAs(prefixCombiner(alock_meta_files, alock_instdir_meta, os.sep), alock_meta_files, 0644)
+#alock_env.InstallAs(prefixCombiner(alock_instdir_man, [alock_manpage], os.sep), [alock_manpage], 0644)
+#alock_env.InstallAs(prefixCombiner(alock_instdir_meta_contrib, alock_contrib_files, os.sep), alock_contrib_files, 0645)
 
 # TODO: add a "scons dist" command which builds a propper tarball
 #alock_env.Alias('dist', alock_env.Tar(alock_target + '-' + alock_version,
@@ -213,6 +222,6 @@ alock_env.Install(alock_instdir_meta_contrib, alock_contrib_files)
 # aliases
 
 alock_env.Alias('docs', alock_doc_files)
-alock_env.Alias('install', alock_instdir)
+#alock_env.Alias('install', alock_instdir)
 
 # vim:ft=python

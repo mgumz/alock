@@ -1,5 +1,9 @@
 Version 1.0
 
+2005-06-01:
+
+	* added -cursor image:file=<filename>, uses xrender and xpm/imlib2
+
 2005-05-25:
 	
 	* solved problems install-problems: use at least scons 0.96.90

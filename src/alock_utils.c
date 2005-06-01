@@ -57,14 +57,22 @@ int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
 \*------------------------------------------------------------------*/
 int alock_check_xrender(const struct aXInfo* xinfo) {
 #ifdef HAVE_XRENDER
-    int major_opcode, first_event, first_error;
-    if (XQueryExtension(xinfo->display, "RENDER",
-                        &major_opcode,
-                        &first_event, &first_error) == False) {
-        printf("alock: error, no xrender-support found\n");
-        return 0;
+    static int have_xrender = 0;
+    static int checked_already = 0;
+
+    if (!checked_already) {
+        int major_opcode, first_event, first_error;
+        if (XQueryExtension(xinfo->display, "RENDER",
+                            &major_opcode,
+                            &first_event, &first_error) == False) {
+            printf("alock: error, no xrender-support found\n");
+            have_xrender = 0;
+        } else
+            have_xrender = 1;
+        
+        checked_already = 1;
     }
-    return 1;
+    return have_xrender;
 #else
     printf("alock: error, i wasnt compiled to support xrender.\n");
     return 0;
@@ -86,14 +94,18 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
 
     Picture alpha_pic = None;
     XRenderPictFormat* format = None;
-    XRenderPictFormat alpha_format;
 
-    alpha_format.type = PictTypeDirect;
-    alpha_format.depth = 8;
-    alpha_format.direct.alpha = 0;
-    alpha_format.direct.alphaMask = 0xff;
+    {
+        XRenderPictFormat alpha_format;
+        unsigned long mask = PictFormatType|PictFormatDepth|PictFormatAlpha|PictFormatAlphaMask;
+        alpha_format.type = PictTypeDirect;
+        alpha_format.depth = 8;
+        alpha_format.direct.alpha = 0;
+        alpha_format.direct.alphaMask = 0xff;
 
-    format = XRenderFindStandardFormat(dpy, PictStandardA8);
+        format = XRenderFindFormat(dpy, mask, &alpha_format, 0);
+    }
+
     if (!format) {
         printf("error, couldnt find valid format for alpha.\n");
         XFreePixmap(dpy, dst_pm);
@@ -138,10 +150,6 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
 #endif /* HAVE_XRENDER */
 }
 
-
-
-
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-
 

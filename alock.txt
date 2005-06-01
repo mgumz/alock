@@ -75,6 +75,8 @@ OPTIONS
         * fg=<color>
     - xcursor - Use the given <filename> in xcursor-format
         * file=<filename> 
+    - image - Use the given <filename>
+        * file=<filename>
     - none - No change to the current cursor
 
 AUTHOR

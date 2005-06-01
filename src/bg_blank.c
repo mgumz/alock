@@ -39,7 +39,6 @@ static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
     XWindowAttributes xgwa;
     XSetWindowAttributes xswa;
     long xsmask = 0;
-    XColor tmp_color;
     char* color_name = strdup("black");
     
     if (!xinfo || !args)

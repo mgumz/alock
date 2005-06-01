@@ -21,6 +21,12 @@ def prefixCombiner(prefix, itemlist, glue=''):
         result.append(prefix + glue + item)
     return result
 
+
+def alock_installAs(env, dest, source, mode = 0644):
+    env.InstallAs(dest, source)
+    for file in dest:
+        env.Chmod(file, mode)
+
 # http://scons.tigris.org/servlets/ReadMsg?listName=users&msgNo=2739
 # http://scons.tigris.org/servlets/ReadMsg?list=users&msgNo=2783
 def alock_installFunc(dest, source, env):

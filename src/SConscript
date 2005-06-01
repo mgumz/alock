@@ -29,6 +29,8 @@ if build['imlib2']:
     bg_sources += [ 'bg_image.c' ]
 if build['xrender']:
     bg_sources += [ 'bg_shade.c']
+    if build['xrender'] or build['xpm']:
+        cursor_sources += ['cursor_image.c']
 
 alock_sources += auth_sources + bg_sources + cursor_sources
 

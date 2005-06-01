@@ -82,38 +82,5 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
         unsigned int width,
         unsigned int height);
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-extern struct aBackground alock_bg_none;
-extern struct aBackground alock_bg_blank;
-#ifdef HAVE_IMLIB2
-extern struct aBackground alock_bg_image;
-#endif /* HAVE_IMLIB2 */
-#ifdef HAVE_XRENDER
-extern struct aBackground alock_bg_shade;
-#endif /* HAVE_XRENDER */
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-extern struct aAuth alock_auth_none;
-#ifdef HASH_PWD
-extern struct aAuth alock_auth_md5;
-extern struct aAuth alock_auth_sha1;
-#endif /* HASH_PWD */
-#ifdef PASSWD_PWD
-extern struct aAuth alock_auth_passwd;
-#endif /* PASSWD_PWD */
-#ifdef PAM_PWD
-extern struct aAuth alock_auth_pam;
-#endif /* PAM_PWD */
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-extern struct aCursor alock_cursor_none;
-extern struct aCursor alock_cursor_theme;
-extern struct aCursor alock_cursor_glyph;
-#ifdef HAVE_XCURSOR
-extern struct aCursor alock_cursor_xcursor;
-#endif /* HAVE_XCURSOR */
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
 #endif // _ALOCK_H_
 
