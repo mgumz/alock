@@ -35,11 +35,14 @@
 
 #include <X11/bitmaps/xlogo16>
 
-#include "../bitmaps/mini.bitmap"
-#include "../bitmaps/mini_mask.bitmap"
+#include "../bitmaps/mini.xbm"
+#include "../bitmaps/mini_mask.xbm"
 
-#include "../bitmaps/xtr.bitmap"
-#include "../bitmaps/xtr_mask.bitmap"
+#include "../bitmaps/xtr.xbm"
+#include "../bitmaps/xtr_mask.xbm"
+
+#include "../bitmaps/alock.xbm"
+#include "../bitmaps/alock_mask.xbm"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
@@ -56,6 +59,10 @@ struct ThemeCursor {
 
 static struct ThemeCursor cursors[] = {
 
+    { "alock",
+      alock_width, alock_height, alock_x_hot, alock_y_hot,
+      alock_bits, alock_mask_bits },
+    
     { "mini", 
       mini_width, mini_height, mini_x_hot, mini_y_hot, 
       mini_bits, mini_mask_bits },
