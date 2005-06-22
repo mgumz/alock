@@ -11,7 +11,7 @@ xcursor-fluxbox
     i used http://fluxbox.org/download/propaganda/fb-icon48x48-metal.png
     and 
     
-        $> echo "2304 24 24 fb-icon48x48-metal.png.png 0" > cursor.cfg
+        $> echo "2304 24 24 fb-icon48x48-metal.png 0" > cursor.cfg
         $> xcursorgen cursor.cfg xcursor-fluxbox
 
     to create the fancy xcursor :) am i a little bit biased about my beloved
