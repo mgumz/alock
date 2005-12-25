@@ -249,7 +249,7 @@ static int alock_auth_sha1_init(const char* args) {
                         printf("alock: error, missing or incorrect hash for [sha1].\n");
                         free(arguments);
                         return 0;
-                    }    
+                    }
                 } else if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
                     char* tmp_hash = NULL;
                     FILE* hashfile = fopen(&arg[5], "r");
@@ -264,7 +264,7 @@ static int alock_auth_sha1_init(const char* args) {
                         }
                         fclose(hashfile);
                     } else {
-                        printf("alock: error, couldnt read [%s] for [md5].\n", 
+                        printf("alock: error, couldnt read [%s] for [sha1].\n",
                                 &arg[5]);
                         free(arguments);
                         return 0;
@@ -291,9 +291,9 @@ static int alock_auth_sha1_init(const char* args) {
         printf("alock: error, missing hash for [sha1].\n");
         return 0;
     }
-    
+
     alock_string2lower(userhash);
-    
+
     return 1;
 }
 
@@ -334,15 +334,15 @@ struct aAuth alock_auth_sha1 = {
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-#else 
+#else
 
 int main(int argc, char* argv[]) {
-    
+
     unsigned char digest[SHA1_DIGEST_LENGTH];
     unsigned int i;
     unsigned char c;
     sha1Context sha1;
-    
+
     if (argc > 1) {
         printf("asha1 - reads from stdin to calculate a sha1-hash.\n");
         exit(0);
@@ -354,12 +354,11 @@ int main(int argc, char* argv[]) {
     }
     sha1_final(digest, &sha1);
 
-    printf("\n");
     for(i = 0; i < SHA1_DIGEST_LENGTH; ++i)
         printf("%02x", digest[i]);
     printf("\n");
     fflush(stdout);
-    
+
     return 0;
 }
 

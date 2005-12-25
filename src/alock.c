@@ -6,7 +6,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Sa 30 April 2005 14:19:44 CEST
 
   $Id$
@@ -36,6 +36,9 @@ extern struct aAuth alock_auth_none;
 #ifdef HASH_PWD
 extern struct aAuth alock_auth_md5;
 extern struct aAuth alock_auth_sha1;
+extern struct aAuth alock_auth_sha256;
+extern struct aAuth alock_auth_sha384;
+extern struct aAuth alock_auth_sha512;
 #endif /* HASH_PWD */
 #ifdef PASSWD_PWD
 extern struct aAuth alock_auth_passwd;
@@ -55,6 +58,9 @@ static struct aAuth* alock_authmodules[] = {
 #ifdef HASH_PWD
     &alock_auth_md5,
     &alock_auth_sha1,
+    &alock_auth_sha256,
+    &alock_auth_sha384,
+    &alock_auth_sha512,
 #endif /* HASH_PWD */
     NULL
 };
@@ -132,7 +138,7 @@ void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
 }
 
 int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
-    
+
     XEvent ev;
     KeySym ks;
     char cbuf[10], rbuf[50];
@@ -145,7 +151,7 @@ int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
         XNextEvent(xinfo->display, &ev);
         switch (ev.type) {
         case KeyPress:
-            
+
             if (ev.xkey.time < timeout) {
                 XBell(xinfo->display, 0);
                 break;
@@ -171,7 +177,7 @@ int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
 
                 if (opts->auth->auth(rbuf))
                     return 1;
-                
+
                 XSync(xinfo->display, True); /* discard pending events to start really fresh */
                 XBell(xinfo->display, 0);
                 rlen = 0;
@@ -217,7 +223,7 @@ int main(int argc, char **argv) {
     opts.background = alock_backgrounds[0];
 
     opts.auth->init(NULL);
-    
+
     /*  parse options */
     if (argc != 1) {
         for(arg = 1; arg <= argc; arg++) {
@@ -339,14 +345,14 @@ int main(int argc, char **argv) {
     initXInfo(&xinfo, &opts);
 
     if (!opts.background->init(background_args, &xinfo)) {
-        printf("alock: error, couldnt init [%s] with [%s].\n", 
+        printf("alock: error, couldnt init [%s] with [%s].\n",
                opts.background->name,
                background_args);
         exit(1);
     }
 
     if (!opts.cursor->init(cursor_args, &xinfo)) {
-        printf("alock: error, couldnt init [%s] with [%s].\n", 
+        printf("alock: error, couldnt init [%s] with [%s].\n",
                opts.cursor->name,
                cursor_args);
         exit(1);
@@ -355,7 +361,7 @@ int main(int argc, char **argv) {
     XSelectInput(xinfo.display, xinfo.window, KeyPressMask|KeyReleaseMask);
     XMapWindow(xinfo.display, xinfo.window);
     XRaiseWindow(xinfo.display, xinfo.window);
-    
+
     /* try to grab 2 times, another process (windowmanager) may have grabbed
      * the keyboard already */
     if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
@@ -381,7 +387,7 @@ int main(int argc, char **argv) {
     opts.cursor->deinit(&xinfo);
     opts.background->deinit(&xinfo);
     XCloseDisplay(xinfo.display);
-    
+
     return 0;
 }
 

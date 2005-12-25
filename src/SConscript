@@ -18,7 +18,7 @@ build =  alock_env.Copy()
 if build['passwd']:
     auth_sources += [ 'auth_passwd.c' ]
 if build['hash']:
-    auth_sources += [ 'auth_md5.c', 'auth_sha1.c' ]
+    auth_sources += [ 'auth_md5.c', 'auth_sha1.c', 'auth_sha2.c' ]
 if build['pam']:
     auth_sources += [ 'auth_pam.c' ]
 
@@ -37,13 +37,18 @@ alock_sources += auth_sources + bg_sources + cursor_sources
 alock = build.Program('alock', alock_sources)
 
 if build['amd5']:
-    md5 = alock_env.Copy()
+    md5 = Environment()
     md5.AppendUnique(CPPDEFINES = [ 'STAND_ALONE' ])
     md5.Program('amd5', md5.StaticObject(target = 'amd5.o', source = 'auth_md5.c'))
 
 if build['asha1']:
-    sha1 = alock_env.Copy()
+    sha1 = Environment()
     sha1.AppendUnique(CPPDEFINES = [ 'STAND_ALONE' ])
     sha1.Program('asha1', sha1.StaticObject(target = 'asha1', source = 'auth_sha1.c'))
+
+if build['asha2']:
+    sha1 = Environment()
+    sha1.AppendUnique(CPPDEFINES = [ 'STAND_ALONE' ])
+    sha1.Program('asha2', sha1.StaticObject(target = 'asha2', source = 'auth_sha2.c'))
 
 # vim:ft=python

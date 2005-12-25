@@ -36,7 +36,7 @@ struct aXInfo {
     Display* display;
     Window   root;
     Colormap colormap;
-    
+
     Window   window;
     Cursor   cursor;
 };

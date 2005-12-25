@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, ?? May 2005
+v1.0, 25 December 2005
 
 NAME
 ----
@@ -42,6 +42,17 @@ OPTIONS
     - sha1 - alock creates a sha1-hash from the entered unlockpassword and compares it with the hash provided
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use <filename> as reference
+    - sha256 - alock creates a sha256-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
+    - sha384 - alock creates a sha384-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
+    - sha512 - alock creates a sha512-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
+
+
 
 -bg type:options ::
     Define the type of alock should handle the background:

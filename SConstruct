@@ -18,19 +18,19 @@ alock_optfile = [ 'scons.opts', 'user.opts' ]
 
 alock_target = 'src/alock'
 
-alock_meta_files = [ 
-    'README', 
-    'CHANGELOG', 
-    'LICENSE', 
+alock_meta_files = [
+    'README',
+    'CHANGELOG',
+    'LICENSE',
     'alock.txt',
     'alock.html' ]
-alock_contrib_files = [ 
-    'contrib/README', 
+alock_contrib_files = [
+    'contrib/README',
     'contrib/xcursor-fluxbox',
     'contrib/xcursor-pekwm' ]
 alock_manpage = 'alock.1'
-alock_doc_files = [ 
-    'alock.html', 
+alock_doc_files = [
+    'alock.html',
     'alock.1' ]
 
 Default(alock_target)
@@ -54,6 +54,7 @@ alock_options.AddOptions(
 
         BoolOption('amd5', 'build a little md5-helper', 0),
         BoolOption('asha1', 'build a little sha1-helper', 0),
+        BoolOption('asha2', 'build a little sha2-helper', 0),
 
         PathOption('PREFIX', 'install-path base', '/usr/local'),
         PathOption('DESTDIR', 'install to $DESTDIR/$PREFIX', '/')
@@ -96,7 +97,7 @@ if not conf.CheckLibWithHeader('X11', 'X11/Xlib.h', 'C', 'XOpenDisplay(0);', 1):
     print "sorry, no headers or libs for X11 found, cant build alock."
     Exit(1)
 conf.Finish()
-    
+
 if alock_env['debug']:
     alock_env.AppendUnique(
             CPPDEFINES = [ 'DEBUG' ],
@@ -179,18 +180,21 @@ if alock_env['static']:
     alock_env.Append(
             LINKFLAGS = [ '-static' ],
             LIBS = [ 'X11', 'pthread' ])
-            
+
 
 ############################################################################
 #
 #
-    
+
 default_targets = [ alock_target ]
 if alock_env['amd5']:
     default_targets += [ 'src/amd5' ]
 
 if alock_env['asha1']:
     default_targets += [ 'src/asha1' ]
+
+if alock_env['asha2']:
+    default_targets += [ 'src/asha2' ]
 
 Default(default_targets)
 
@@ -211,7 +215,7 @@ alock_env.AddPostAction('alock.1', Chmod('alock.1', 0644))
 alock_env.AddPostAction('alock.html', Chmod('alock.html', 0644))
 
 ############################################################################
-# 
+#
 # installing
 #alock_env.InstallAs(prefixCombiner(alock_instdir_bin, ['alock'], os.sep), [alock_target], 0755)
 #alock_env.InstallAs(prefixCombiner(alock_meta_files, alock_instdir_meta, os.sep), alock_meta_files, 0644)

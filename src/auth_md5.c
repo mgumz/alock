@@ -313,7 +313,7 @@ static int alock_auth_md5_init(const char* args) {
                         printf("alock: error, missing or incorrect hash for [md5].\n");
                         free(arguments);
                         return 0;
-                    }    
+                    }
                 } else if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
                     char* tmp_hash = NULL;
                     FILE* hashfile = fopen(&arg[5], "r");
@@ -328,7 +328,7 @@ static int alock_auth_md5_init(const char* args) {
                         }
                         fclose(hashfile);
                     } else {
-                        printf("alock: error, couldnt read [%s] for [md5].\n", 
+                        printf("alock: error, couldnt read [%s] for [md5].\n",
                                 &arg[5]);
                         free(arguments);
                         return 0;
@@ -355,9 +355,9 @@ static int alock_auth_md5_init(const char* args) {
         printf("alock: error, missing hash for [md5].\n");
         return 0;
     }
-    
+
     alock_string2lower(userhash);
-    
+
     return 1;
 }
 
@@ -398,32 +398,31 @@ struct aAuth alock_auth_md5 = {
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-#else 
+#else
 
 int main(int argc, char* argv[]) {
-    
+
     unsigned char digest[MD5_DIGEST_LENGTH];
     unsigned int i;
     unsigned char c;
     md5Context md5;
-    
+
     if (argc > 1) {
         printf("amd5 - reads from stdin to calculate a md5-hash.\n");
         exit(0);
     }
-    
+
     md5_init(&md5);
     while((c = fgetc(stdin)) != (unsigned char)EOF) {
         md5_update(&md5, &c, 1);
     }
     md5_final(digest, &md5);
 
-    printf("\n");
     for(i = 0; i < MD5_DIGEST_LENGTH; ++i)
         printf("%02x", digest[i]);
     printf("\n");
     fflush(stdout);
-    
+
     return 0;
 }
 

@@ -10,7 +10,7 @@ def createManPage(target, source, env):
 
 def createHtml(target, source, env):
     """Creates a html-site via asciidoc."""
-    os.system('asciidoc -d manpage -b xhtml -o ' + str(target[0]) + ' ' +
+    os.system('asciidoc -d manpage -b xhtml11 -o ' + str(target[0]) + ' ' +
             str(source[0]))
 
 def prefixCombiner(prefix, itemlist, glue=''):

@@ -1,4 +1,8 @@
 Version 1.0
+2005-12-25:
+	* added -auth sha256
+	* added -auth sha384
+	* added -auth sha512
 
 2005-08-12:
 
