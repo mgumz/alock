@@ -70,6 +70,7 @@ struct aOpts {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 void alock_string2lower(char* string);
+int alock_native_byte_order();
 int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
         const char* fallback_name, XColor* result);
 int alock_check_xrender(const struct aXInfo* xinfo);

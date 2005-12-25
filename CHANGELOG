@@ -1,5 +1,9 @@
 Version 1.0
 
+2005-08-12:
+
+	* added static=yes built option to scons
+
 2005-06-01:
 
 	* added -cursor image:file=<filename>, uses xrender and xpm/imlib2

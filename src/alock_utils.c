@@ -55,6 +55,14 @@ int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
+int alock_native_byte_order() {
+    int	x = 1;
+    return (*((char *) &x) == 1) ? LSBFirst : MSBFirst;
+}
+
+/*------------------------------------------------------------------*\
+ * taken from cursor.c of libXcursor
+\*------------------------------------------------------------------*/
 int alock_check_xrender(const struct aXInfo* xinfo) {
 #ifdef HAVE_XRENDER
     static int have_xrender = 0;

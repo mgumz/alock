@@ -39,6 +39,7 @@ SConsignFile('SConsign')
 alock_options = Options(alock_optfile)
 alock_options.AddOptions(
         BoolOption('debug', 'build debug version', 0),
+        BoolOption('static','build static', 0),
 
         BoolOption('passwd', 'support for -auth passwd', 0),
         BoolOption('shadow', 'support for -auth passwd with shadow', 0),
@@ -60,7 +61,7 @@ alock_options.AddOptions(
 
 alock_env = Environment(options = alock_options,
                          TARFLAGS = '-c -z',
-                         TARSUFFIX = '.tgz' 
+                         TARSUFFIX = '.tgz',
                        )
 alock_options.Update(alock_env)
 Help(alock_options.GenerateHelpText(alock_env))
@@ -174,7 +175,12 @@ if alock_env['xrender']:
         alock_env['xrender'] = 0
     conf.Finish()
 
-        
+if alock_env['static']:
+    alock_env.Append(
+            LINKFLAGS = [ '-static' ],
+            LIBS = [ 'X11', 'pthread' ])
+            
+
 ############################################################################
 #
 #

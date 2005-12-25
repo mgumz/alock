@@ -8,7 +8,7 @@
   
   start   : Mi 01 June 2005 10:48:21 CEST
 
-  $Id: $
+  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -16,6 +16,9 @@
   about :
 
     provide -cursor image:file=<file>
+
+    TODO: png-files can have transparency-colors, we want to ignore
+          them.
 
 \* ---------------------------------------------------------------- */
 
@@ -94,12 +97,34 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
                 imlib_context_set_image(img);
                 w = imlib_image_get_width();
                 h = imlib_image_get_height();
-                cursor_pm = XCreatePixmap(xinfo->display, 
-                                          xinfo->root, 
-                                          w, h, 
-                                          DefaultDepth(xinfo->display, DefaultScreen(xinfo->display)));
-                imlib_context_set_drawable(cursor_pm);
-                imlib_render_image_on_drawable(0, 0);
+                
+                { /* taken from cursor.c of libXcursor */
+                    GC gc = None;
+                    XImage ximage;
+                    ximage.width = w;
+                    ximage.height = h;
+                    ximage.xoffset = 0;
+                    ximage.format = ZPixmap;
+                    ximage.data = (char *) imlib_image_get_data_for_reading_only();
+                    ximage.byte_order = alock_native_byte_order();
+                    ximage.bitmap_unit = 32;
+                    ximage.bitmap_bit_order = ximage.byte_order;
+                    ximage.bitmap_pad = 32;
+                    ximage.depth = 32;
+                    ximage.bits_per_pixel = 32;
+                    ximage.bytes_per_line = w * 4;
+                    ximage.red_mask = 0xff0000;
+                    ximage.green_mask = 0x00ff00;
+                    ximage.blue_mask = 0x0000ff;
+                    ximage.obdata = 0;
+                    
+                    XInitImage(&ximage);
+
+                    cursor_pm = XCreatePixmap(xinfo->display, xinfo->root, w, h, 32);
+                    gc = XCreateGC(xinfo->display, cursor_pm, 0, 0);
+                    XPutImage(xinfo->display, cursor_pm, gc, &ximage, 0, 0, 0, 0, w, h);
+                    XFreeGC(xinfo->display, gc);
+                }
                 imlib_free_image_and_decache();
             } 
             imlib_context_pop();
@@ -110,17 +135,17 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
             XImage* img = NULL;
             XpmReadFileToImage(xinfo->display, filename, &img, NULL, NULL);
             if (img) {
+                GC gc = None;
                 w = img->width;
                 h = img->height;
                 
                 cursor_pm = XCreatePixmap(xinfo->display, 
                                           xinfo->root, 
                                           w, h, 
-                                          DefaultDepth(xinfo->display, DefaultScreen(xinfo->display)));
-                XPutImage(xinfo->display, cursor_pm, 
-                          DefaultGC(xinfo->display, DefaultScreen(xinfo->display)),
-                          img, 
-                          0, 0, 0, 0, w, h);
+                                          img->depth);
+                gc = XCreateGC(xinfo->display, cursor_pm, 0, NULL);
+                XPutImage(xinfo->display, cursor_pm, gc, img, 0, 0, 0, 0, w, h);
+                XFreeGC(xinfo->display, gc);
                 XDestroyImage(img);
             }
         }
@@ -135,14 +160,20 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
         }
 
         {
-            XRenderPictFormat* format = XRenderFindVisualFormat(xinfo->display, 
-                                                                DefaultVisual(xinfo->display, DefaultScreen(xinfo->display)));
+            /* TODO: maybe replace this by an older xrenderapi-call, since
+             * XRenderFindStandardFormat was introduced in xyz, dunno atm */
+            XRenderPictFormat* format = XRenderFindStandardFormat (xinfo->display, PictStandardARGB32);
             if (format) {
                 Picture cursor_pic = XRenderCreatePicture(xinfo->display, cursor_pm, format, 0, 0);
                 cursor = XRenderCreateCursor(xinfo->display, cursor_pic, w / 2, h / 2);
                 XRenderFreePicture(xinfo->display, cursor_pic);
+            } else {
+                printf("alock: error while finding a valid XRenderPictFormat in [image].\n");
+                free(filename);
+                return 0;
             }
 
+            XFreePixmap(xinfo->display, cursor_pm);
         }
     }
 
