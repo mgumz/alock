@@ -33,12 +33,15 @@
 
 struct aXInfo {
 
-    Display* display;
-    Window   root;
-    Colormap colormap;
+    Display*  display;
 
-    Window   window;
-    Cursor   cursor;
+    int       nr_screens;
+
+    Window*   root;
+    Colormap* colormap;
+
+    Window*   window;
+    Cursor*   cursor;
 };
 
 struct aAuth {
@@ -71,14 +74,16 @@ struct aOpts {
 \*------------------------------------------------------------------*/
 void alock_string2lower(char* string);
 int alock_native_byte_order();
-int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
-        const char* fallback_name, XColor* result);
+int alock_alloc_color(const struct aXInfo* xinfo, const int scr,
+        const char* color_name,
+        const char* fallback_name,
+        XColor* result);
 int alock_check_xrender(const struct aXInfo* xinfo);
-int alock_shade_pixmap(const struct aXInfo* xinfo, 
-        const Pixmap src_pm, 
-        Pixmap dst_pm, 
+int alock_shade_pixmap(const struct aXInfo* xinfo,
+        const Pixmap src_pm,
+        Pixmap dst_pm,
         unsigned char shade,
-        int src_x, int src_y, 
+        int src_x, int src_y,
         int dst_x, int dst_y,
         unsigned int width,
         unsigned int height);

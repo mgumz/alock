@@ -1,7 +1,7 @@
 alock - README
 ==============
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 25 December 2005
+v1.0, 05 May 2006
 
 About
 -----
@@ -68,7 +68,7 @@ from 'xtrlock' left.
 
 Author / Contributors
 ---------------------
-* 2005        Mathias Gumz aka akira <akira@fluxbox.org> (code)
+* 2005 - 2006 Mathias Gumz aka akira <akira@fluxbox.org> (code)
 * 1993 - 1994 Ian Jackson (xtrlock)
 
 * 2005        Tenner (alock-logo)

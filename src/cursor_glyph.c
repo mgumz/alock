@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Di 17 Mai 2005 14:19:44 CEST
 
   $Id$
@@ -120,12 +120,12 @@ static const struct CursorFontName cursor_names[] = {
 };
 
 /*------------------------------------------------------------------*\
-   
+
 \*------------------------------------------------------------------*/
 
-static Cursor cursor = 0;
-static XColor color_fg;
-static XColor color_bg;
+static Cursor* cursor = NULL;
+static XColor* color_fg = NULL;
+static XColor* color_bg = NULL;
 
 static int alock_cursor_glyph_init(const char* args, struct aXInfo* xinfo) {
 
@@ -144,7 +144,7 @@ static int alock_cursor_glyph_init(const char* args, struct aXInfo* xinfo) {
             arg = strsep(&tmp, ",");
             if (arg) {
                 const struct CursorFontName* cursor_glyph_name;
-                    
+
                 if (!strcmp(arg, "list")) {
                     for (cursor_glyph_name = cursor_names; cursor_glyph_name->name; ++cursor_glyph_name) {
                         printf("%s\n", cursor_glyph_name->name);
@@ -178,20 +178,32 @@ static int alock_cursor_glyph_init(const char* args, struct aXInfo* xinfo) {
         }
         free(arguments);
     }
-    
-    alock_alloc_color(xinfo, color_bg_name, "black", &color_bg);
-    alock_alloc_color(xinfo, color_fg_name, "white", &color_fg);
 
-    free(color_fg_name);
-    free(color_bg_name);
-    
-    /* create cursor from X11/cursorfont.h */
-    if ((cursor = XCreateFontCursor(xinfo->display, shape))) {
-        XRecolorCursor(xinfo->display, cursor, &color_fg, &color_bg);
-        xinfo->cursor = cursor;
-    } else {
-        printf("alock: error, couldnt create fontcursor [%d].\n", shape);
-        return 0;
+    {
+        cursor = (Cursor*)calloc(xinfo->nr_screens, sizeof(Cursor));
+        color_fg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+        color_bg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+    }
+
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+
+            alock_alloc_color(xinfo, scr, color_bg_name, "black", &color_bg[scr]);
+            alock_alloc_color(xinfo, scr, color_fg_name, "white", &color_fg[scr]);
+
+            /* create cursor from X11/cursorfont.h */
+            if ((cursor[scr] = XCreateFontCursor(xinfo->display, shape))) {
+                XRecolorCursor(xinfo->display, cursor[scr], &color_fg[scr], &color_bg[scr]);
+                xinfo->cursor[scr] = cursor[scr];
+            } else {
+                printf("alock: error, couldnt create fontcursor [%d].\n", shape);
+                return 0;
+            }
+        }
+
+        free(color_fg_name);
+        free(color_bg_name);
     }
 
     return 1;
@@ -202,7 +214,16 @@ static int alock_cursor_glyph_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !cursor)
         return 0;
 
-    XFreeCursor(xinfo->display, cursor);
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            XFreeCursor(xinfo->display, cursor[scr]);
+        }
+        free(cursor);
+        free(color_bg);
+        free(color_fg);
+    }
+
     return 1;
 }
 
@@ -210,7 +231,7 @@ static int alock_cursor_glyph_deinit(struct aXInfo* xinfo) {
 struct aCursor alock_cursor_glyph = {
     "glyph",
     alock_cursor_glyph_init,
-    alock_cursor_glyph_deinit 
+    alock_cursor_glyph_deinit
 };
 
 

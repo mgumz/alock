@@ -131,10 +131,21 @@ void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
     }
 
     xinfo->display = dpy;
-    xinfo->window = 0;
+    xinfo->nr_screens = ScreenCount(dpy);
 
-    xinfo->root = DefaultRootWindow(dpy);
-    xinfo->colormap = DefaultColormap(dpy, DefaultScreen(dpy));
+    xinfo->window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
+    xinfo->root = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
+    xinfo->colormap = (Colormap*)calloc(xinfo->nr_screens, sizeof(Colormap));
+    xinfo->cursor = (Cursor*)calloc(xinfo->nr_screens, sizeof(Cursor));
+
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            xinfo->window[scr] = 0;
+            xinfo->root[scr] = RootWindow(dpy, scr);
+            xinfo->colormap[scr] = DefaultColormap(dpy, scr);
+        }
+    }
 }
 
 int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
@@ -358,24 +369,33 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    XSelectInput(xinfo.display, xinfo.window, KeyPressMask|KeyReleaseMask);
-    XMapWindow(xinfo.display, xinfo.window);
-    XRaiseWindow(xinfo.display, xinfo.window);
+    {
+        int scr;
+        for (scr = 0; scr < xinfo.nr_screens; scr++) {
+
+            XSelectInput(xinfo.display, xinfo.window[scr], KeyPressMask|KeyReleaseMask);
+            XMapWindow(xinfo.display, xinfo.window[scr]);
+            XRaiseWindow(xinfo.display, xinfo.window[scr]);
+
+        }
+    }
 
     /* try to grab 2 times, another process (windowmanager) may have grabbed
      * the keyboard already */
-    if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
-                      CurrentTime)) != GrabSuccess) {
+    if ((XGrabKeyboard(xinfo.display, xinfo.window[0], True, GrabModeAsync, GrabModeAsync,
+                          CurrentTime)) != GrabSuccess) {
         sleep(1);
-        if ((XGrabKeyboard(xinfo.display, xinfo.window, True, GrabModeAsync, GrabModeAsync,
+        if ((XGrabKeyboard(xinfo.display, xinfo.window[0], True, GrabModeAsync, GrabModeAsync,
                         CurrentTime)) != GrabSuccess) {
             printf("alock: couldnt grab the keyboard.\n");
             exit(1);
         }
     }
 
-    if (XGrabPointer(xinfo.display, xinfo.window, False, (KeyPressMask|KeyReleaseMask) & 0,
-                     GrabModeAsync, GrabModeAsync, None, xinfo.cursor, CurrentTime) != GrabSuccess) {
+    /* TODO: think about it: do we really need NR_SCREEN cursors ? we grab the
+     * pointer on :*.0 anyway ... */
+    if (XGrabPointer(xinfo.display, xinfo.window[0], False, (KeyPressMask|KeyReleaseMask) & 0,
+                     GrabModeAsync, GrabModeAsync, None, xinfo.cursor[0], CurrentTime) != GrabSuccess) {
         XUngrabKeyboard(xinfo.display, CurrentTime);
         printf("alock: couldnt grab the pointer.\n");
         exit(1);

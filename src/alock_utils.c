@@ -39,16 +39,18 @@ void alock_string2lower(char* string) {
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-int alock_alloc_color(const struct aXInfo* xinfo, const char* color_name,
+int alock_alloc_color(const struct aXInfo* xinfo, const int scr, const char* color_name,
         const char* fallback_name, XColor* result) {
 
     static XColor tmp;
 
-    if (!xinfo || !color_name || !fallback_name || !result)
+    if (!xinfo || 
+        !xinfo->colormap || xinfo->nr_screens < scr || scr < 0 || 
+        !color_name || !fallback_name || !result)
         return 0;
 
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap, color_name, &tmp, result)) == 0)
-        if ((XAllocNamedColor(xinfo->display, xinfo->colormap, fallback_name, &tmp, result)) == 0)
+    if((XAllocNamedColor(xinfo->display, xinfo->colormap[scr], color_name, &tmp, result)) == 0)
+        if ((XAllocNamedColor(xinfo->display, xinfo->colormap[scr], fallback_name, &tmp, result)) == 0)
             return 0;
     return 1;
 }

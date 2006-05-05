@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Sa 30 Apr 2005 12:02:47 CEST
 
   $Id$
@@ -16,7 +16,7 @@
 /* ---------------------------------------------------------------- *\
 
   about :
-    
+
     provide -cursor theme:name,bg=color,fg=color
 
 \* ---------------------------------------------------------------- */
@@ -62,9 +62,9 @@ static struct ThemeCursor cursors[] = {
     { "alock",
       alock_width, alock_height, alock_x_hot, alock_y_hot,
       alock_bits, alock_mask_bits },
-    
-    { "mini", 
-      mini_width, mini_height, mini_x_hot, mini_y_hot, 
+
+    { "mini",
+      mini_width, mini_height, mini_x_hot, mini_y_hot,
       mini_bits, mini_mask_bits },
 
     { "xtr",
@@ -82,9 +82,9 @@ static struct ThemeCursor cursors[] = {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-static Cursor cursor = 0;
-static XColor color_fg;
-static XColor color_bg;
+static Cursor* cursor = NULL;
+static XColor* color_fg = NULL;
+static XColor* color_bg = NULL;
 static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
 
     char* color_bg_name = strdup("steelblue3");
@@ -95,7 +95,7 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
 
     if (!xinfo || !args)
         return 0;
-    
+
     if (strstr(args, "theme:") == args && strlen(&args[6]) > 0) {
         char* arguments = strdup(&args[6]);
         char* tmp;
@@ -104,7 +104,7 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
             arg = strsep(&tmp, ",");
             if (arg) {
                 const struct ThemeCursor* cursor_theme_name;
-                    
+
                 if (!strcmp(arg, "list")) {
                     for (cursor_theme_name = cursors; cursor_theme_name->name; ++cursor_theme_name) {
                         printf("%s\n", cursor_theme_name->name);
@@ -139,40 +139,58 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
         free(arguments);
     }
 
-    alock_alloc_color(xinfo, color_fg_name, "white", &color_fg);
-    alock_alloc_color(xinfo, color_bg_name, "blank", &color_bg);
-    
-    free(color_fg_name);
-    free(color_bg_name);
-    
-    pixmap_cursor = XCreateBitmapFromData(xinfo->display, xinfo->root, 
-                                          theme->bits, theme->width, theme->height);
-    pixmap_cursor_mask = XCreateBitmapFromData(xinfo->display, xinfo->root, 
-                                               theme->mask, theme->width, theme->height);
+    {
+        int scr;
+        for (scr = 0; xinfo->nr_screens; scr++) {
+            alock_alloc_color(xinfo, scr, color_fg_name, "white", &color_fg[scr]);
+            alock_alloc_color(xinfo, scr, color_bg_name, "blank", &color_bg[scr]);
+        }
 
-    cursor = XCreatePixmapCursor(xinfo->display,
+        cursor = (Cursor*)calloc(xinfo->nr_screens, sizeof(Cursor));
+        color_bg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+        color_fg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+
+        free(color_fg_name);
+        free(color_bg_name);
+
+        for (scr = 0; xinfo->nr_screens; scr++) {
+
+            pixmap_cursor = XCreateBitmapFromData(xinfo->display, xinfo->root[scr],
+                                          theme->bits, theme->width, theme->height);
+            pixmap_cursor_mask = XCreateBitmapFromData(xinfo->display, xinfo->root[scr],
+                                           theme->mask, theme->width, theme->height);
+
+            cursor[scr] = XCreatePixmapCursor(xinfo->display,
                                  pixmap_cursor, pixmap_cursor_mask,
-                                 &color_fg, &color_bg,
+                                 &color_fg[scr], &color_bg[scr],
                                  theme->x_hot, theme->y_hot);
 
-    if (cursor) {
-        xinfo->cursor = cursor;
-        return 1;
-    } else
-        return 0;
+            if (cursor)
+                xinfo->cursor = cursor;
+        }
+    }
+
+    return 1;
 }
 
 static int alock_cursor_theme_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !cursor)
         return 0;
-
-    XFreeCursor(xinfo->display, cursor);
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            XFreeCursor(xinfo->display, cursor[scr]);
+        }
+        free(cursor);
+        free(color_bg);
+        free(color_fg);
+    }
     return 1;
 }
 
 struct aCursor alock_cursor_theme = {
     "theme",
-    alock_cursor_theme_init, 
+    alock_cursor_theme_init,
     alock_cursor_theme_deinit
 };
 

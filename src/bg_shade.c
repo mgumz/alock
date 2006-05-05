@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Di 18 Mai 2005 10:44:20 CEST
 
   $Id$
@@ -32,8 +32,8 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
-static Window window = 0;
-static XColor color;
+static Window* window = NULL;
+static XColor* color = NULL;
 
 static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
 
@@ -73,89 +73,105 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
                         return 0;
                     }
                 }
-            } 
+            }
         }
         free(arguments);
     }
-    
+
     if (!alock_check_xrender(xinfo)) {
         free(color_name);
         return 0;
     }
 
-    /* get a color from color_name */
-    alock_alloc_color(xinfo, color_name, "black", &color);
-    free(color_name);
-    
-    { /* get dimension of the screen */
-        XWindowAttributes xgwa;
-        XGetWindowAttributes(xinfo->display, xinfo->root, &xgwa);
-        width = xgwa.width;
-        height = xgwa.height;
+    {
+        window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
+        color = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
     }
 
-    { /* xrender stuff */
-        Display* dpy = xinfo->display;
-        Window root = xinfo->root;
-        int scrnr = DefaultScreen(dpy);
-        int depth = DefaultDepth(dpy, scrnr);
-        GC gc = DefaultGC(dpy, scrnr);
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
 
-        { /* grab whats on the screen */
-            XImage* image = XGetImage(dpy, root, 0, 0, width, height, AllPlanes, ZPixmap);
-            src_pm = XCreatePixmap(dpy, root, width, height, depth);
-            XPutImage(dpy, src_pm, gc, image, 0, 0, 0, 0, width, height);
-            XDestroyImage(image);
+            /* get a color from color_name */
+            alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
+
+            { /* get dimension of the screen */
+                XWindowAttributes xgwa;
+                XGetWindowAttributes(xinfo->display, xinfo->root[scr], &xgwa);
+                width = xgwa.width;
+                height = xgwa.height;
+            }
+            { /* xrender stuff */
+                Display* dpy = xinfo->display;
+                Window root = xinfo->root[scr];
+                int depth = DefaultDepth(dpy, scr);
+                GC gc = DefaultGC(dpy, scr);
+
+                { /* grab whats on the screen */
+                    XImage* image = XGetImage(dpy, root, 0, 0, width, height, AllPlanes, ZPixmap);
+                    src_pm = XCreatePixmap(dpy, root, width, height, depth);
+                    XPutImage(dpy, src_pm, gc, image, 0, 0, 0, 0, width, height);
+                    XDestroyImage(image);
+                }
+
+                dst_pm = XCreatePixmap(dpy, root, width, height, depth);
+
+                { /* tint the dst*/
+                    GC tintgc;
+                    XGCValues tintval;
+
+                    tintval.foreground = color[scr].pixel;
+                    tintgc = XCreateGC(dpy, dst_pm, GCForeground, &tintval);
+                    XFillRectangle(dpy, dst_pm, tintgc, 0, 0, width, height);
+                    XFreeGC(dpy, tintgc);
+                }
+
+                alock_shade_pixmap(xinfo, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
+            }
+
+            { /* create final window */
+                XSetWindowAttributes xswa;
+                long xsmask = 0;
+
+                xswa.override_redirect = True;
+                xswa.colormap = xinfo->colormap[scr];
+                xswa.background_pixmap = dst_pm;
+
+                xsmask |= CWOverrideRedirect;
+                xsmask |= CWBackPixmap;
+                xsmask |= CWColormap;
+
+                window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
+                                  0, 0, width, height,
+                                  0, /* borderwidth */
+                                  CopyFromParent, /* depth */
+                                  InputOutput, /* class */
+                                  CopyFromParent, /* visual */
+                                  xsmask, &xswa);
+                XFreePixmap(xinfo->display, src_pm);
+                XFreePixmap(xinfo->display, dst_pm);
+            }
+
+            if (window[scr])
+                xinfo->window[scr] = window[scr];
         }
-
-        dst_pm = XCreatePixmap(dpy, root, width, height, depth);
-
-        { /* tint the dst*/
-            GC tintgc;
-            XGCValues tintval;
-
-            tintval.foreground = color.pixel;
-            tintgc = XCreateGC(dpy, dst_pm, GCForeground, &tintval);
-            XFillRectangle(dpy, dst_pm, tintgc, 0, 0, width, height);
-            XFreeGC(dpy, tintgc);
-        }
-
-        alock_shade_pixmap(xinfo, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
+        free(color_name);
     }
 
-    { /* create final window */
-        XSetWindowAttributes xswa;
-        long xsmask = 0;
-
-        xswa.override_redirect = True;
-        xswa.colormap = xinfo->colormap;
-        xswa.background_pixmap = dst_pm;
-
-        xsmask |= CWOverrideRedirect;
-        xsmask |= CWBackPixmap;
-        xsmask |= CWColormap;
-    
-        window = XCreateWindow(xinfo->display, xinfo->root,
-                          0, 0, width, height,
-                          0, /* borderwidth */
-                          CopyFromParent, /* depth */
-                          InputOutput, /* class */
-                          CopyFromParent, /* visual */
-                          xsmask, &xswa);
-        XFreePixmap(xinfo->display, src_pm);
-        XFreePixmap(xinfo->display, dst_pm);
-    }
-    
-    if (window)
-        xinfo->window = window;
-    
-    return window;
+    return 1;
 }
 
 static int alock_bg_shade_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !window)
         return 0;
-    XDestroyWindow(xinfo->display, window);
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            XDestroyWindow(xinfo->display, window[scr]);
+        }
+        free(window);
+        free(color);
+    }
     return 1;
 }
 

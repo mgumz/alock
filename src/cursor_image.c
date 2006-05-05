@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Mi 01 June 2005 10:48:21 CEST
 
   $Id$
@@ -43,9 +43,9 @@
 static Cursor cursor = 0;
 
 static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
-    
+
     char* filename = NULL;
-    
+
     if (!xinfo || !args)
         return 0;
 
@@ -70,7 +70,7 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
         printf("alock: error, missing argument for [image].\n");
         return 0;
     }
-    
+
     if (!alock_check_xrender(xinfo)) {
         printf("alock: error, no running xrender extension found [image].\n");
         free(filename);
@@ -90,14 +90,14 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
             imlib_context_push(ctx);
             imlib_context_set_display(xinfo->display);
             imlib_context_set_visual(DefaultVisual(xinfo->display, DefaultScreen(xinfo->display)));
-            imlib_context_set_colormap(xinfo->colormap);
+            imlib_context_set_colormap(xinfo->colormap[0]);
 
             img = imlib_load_image_without_cache(filename);
             if (img) {
                 imlib_context_set_image(img);
                 w = imlib_image_get_width();
                 h = imlib_image_get_height();
-                
+
                 { /* taken from cursor.c of libXcursor */
                     GC gc = None;
                     XImage ximage;
@@ -117,16 +117,16 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
                     ximage.green_mask = 0x00ff00;
                     ximage.blue_mask = 0x0000ff;
                     ximage.obdata = 0;
-                    
+
                     XInitImage(&ximage);
 
-                    cursor_pm = XCreatePixmap(xinfo->display, xinfo->root, w, h, 32);
+                    cursor_pm = XCreatePixmap(xinfo->display, xinfo->root[0], w, h, 32);
                     gc = XCreateGC(xinfo->display, cursor_pm, 0, 0);
                     XPutImage(xinfo->display, cursor_pm, gc, &ximage, 0, 0, 0, 0, w, h);
                     XFreeGC(xinfo->display, gc);
                 }
                 imlib_free_image_and_decache();
-            } 
+            }
             imlib_context_pop();
             imlib_context_free(ctx);
         }
@@ -138,10 +138,10 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
                 GC gc = None;
                 w = img->width;
                 h = img->height;
-                
-                cursor_pm = XCreatePixmap(xinfo->display, 
-                                          xinfo->root, 
-                                          w, h, 
+
+                cursor_pm = XCreatePixmap(xinfo->display,
+                                          xinfo->root[0],
+                                          w, h,
                                           img->depth);
                 gc = XCreateGC(xinfo->display, cursor_pm, 0, NULL);
                 XPutImage(xinfo->display, cursor_pm, gc, img, 0, 0, 0, 0, w, h);
@@ -179,15 +179,20 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
 
     free(filename);
 
-    xinfo->cursor = cursor;
-    
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            xinfo->cursor[scr] = cursor;
+        }
+    }
+
     return cursor;
 }
 
 static int alock_cursor_image_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !cursor)
         return 0;
-    
+
     XFreeCursor(xinfo->display, cursor);
     return 1;
 }
@@ -195,7 +200,7 @@ static int alock_cursor_image_deinit(struct aXInfo* xinfo) {
 struct aCursor alock_cursor_image = {
     "image",
     alock_cursor_image_init,
-    alock_cursor_image_deinit 
+    alock_cursor_image_deinit
 };
 
 

@@ -1,4 +1,6 @@
 Version 1.0
+2006-05-05:
+	* lock all screens if in X is running in multiscreen mode
 2005-12-25:
 	* added -auth sha256
 	* added -auth sha384

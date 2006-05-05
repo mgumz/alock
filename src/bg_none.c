@@ -21,41 +21,53 @@
   includes
 \* ---------------------------------------------------------------- */
 #include <X11/Xlib.h>
+#include <stdlib.h>
 #include "alock.h"
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
-static Window window = 0;
+static Window* window = NULL;
 
 static int alock_bg_none_init(const char* args, struct aXInfo* xinfo) {
 
     XSetWindowAttributes xswa;
     long xsmask = 0;
-    
+
     if (!xinfo)
         return 0;
 
+    window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
+
     xswa.override_redirect = True;
     xsmask |= CWOverrideRedirect;
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
+                                  0, 0, 1, 1,
+                                  0, /* borderwidth */
+                                  CopyFromParent, /* depth */
+                                  InputOnly, /* class */
+                                  CopyFromParent, /* visual */
+                                  xsmask, &xswa);
 
-    window = XCreateWindow(xinfo->display, xinfo->root,
-                          0, 0, 1, 1,
-                          0, /* borderwidth */
-                          CopyFromParent, /* depth */
-                          InputOnly, /* class */
-                          CopyFromParent, /* visual */
-                          xsmask, &xswa);
+            if (window[scr])
+                xinfo->window[scr] = window[scr];
+        }
+    }
 
-    if (window)
-        xinfo->window = window;
-    
-    return window;
+    return 1;
 }
 
 static int alock_bg_none_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !window)
         return 0;
-    XDestroyWindow(xinfo->display, window);
+    {
+        int scr;
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+            XDestroyWindow(xinfo->display, window[scr]);
+        }
+    }
     return 1;
 }
 
