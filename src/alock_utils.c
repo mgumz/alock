@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Mo 23 Mai 2005 13:55:24 CEST
 
   $Id$
@@ -44,8 +44,8 @@ int alock_alloc_color(const struct aXInfo* xinfo, const int scr, const char* col
 
     static XColor tmp;
 
-    if (!xinfo || 
-        !xinfo->colormap || xinfo->nr_screens < scr || scr < 0 || 
+    if (!xinfo ||
+        !xinfo->colormap || xinfo->nr_screens < scr || scr < 0 ||
         !color_name || !fallback_name || !result)
         return 0;
 
@@ -79,7 +79,7 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
             have_xrender = 0;
         } else
             have_xrender = 1;
-        
+
         checked_already = 1;
     }
     return have_xrender;
@@ -90,17 +90,17 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
 }
 
 int alock_shade_pixmap(const struct aXInfo* xinfo,
+        int scr,
         const Pixmap src_pm,
-        Pixmap dst_pm, 
-        unsigned char shade, 
+        Pixmap dst_pm,
+        unsigned char shade,
         int src_x, int src_y,
         int dst_x, int dst_y,
         unsigned int width,
         unsigned int height) {
 #ifdef HAVE_XRENDER
     Display* dpy = xinfo->display;
-    int scrnr = DefaultScreen(dpy);
-    Visual* vis = DefaultVisual(dpy, scrnr);
+    Visual* vis = DefaultVisual(dpy, scr);
 
     Picture alpha_pic = None;
     XRenderPictFormat* format = None;
@@ -123,9 +123,9 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
         return 0;
     }
 
-    { /* fill the alpha-picture */ 
+    { /* fill the alpha-picture */
         Pixmap alpha_pm = None;
-        
+
         XRenderColor alpha_color;
         XRenderPictureAttributes alpha_attr;
 
@@ -138,18 +138,18 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
         XRenderFillRectangle(dpy, PictOpSrc, alpha_pic, &alpha_color, 0, 0, 1, 1);
         XFreePixmap(dpy, alpha_pm);
     }
-            
+
     { /* blend all together */
         Picture src_pic;
         Picture dst_pic;
-        
+
         format = XRenderFindVisualFormat(dpy, vis);
 
         src_pic = XRenderCreatePicture(dpy, src_pm, format, 0, 0);
         dst_pic = XRenderCreatePicture(dpy, dst_pm, format, 0, 0);
 
-        XRenderComposite(dpy, PictOpOver, 
-                         src_pic, alpha_pic, dst_pic, 
+        XRenderComposite(dpy, PictOpOver,
+                         src_pic, alpha_pic, dst_pic,
                          src_x, src_y, 0, 0, dst_x, dst_y, width, height);
         XRenderFreePicture(dpy, src_pic);
         XRenderFreePicture(dpy, dst_pic);

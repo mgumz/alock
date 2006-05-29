@@ -103,11 +103,9 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
         shade = 0;
     }
 
-    {
-        pixmap = (Pixmap*)calloc(xinfo->nr_screens, sizeof(Pixmap));
-        window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
-        color = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
-    }
+    pixmap = (Pixmap*)calloc(xinfo->nr_screens, sizeof(Pixmap));
+    window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
+    color = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
 
     {
         int scr;
@@ -171,7 +169,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                         imlib_context_set_drawable(tmp_pixmap);
                         imlib_render_image_on_drawable(0, 0);
 
-                        alock_shade_pixmap(xinfo, tmp_pixmap, shaded_pixmap, shade, 0, 0, 0, 0, w, h);
+                        alock_shade_pixmap(xinfo, scr, tmp_pixmap, shaded_pixmap, shade, 0, 0, 0, 0, w, h);
 
                         imlib_free_image_and_decache();
                         imlib_context_set_drawable(shaded_pixmap);
@@ -250,7 +248,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
     if (filename)
         free(filename);
 
-    return window;
+    return (window != 0);
 }
 
 

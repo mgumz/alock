@@ -126,7 +126,7 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
                     XFreeGC(dpy, tintgc);
                 }
 
-                alock_shade_pixmap(xinfo, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
+                alock_shade_pixmap(xinfo, scr, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
             }
 
             { /* create final window */

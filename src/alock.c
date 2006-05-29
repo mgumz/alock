@@ -89,14 +89,14 @@ static struct aBackground* alock_backgrounds[] = {
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 extern struct aCursor alock_cursor_none;
-extern struct aCursor alock_cursor_theme;
 extern struct aCursor alock_cursor_glyph;
+extern struct aCursor alock_cursor_theme;
 #ifdef HAVE_XCURSOR
 extern struct aCursor alock_cursor_xcursor;
-#endif /* HAVE_XCURSOR */
 #ifdef HAVE_XRENDER
 extern struct aCursor alock_cursor_image;
 #endif /* HAVE_XRENDER */
+#endif /* HAVE_XCURSOR */
 
 static struct aCursor* alock_cursors[] = {
     &alock_cursor_none,
@@ -104,10 +104,10 @@ static struct aCursor* alock_cursors[] = {
     &alock_cursor_glyph,
 #ifdef HAVE_XCURSOR
     &alock_cursor_xcursor,
-#endif /* HAVE_XCURSOR */
 #ifdef HAVE_XRENDER
     &alock_cursor_image,
 #endif /* HAVE_XRENDER */
+#endif /* HAVE_XCURSOR */
     NULL
 };
 /*------------------------------------------------------------------*\
@@ -229,11 +229,9 @@ int main(int argc, char **argv) {
     const char* cursor_args = NULL;
     const char* background_args = NULL;
 
-    opts.auth = alock_authmodules[0];
+    opts.auth = NULL;
     opts.cursor = alock_cursors[0];
     opts.background = alock_backgrounds[0];
-
-    opts.auth->init(NULL);
 
     /*  parse options */
     if (argc != 1) {
@@ -352,6 +350,14 @@ int main(int argc, char **argv) {
             }
         }
     }
+
+    if (!opts.auth) {
+        printf("alock: error, no auth-method specified.\n");
+        displayUsage();
+        exit(1);
+    }
+
+    opts.auth->init(NULL);
 
     initXInfo(&xinfo, &opts);
 

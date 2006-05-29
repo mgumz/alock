@@ -1,26 +1,28 @@
 Version 1.0
+----------------------------------------------------------------------
+2006-05-29:
+	* added a minimal configure / gmake buildsystem to make building easier
+	* stop when no auth method is selected to prevent confusion
+
 2006-05-05:
 	* lock all screens if in X is running in multiscreen mode
+
 2005-12-25:
 	* added -auth sha256
 	* added -auth sha384
 	* added -auth sha512
 
 2005-08-12:
-
 	* added static=yes built option to scons
 
 2005-06-01:
-
 	* added -cursor image:file=<filename>, uses xrender and xpm/imlib2
 
 2005-05-25:
-	
 	* solved problems install-problems: use at least scons 0.96.90
 	* minor tweaks to buildsystem
 
 2005-05-24:
-
 	* updated documentation
 	* updated buildsystem, scons install works
 	* rewritten README to be also in asciidoc-format
@@ -30,20 +32,17 @@ Version 1.0
 	* rename -cursor font to -cursor glyph
 
 2005-05-23:
-
 	* added -bg image:shade=<perc>
 	* little restructuring:
 		- added alock_utils.c for shared code
 		- mv bg_imlib2.c bg_image.c
 
 2005-05-20:
-
 	* added -bg shade:
 		- shade=<perc> - percentage, 0 - 100
 		- color=<color> - tint with <color>, default is "black"
 
 2005-05-18:
-
 	* fixed minor issues with defaults
 	* deleted fancy contrib/xcursor-watch (too big)
 	* added even more fancy contrib/xcursor-fluxbox
@@ -56,7 +55,6 @@ Version 1.0
 	* -bg blank uses the color-option now
 
 2005-05-17:
-
 	* restructuring almost done, polished interface:
 		: working -bg, -auth and -cursor with all the submodules
 		- cleaned -h
@@ -65,22 +63,18 @@ Version 1.0
 	* added -cursor none, doesnt change cursor
 
 2005-05-16:
-
 	* updated documention
 
 2005-05-14:
-
 	* started documention, using asciidoc
 
 2005-05-09:
-
 	* changed project-name to 'alock':
 		+ simpler, better name
 		+ i want to dedicate it to my gf: anja
 	* minor fixes
 
 2005-05-08:
-
 	* changed the auth_md5.c - code to the openbsd-version (public domain)
 	* added auth_sha1.c - also from openbsd-codebase, also public domain
 	* added two stand-alone programs to calculate md5/sha1 hashs:
@@ -90,7 +84,6 @@ Version 1.0
 	* minor changes to aklock.c
 
 2005-05-07:
-
 	* big restructering + feature enhancements
 		+ added auth_<method>.c, each basic auth-method has now
 		  its own implementation-file
@@ -103,7 +96,6 @@ Version 1.0
 	* support for 'shadow'-passwords is part of the passwd authmodule
 
 2005-05-06:
-
 	* added -nolock
 	* discard all pending xevents after wrong password to prevent
 	  strange folks for blocking the current session by filling
@@ -118,20 +110,15 @@ Version 1.0
 		+ src/
 
 2005-05-02:
-
 	* restructuring
 
 2005-04-30:
-
 	* added -cursor <theme>
 	* cursor-bitmap-themes are stored in bitmaps/
 	* started svn-usage
-
-Version 0.1
 
 2005-04-28: 
 	* first release (0.1)
 	* added pam-support (works ok with linux + freebsd so far)
 	* use scons for building the stuff
 
-# vim:ft=changelog

@@ -80,6 +80,7 @@ int alock_alloc_color(const struct aXInfo* xinfo, const int scr,
         XColor* result);
 int alock_check_xrender(const struct aXInfo* xinfo);
 int alock_shade_pixmap(const struct aXInfo* xinfo,
+        int scr,
         const Pixmap src_pm,
         Pixmap dst_pm,
         unsigned char shade,

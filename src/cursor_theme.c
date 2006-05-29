@@ -33,7 +33,9 @@
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
+#ifdef HAVE_THEME
 #include <X11/bitmaps/xlogo16>
+#endif /* HAVE_THEME */
 
 #include "../bitmaps/mini.xbm"
 #include "../bitmaps/mini_mask.xbm"
@@ -141,19 +143,15 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
 
     {
         int scr;
-        for (scr = 0; xinfo->nr_screens; scr++) {
-            alock_alloc_color(xinfo, scr, color_fg_name, "white", &color_fg[scr]);
-            alock_alloc_color(xinfo, scr, color_bg_name, "blank", &color_bg[scr]);
-        }
 
         cursor = (Cursor*)calloc(xinfo->nr_screens, sizeof(Cursor));
         color_bg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
         color_fg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
 
-        free(color_fg_name);
-        free(color_bg_name);
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
 
-        for (scr = 0; xinfo->nr_screens; scr++) {
+            alock_alloc_color(xinfo, scr, color_fg_name, "white", &color_fg[scr]);
+            alock_alloc_color(xinfo, scr, color_bg_name, "blank", &color_bg[scr]);
 
             pixmap_cursor = XCreateBitmapFromData(xinfo->display, xinfo->root[scr],
                                           theme->bits, theme->width, theme->height);
@@ -165,10 +163,16 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
                                  &color_fg[scr], &color_bg[scr],
                                  theme->x_hot, theme->y_hot);
 
-            if (cursor)
-                xinfo->cursor = cursor;
         }
+
+        if (cursor)
+            xinfo->cursor = cursor;
+
     }
+
+    free(color_fg_name);
+    free(color_bg_name);
+
 
     return 1;
 }
