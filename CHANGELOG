@@ -1,5 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-06-01:
+	* fixed gmake buildsystem
+
 2006-05-29:
 	* added a minimal configure / gmake buildsystem to make building easier
 	* stop when no auth method is selected to prevent confusion

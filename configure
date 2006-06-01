@@ -6,6 +6,7 @@
 
 CHECK_XRENDER=0
 CHECK_XCURSOR=0
+CHECK_XPM=0
 CHECK_IMLIB2=0
 CHECK_PAM=0
 CHECK_PASSWD=0
@@ -44,9 +45,9 @@ EOF
             then
                 echo "ok."
                 echo "#_______________________" >&4
-                echo "WITH_IMLIB2=1" >&4
-                echo "CFLAGS_IMLIB2=`imlib2-config --cflags`" >&4
-                echo "LIBS_IMLIB2=`imlib2-config --libs`" >&4
+                echo "WITH_IMLIB2:=1" >&4
+                echo "CFLAGS_IMLIB2:=`imlib2-config --cflags`" >&4
+                echo "LIBS_IMLIB2:=`imlib2-config --libs`" >&4
                 echo "" >&4
             else
                 echo "no."
@@ -86,9 +87,9 @@ EOF
         then
             echo "ok."
             echo "#_______________________" >&4
-            echo "WITH_XRENDER=1" >&4
-            echo "CFLAGS_XRENDER=" >&4
-            echo "LDFLAGS_XRENDER=-lXrender" >&4
+            echo "WITH_XRENDER:=1" >&4
+            echo "CFLAGS_XRENDER:=" >&4
+            echo "LDFLAGS_XRENDER:=-lXrender" >&4
             echo "" >&4
         else
             echo "no."
@@ -119,10 +120,10 @@ EOF
         then
             echo "ok."
             echo "#_______________________" >&4
-            echo "WITH_XCURSOR=1" >&4
-            echo "CFLAGS_XCURSOR=" >&4
-            echo "LDFLAGS_XCURSOR=" >&4
-            echo "LIBS_XCURSOR=-lXcursor" >&4
+            echo "WITH_XCURSOR:=1" >&4
+            echo "CFLAGS_XCURSOR:=" >&4
+            echo "LDFLAGS_XCURSOR:=" >&4
+            echo "LIBS_XCURSOR:=-lXcursor" >&4
             echo "" >&4
         else
             echo "no."
@@ -178,7 +179,7 @@ EOF
     then
         echo "ok."
         echo "#_______________________" >&4
-        echo "WITH_THEME=1" >&4
+        echo "WITH_THEME:=1" >&4
         echo "" >&4
     else
         echo "no."
@@ -186,18 +187,48 @@ EOF
     fi
 }
 
+check_xpm() {
+    cat << EOF > tmp.c
+#include <X11/xpm.h>
+int main() {
+    XpmReadFileToImage(NULL, NULL, NULL, NULL, NULL);
+}
+EOF
+    msg_chkfor "X11/xpm.h"
+    if ${CC} ${CFLAGS} -c tmp.c -o /dev/null 2>&3
+    then
+        echo "ok."
+        msg_chkfor "libXpm"
+        if ${CC} ${CFLAGS} tmp.c -o /dev/null ${LDFLAGS} -lXpm -lX11 2>&3
+        then
+            echo "ok."
+            echo "#_______________________" >&4
+            echo "WITH_XPM:=1" >&4
+            echo "LIBS_XPM:=-lXpm" >&4
+            echo "" >&4
+        else
+            echo "no."
+            exit 1
+        fi
+    else
+        echo "no."
+        echo "maybe you should install a package called 'xpm'."
+        exit 1
+    fi
+}
+
 check_hash() {
 
     echo "configure for hash."
     echo "#_______________________" >&4
-    echo "WITH_HASH=1" >&4
+    echo "WITH_HASH:=1" >&4
     echo "" >&4
 }
 
 check_pam() {
     echo "configure for pam."
     echo "#_______________________" >&4
-    echo "WITH_PAM=1" >&4
+    echo "WITH_PAM:=1" >&4
     echo "LIBS_PAM= -lpam -lpam_misc -lcrypt" >&4
     echo "" >&4
 }
@@ -205,7 +236,7 @@ check_pam() {
 check_passwd() {
     echo "configure for passwd."
     echo "#_______________________" >&4
-    echo "WITH_PASSWD=1" >&4
+    echo "WITH_PASSWD:=1" >&4
     echo "LIBS_PASSWD=-lcrypt" >&4
     echo "" >&4
 }
@@ -245,6 +276,9 @@ EOF
 
         --with-xcursor|--enable-xcursor) CHECK_XCURSOR=1;;
         --without-xcursor|--disable-xcursor) CHECK_XCURSOR=0;;
+
+        --with-xpm|--enable-xpm) CHECK_XPM=1;;
+        --without-xpm|--disable-xpm) CHECK_XPM=0;;
 
         --with-imlib2|--enable-imlib2) CHECK_IMLIB2=1;;
         --without-imlib2|--disable-imlib2) CHECK_IMLIB2=0;;
@@ -294,12 +328,16 @@ echo "" >&4
 
 check_xlib
 check_xlogo16
+[[ $CHECK_XPM == 1 ]] && check_xpm
 [[ $CHECK_XRENDER == 1 ]] && check_xrender
 [[ $CHECK_XCURSOR == 1 ]] && check_xcursor
 [[ $CHECK_IMLIB2 == 1 ]] && check_imlib2
 [[ $CHECK_PAM == 1 ]] && check_pam
 [[ $CHECK_PASSWD == 1 ]] && check_passwd
 [[ $CHECK_HASH == 1 ]] && check_hash
+
+echo "#_______________________" >&4
+echo "" >&4
 
 true
 

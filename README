@@ -1,77 +1,113 @@
-alock - README
-==============
+ALOCK(1)
+========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 05 May 2006
+v1.0, 01 June 2006
 
-About
------
-'alock' locks your current session in X. It's not a full featured
-screensaver distribution like 'xlockmore' or 'xscreensaver', but just a
-tiny locker: "uh, i need coffee .. so i need a lock" .. 
-You can modify the way you have to authenitificate yourself, the way the
-mousepointer looks when you locked the display and the way the content of
-the display is handled. Eg: with -bg none you can see whats going on, 
-even when you are not able to modify what you see, which might be pretty 
-usefull for public terminals where a demo should run but noone should
-press any buttons or keys (you know those little kids ... )
+NAME
+----
+alock - locks the local X display until a password is entered.
 
-Installation
-------------
-To install / compile 'alock' you need 'scons':
+SYNOPSIS
+--------
+'alock' [-h] [-v] [-bg type:opts] [-cursor type:opts] [-auth type:opts]
 
-* link:http://www.scons.org[scons]
+DESCRIPTION
+-----------
+'alock' locks the X server till the user enters a password at the
+keyboard. If the authentification was successful the X server is
+unlocked and the user can continue to work.
 
-It's a clever buildsystem which i prefer over make/autotools. Be sure you
-grab the latest (0.96.90) version installed to avoid problems at install-time.
-After installing 'scons' you just type:
+'alock' does not provide fancy animations like 'xlock' and 'xscreensaver'
+and never will. Its just for locking the current X session.
 
-    $> scons
-
-and it should build your personal version of 'alock'.
-You can influence the build-process by some variables, check
-
-    $> scons -h
-
-To install it finally to your system use:
-
-    $> scons install
-
-and thats it.
-If you grabed a svn-version (not a release-tarball) you also need
-'asciidoc' and 'xmlto' to create the documentation-files:
-
-* link:http://www.methods.co.nz/asciidoc/[AsciiDoc]
-* link:http://cyberelk.net/tim/xmlto/[xmlto]
-
-Tested platforms (so far):
-
-* gentoo-linux (pc and ppc with gcc3.4.3) 
-* freebsd5.3 (pc gcc3.4.2)
-* slackware (pc, gcc3.3.5, shadow)
-
-Usage
------
-You find more info about how to use 'alock' in the alock-documentation:
-
-    $> less alock.txt
-    $> man alock
-    $> firefox alock.html
-
-History
+OPTIONS
 -------
-An irc-buddy of mine (izhirahider) was using 'xtrlock' and had some
-problems with it .. no wonder, development stopped some years ago
-and it doesnt support 'pam'. Since i liked the minimalism of 'xtrlock' 
-but wanted to add some minor things to it i forked 'alock' from
-'xtrlock' and modified it a bit :) At the moment there is almost no code
-from 'xtrlock' left.
+-h ::
+    Print a short help
+-v ::
+    Print the version number
 
-Author / Contributors
----------------------
-* 2005 - 2006 Mathias Gumz aka akira <akira@fluxbox.org> (code)
-* 1993 - 1994 Ian Jackson (xtrlock)
+-auth type:options ::
+    Define the type of the authentification, depends strongly on
+    how alock was built:
+    - list - Displays a list of available types
+    - passwd - Tries to authentificate against the users system-password.
+               On systems using 'shadow' alock needs the suid-flag set.
+    - pam - Tries to authentificate against the users system-password
+            using the 'pam-login'-module.
+    - md5 - alock creates a md5-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename>  - use content of <filename> as reference
 
-* 2005        Tenner (alock-logo)
-* 2001-2005   Fluxbox-Team (fluxbox-logo)
-* 2005        Pekwm-Team (pekwm-logo)
+    - sha1 - alock creates a sha1-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
+    - sha256 - alock creates a sha256-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
+    - sha384 - alock creates a sha384-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
+    - sha512 - alock creates a sha512-hash from the entered unlockpassword and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
 
+
+
+-bg type:options ::
+    Define the type of alock should handle the background:
+    - list - Displays a list of available types
+    - none - You can see everything like it is
+    - blank - Fill the background with color
+        * color=<color> - Use <color>
+    - shade - Dims content of the screen and recolors it.
+        * shade=<perc> - Valid from 1 to 99
+        * color=<color> - Use <color>
+    - image - Use the image <filename> and puts it as the background
+        * file=<filename>
+        * center
+        * scale
+        * tile
+        * color=<color> - Use <color>
+        * shade=<perc> - Valid from 1 to 99
+
+-cursor type:options ::
+    Define the look-a-like of the cursor/mouse pointer:
+    - list - Displays a list of available types
+    - theme - Use the given internal cursor
+        * list - Display all possible themes
+        * name=<name>
+        * bg=<color> - Use forground-color
+        * fg=<color> - Use background-color
+    - glyph - Use the given glyph of the "cursor"-font
+        * list - Display all possible glyph-names
+        * name=<name>
+        * bg=<color>
+        * fg=<color>
+    - xcursor - Use the given <filename> in xcursor-format
+        * file=<filename> 
+    - image - Use the given <filename>
+        * file=<filename>
+    - none - No change to the current cursor
+
+AUTHOR
+------
+Written by Mathias Gumz <akira at fluxbox dot org>
+
+RESOURCES
+---------
+
+link:http://darkshed.net[Home]
+
+Other Lockers ::
+- link:http://www.tux.org/~bagleyd/xlockmore.html[xlockmore]
+- link:http://www.jwz.org/xscreensaver/[xscreensaver]
+- link:ftp://ftp.debian.org/debian/dists/stable/main/source/x11/[xtrlock]
+- link:ftp://ftp.ibiblio.org/pub/Linux/utils/console/[vlock]
+- link:ftp://ftp.ibiblio.org/pub/Linux/utils/console/[lockvc]
+
+COPYING
+-------
+Copyright (C) 2005 - 2006 Mathias Gumz. Free use of this software is
+granted under the terms of the MIT. See LICENSE provided in the
+distribution.

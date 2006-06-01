@@ -1,4 +1,5 @@
 
+
 /* ---------------------------------------------------------------- *\
 
   file    : alock.c
@@ -93,9 +94,9 @@ extern struct aCursor alock_cursor_glyph;
 extern struct aCursor alock_cursor_theme;
 #ifdef HAVE_XCURSOR
 extern struct aCursor alock_cursor_xcursor;
-#ifdef HAVE_XRENDER
+#if (defined(HAVE_XRENDER) && (defined(HAVE_XPM) || (defined(HAVE_IMLIB2))))
 extern struct aCursor alock_cursor_image;
-#endif /* HAVE_XRENDER */
+#endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
 #endif /* HAVE_XCURSOR */
 
 static struct aCursor* alock_cursors[] = {
@@ -104,9 +105,9 @@ static struct aCursor* alock_cursors[] = {
     &alock_cursor_glyph,
 #ifdef HAVE_XCURSOR
     &alock_cursor_xcursor,
-#ifdef HAVE_XRENDER
+#if (defined(HAVE_XRENDER) && ((defined(HAVE_XPM) || defined(HAVE_IMLIB2))))
     &alock_cursor_image,
-#endif /* HAVE_XRENDER */
+#endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
 #endif /* HAVE_XCURSOR */
     NULL
 };

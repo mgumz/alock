@@ -72,10 +72,11 @@ static struct ThemeCursor cursors[] = {
     { "xtr",
       xtr_width, xtr_height, xtr_x_hot, xtr_y_hot,
       xtr_bits, xtr_mask_bits },
-
+#ifdef HAVE_THEME
     { "xlogo16",
       xlogo16_width, xlogo16_height, xlogo16_width / 2, xlogo16_height / 2,
       xlogo16_bits, xlogo16_bits },
+#endif /* HAVE_THEME */
 
     { NULL, 0, 0, 0, 0, NULL, NULL }
 };
