@@ -10,7 +10,7 @@ CHECK_XPM=0
 CHECK_IMLIB2=0
 CHECK_PAM=0
 CHECK_PASSWD=0
-CHECK_HASH=0
+CHECK_HASH=1
 
 prefix=/usr/local
 
@@ -21,6 +21,19 @@ msg_chkfor() {
     echo -n "checking for "$1" ... "
 }
 
+check_docs() {
+
+    msg_chkfor "asciidoc"
+    if which asciidoc 1> /dev/null 2>&3
+    then
+        echo "ok."
+        echo "#_______________________" >&4
+        echo "WITH_DOCS=1" >&4
+        echo "" >&4
+    else
+        echo "no. you cant rebuild the docs."
+    fi
+}
 
 check_imlib2() {
 
@@ -325,7 +338,7 @@ echo "LIBS=${LIBS}" >&4
 echo "#_______________________" >&4
 echo "" >&4
 
-
+check_docs
 check_xlib
 check_xlogo16
 [[ $CHECK_XPM == 1 ]] && check_xpm
