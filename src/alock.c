@@ -34,29 +34,29 @@
     globals
 \*------------------------------------------------------------------*/
 extern struct aAuth alock_auth_none;
-#ifdef HASH_PWD
+#ifdef HAVE_HASH 
 extern struct aAuth alock_auth_md5;
 extern struct aAuth alock_auth_sha1;
 extern struct aAuth alock_auth_sha256;
 extern struct aAuth alock_auth_sha384;
 extern struct aAuth alock_auth_sha512;
-#endif /* HASH_PWD */
-#ifdef PASSWD_PWD
+#endif /* HAVE_HASH */
+#ifdef HAVE_PASSWD
 extern struct aAuth alock_auth_passwd;
-#endif /* PASSWD_PWD */
-#ifdef PAM_PWD
+#endif /* HAVE_PASSWD */
+#ifdef HAVE_PAM
 extern struct aAuth alock_auth_pam;
-#endif /* PAM_PWD */
+#endif /* HAVE_PAM */
 
 static struct aAuth* alock_authmodules[] = {
     &alock_auth_none,
-#ifdef PAM_PWD
+#ifdef HAVE_PAM
     &alock_auth_pam,
-#endif
-#ifdef PASSWD_PWD
+#endif /* HAVE_PAM */
+#ifdef HAVE_PASSWD
     &alock_auth_passwd,
-#endif /* PASSWD_PWD */
-#ifdef HASH_PWD
+#endif /* HAVE_PASSWD */
+#ifdef HAVE_HASH
     &alock_auth_md5,
     &alock_auth_sha1,
     &alock_auth_sha256,

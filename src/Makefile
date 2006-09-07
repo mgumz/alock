@@ -1,13 +1,11 @@
-
-###
-#
-#
+##########################
 $(info check for ../config.mk ...)
 ifeq ($(wildcard ../config.mk),../config.mk)
 $(info ok.)
 include ../config.mk
 endif
 
+##########################
 define funcAddModule
 	ifdef WITH_$(1)
 		SRC += $$(SRC_$(1))
@@ -72,8 +70,7 @@ deps: $(DEPS)
 %.d : %.c
 	$(MAKEDEP) -o $@ $<
 
-
-
+#######################
 
 ifneq ($(MAKECMDGOALS),deps)
 ifneq ($(MAKECMDGOALS),first)
@@ -85,5 +82,6 @@ endif
 endif
 endif
 
-
+#######################
+#######################
 
