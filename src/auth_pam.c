@@ -28,8 +28,10 @@
 
 #include <X11/Xlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
@@ -67,7 +69,7 @@ static int PAM_error = 0;
 static int pam_error = PAM_SUCCESS;
 
 static int PAM_conv(int num_msg, const struct pam_message **msgs,
-	              struct pam_response **resp, void *appdata_ptr) {
+                    struct pam_response **resp, void *appdata_ptr) {
 
     int count = 0;
     unsigned int replies = 0U;

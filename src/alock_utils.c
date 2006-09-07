@@ -32,9 +32,10 @@
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 void alock_string2lower(char* string) {
-    static unsigned int i;
-    for(i = strlen(string) - 1; i; --i)
-        tolower(string[i]);
+    const size_t s = strlen(string);
+    size_t i;
+    for(i = 0; i < s; i++)
+        string[i] = tolower(string[i]);
 }
 
 /* ---------------------------------------------------------------- *\

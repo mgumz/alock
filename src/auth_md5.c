@@ -383,10 +383,10 @@ static int alock_auth_md5_auth(const char* pass) {
 
     memset(stringdigest, 0, MD5_DIGEST_STRING_LENGTH);
     for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        sprintf(&stringdigest[i*2], "%02x", digest[i]);
+        sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
     }
 
-    return !strcmp(stringdigest, userhash);
+    return !strcmp((char*)stringdigest, userhash);
 }
 
 struct aAuth alock_auth_md5 = {

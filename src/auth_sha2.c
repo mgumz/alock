@@ -992,9 +992,9 @@ static int alock_auth_sha2_auth(const char* pass) {
 
             memset(stringdigest, 0, SHA256_DIGEST_STRING_LENGTH);
             for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-                sprintf(&stringdigest[i*2], "%02x", digest[i]);
+                sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
             }
-            return !strcmp(stringdigest, userhash);
+            return !strcmp((char*)stringdigest, userhash);
         }
         break;
     case 512: {
@@ -1009,9 +1009,9 @@ static int alock_auth_sha2_auth(const char* pass) {
 
             memset(stringdigest, 0, SHA512_DIGEST_STRING_LENGTH);
             for (i = 0; i < SHA512_DIGEST_LENGTH; i++) {
-                sprintf(&stringdigest[i*2], "%02x", digest[i]);
+                sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
             }
-            return !strcmp(stringdigest, userhash);
+            return !strcmp((char*)stringdigest, userhash);
         }
         break;
     case 384: {
@@ -1026,9 +1026,9 @@ static int alock_auth_sha2_auth(const char* pass) {
 
             memset(stringdigest, 0, SHA384_DIGEST_STRING_LENGTH);
             for (i = 0; i < SHA384_DIGEST_LENGTH; i++) {
-                sprintf(&stringdigest[i*2], "%02x", digest[i]);
+                sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
             }
-            return !strcmp(stringdigest, userhash);
+            return !strcmp((char*)stringdigest, userhash);
         }
         break;
     };

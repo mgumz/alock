@@ -319,10 +319,10 @@ static int alock_auth_sha1_auth(const char* pass) {
 
     memset(stringdigest, 0, SHA1_DIGEST_STRING_LENGTH);
     for (i = 0; i < SHA1_DIGEST_LENGTH; i++) {
-        sprintf(&stringdigest[i*2], "%02x", digest[i]);
+        sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
     }
 
-    return !strcmp(stringdigest, userhash);
+    return !strcmp((char*)stringdigest, userhash);
 }
 
 struct aAuth alock_auth_sha1 = {
