@@ -122,7 +122,7 @@ static void displayUsage() {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-static void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
+static void initXInfo(struct aXInfo* xinfo) {
 
     Display* dpy = XOpenDisplay(NULL);
 
@@ -132,18 +132,17 @@ static void initXInfo(struct aXInfo* xinfo, struct aOpts* opts) {
     }
 
     {
-        const size_t nr_screens = ScreenCount(dpy);
         xinfo->display = dpy;
-        xinfo->nr_screens = nr_screens;
-        xinfo->window = (Window*)calloc(nr_screens, sizeof(Window));
-        xinfo->root = (Window*)calloc(nr_screens, sizeof(Window));
-        xinfo->colormap = (Colormap*)calloc(nr_screens, sizeof(Colormap));
-        xinfo->cursor = (Cursor*)calloc(nr_screens, sizeof(Cursor));
+        xinfo->nr_screens = ScreenCount(dpy);
+        xinfo->window = (Window*)calloc((size_t)xinfo->nr_screens, sizeof(Window));
+        xinfo->root = (Window*)calloc((size_t)xinfo->nr_screens, sizeof(Window));
+        xinfo->colormap = (Colormap*)calloc((size_t)xinfo->nr_screens, sizeof(Colormap));
+        xinfo->cursor = (Cursor*)calloc((size_t)xinfo->nr_screens, sizeof(Cursor));
     }
     {
         int scr;
         for (scr = 0; scr < xinfo->nr_screens; scr++) {
-            xinfo->window[scr] = 0;
+            xinfo->window[scr] = None;
             xinfo->root[scr] = RootWindow(dpy, scr);
             xinfo->colormap[scr] = DefaultColormap(dpy, scr);
         }
@@ -157,7 +156,8 @@ static int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
     char cbuf[10], rbuf[50];
     unsigned int clen, rlen = 0;
 
-    long goodwill = 5 * 30000;
+    const long max_goodwill = 5 * 30000; /* 150 seconds */
+    long goodwill = max_goodwill;
     long timeout = 0;
 
     for(;;) {
@@ -194,22 +194,29 @@ static int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
                 XSync(xinfo->display, True); /* discard pending events to start really fresh */
                 XBell(xinfo->display, 0);
                 rlen = 0;
+
                 if (timeout) {
                     goodwill += ev.xkey.time - timeout;
-                    if (goodwill > 5 * 30000) {
-                        goodwill = 5 * 30000;
+                    if (goodwill > max_goodwill) {
+                        goodwill = max_goodwill;
                     }
                 }
-                timeout = -goodwill * 0.3;
-                goodwill += timeout;
-                timeout += ev.xkey.time + 30000;
+
+                {
+                    long offset;
+
+                    offset = goodwill * 0.3;
+                    goodwill = goodwill - offset;
+                    timeout = ev.xkey.time + 30000 - offset;
+                }
                 break;
             default:
                 if (clen != 1)
                     break;
-                if (rlen < sizeof(rbuf))
+                if (rlen < (sizeof(rbuf) - 1)) {
                     rbuf[rlen] = cbuf[0];
-                rlen++;
+                    rlen++;
+                }
                 break;
             }
             break;
@@ -359,9 +366,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    opts.auth->init(NULL);
-
-    initXInfo(&xinfo, &opts);
+    initXInfo(&xinfo);
 
     if (opts.background->init(background_args, &xinfo) == 0) {
         printf("alock: error, couldnt init [%s] with [%s].\n",
