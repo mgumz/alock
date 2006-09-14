@@ -38,9 +38,9 @@ install : alock
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/bitmaps/*
 	cp -fv README LICENSE CHANGELOG \
 		$(DESTDIR)$(prefix)/share/alock/
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/README
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/LICENSE
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/CHANGELOG
+	chmod 444 $(DESTDIR)$(prefix)/share/alock/README.txt
+	chmod 444 $(DESTDIR)$(prefix)/share/alock/LICENSE.txt
+	chmod 444 $(DESTDIR)$(prefix)/share/alock/CHANGELOG.txt
 
 
 alock :

@@ -1,5 +1,10 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-09-11:
+	* made the timeout function more clear
+	* only accept rlen < 50, dont increase it when it makes no sense
+	* minor splint based mods
+
 2006-06-01:
 	* fixed gmake buildsystem
 
