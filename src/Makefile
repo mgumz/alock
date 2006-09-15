@@ -47,8 +47,8 @@ $(foreach module,$(MODULES),$(eval $(call funcAddModule,$(module))))
 #######################
 SOURCES = $(sort $(SRC))
 OBJECTS = $(SOURCES:.c=.o)
-DEPS = $(SOURCES:.c=.d)
-TARGET = alock
+DEPS    = $(foreach d,$(SOURCES), .$(d:.c=.d))
+TARGET  = alock
 #######################
 
 
@@ -67,8 +67,8 @@ distclean:
 
 deps: $(DEPS)
 
-%.d : %.c
-	$(MAKEDEP) -o $@ $<
+.%.d : %.c
+	$(MAKEDEP) $(CFLAGS) -o $@ $<
 
 #######################
 

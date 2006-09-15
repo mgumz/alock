@@ -1,8 +1,8 @@
 #!/bin/sh
 
-[[ -z $CC ]] && CC=gcc
-[[ -z $CFLAGS ]] && CFLAGS="-I/usr/X11R6/include"
-[[ -z $LDFLAGS ]] && LDFLAGS="-L/usr/X11R6/lib"
+[ -z $CC ] && CC=gcc
+[ -z $CFLAGS ] && CFLAGS="-I/usr/X11R6/include"
+[ -z $LDFLAGS ] && LDFLAGS="-L/usr/X11R6/lib"
 
 CHECK_XRENDER=0
 CHECK_XCURSOR=0
@@ -351,13 +351,13 @@ echo "" >&4
 check_docs
 check_xlib
 check_xlogo16
-[[ $CHECK_XPM == 1 ]] && check_xpm
-[[ $CHECK_XRENDER == 1 ]] && check_xrender
-[[ $CHECK_XCURSOR == 1 ]] && check_xcursor
-[[ $CHECK_IMLIB2 == 1 ]] && check_imlib2
-[[ $CHECK_PAM == 1 ]] && check_pam
-[[ $CHECK_PASSWD == 1 ]] && check_passwd
-[[ $CHECK_HASH == 1 ]] && check_hash
+[ "$CHECK_XPM" -eq 1 ] && check_xpm
+[ "$CHECK_XRENDER" -eq 1 ] && check_xrender
+[ "$CHECK_XCURSOR" -eq 1 ] && check_xcursor
+[ "$CHECK_IMLIB2" -eq 1 ] && check_imlib2
+[ "$CHECK_PAM" -eq 1 ] && check_pam
+[ "$CHECK_PASSWD" -eq 1 ] && check_passwd
+[ "$CHECK_HASH" -eq 1 ] && check_hash
 
 echo "#_______________________" >&4
 echo "" >&4

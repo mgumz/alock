@@ -1,6 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
 2006-09-15:
+	+ minor tunes to src/Makefile
+	* fixed some bashisms in configure to make it work on fbsd
 	* closed issue #1, added --with-all to configure
 	* started using google-hosting for issuetracking
 	  (http://code.google.com/p/alock)
