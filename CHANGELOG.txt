@@ -1,5 +1,10 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-09-15:
+	* closed issue #1, added --with-all to configure
+	* started using google-hosting for issuetracking
+	  (http://code.google.com/p/alock)
+
 2006-09-11:
 	* made the timeout function more clear
 	* only accept rlen < 50, dont increase it when it makes no sense

@@ -14,7 +14,6 @@ CHECK_HASH=1
 
 prefix=/usr/local
 
-
 ##############################################################
 
 msg_chkfor() {
@@ -267,7 +266,7 @@ do
   Options for configure:
 
     --prefix <prefix>     where to install
-    --debug        enable debug
+    --debug               enable debug
 
     --with(out)-xrender   use Xrender
     --with(out)-xcursor   use Xcursor
@@ -277,6 +276,8 @@ do
     --with(out)-pam       use pam_login
     --with(out)-passwd    use /etc/passwd
     --with(out)-hash      use sha1,sha2 and md5 based passwords
+
+    --with-all            use all with-options from above
 
     --help                shows usage of the configure script
 
@@ -301,6 +302,15 @@ EOF
 
         --with-passwd|--enable-passwd) CHECK_PASSWD=1;;
         --without-passwd|--disable-passwd) CHECK_PASSWD=0;;
+
+        --with-all|--enable-all) 
+            CHECK_PASSWD=1
+            CHECK_PAM=1
+            CHECK_IMLIB2=1
+            CHECK_XCURSOR=1
+            CHECK_XRENDER=1
+            CHECK_XPM=1
+            ;;
 
         --prefix)
             shift
