@@ -34,6 +34,22 @@ check_docs() {
     fi
 }
 
+check_tools() {
+
+    msg_chkfor "gcc"
+    if which $CC 1> /dev/null 2>&3
+    then
+        echo "ok."
+        echo "---------------------------------" 1>&3
+        $CC -v 1>&3 2>&3
+        echo "---------------------------------" 1>&3
+    else
+        echo "no."
+        echo "error, no compiler found"
+        exit 1
+    fi
+}
+
 check_imlib2() {
 
     msg_chkfor "imlib2-config"
@@ -41,6 +57,7 @@ check_imlib2() {
     then
         echo "ok."
         cat << EOF > tmp.c
+#include <X11/Xlib.h>
 #include <Imlib2.h>
 int main() {
     Imlib_Context ctx = NULL;
@@ -294,7 +311,10 @@ EOF
         --with-xpm|--enable-xpm) CHECK_XPM=1;;
         --without-xpm|--disable-xpm) CHECK_XPM=0;;
 
-        --with-imlib2|--enable-imlib2) CHECK_IMLIB2=1;;
+        --with-imlib2|--enable-imlib2) 
+            CHECK_IMLIB2=1
+            CHECK_XRENDER=1
+            ;;
         --without-imlib2|--disable-imlib2) CHECK_IMLIB2=0;;
 
         --with-pam|--enable-pam) CHECK_PAM=1;;
@@ -349,6 +369,7 @@ echo "#_______________________" >&4
 echo "" >&4
 
 check_docs
+check_tools
 check_xlib
 check_xlogo16
 [ "$CHECK_XPM" -eq 1 ] && check_xpm
