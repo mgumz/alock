@@ -991,7 +991,7 @@ static int alock_auth_sha2_deinit() {
 
 static int alock_auth_sha2_auth(const char* pass) {
 
-    if (!pass || !userhash || !method)
+    if (!pass || strlen(pass) < 1 || !userhash || !method)
         return 0;
 
     switch (method) {

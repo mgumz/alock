@@ -5,7 +5,7 @@
   copyr   : copyright (c) 2005 by m. gumz
 
   license : see LICENSE
-  
+
   start   : Sa 07 Mai 2005 16:21:24 CEST
 
   $Id$
@@ -16,7 +16,7 @@
   about :
 
     provide -auth pam, pam-authentification for alock
-    
+
     taken from pure-ftpd's authstuff, but you can see similar stuff
     in xlockmore, openssh and basicly all pam-related apps :)
 
@@ -139,7 +139,7 @@ static int alock_auth_pam_init(const char* args) {
         perror("password entry for uid not found");
         return 0;
     }
-    
+
     /* we can be installed setuid root to support shadow passwords,
        and we don't need root privileges any longer.  --marekm */
     setuid(getuid());
@@ -148,9 +148,9 @@ static int alock_auth_pam_init(const char* args) {
 }
 
 static int alock_auth_pam_deinit() {
-    
+
     pwd_entry = NULL;
-    
+
     return 0;
 }
 
@@ -158,7 +158,7 @@ static int alock_auth_pam_auth(const char* pass) {
 
     pam_handle_t* pam_handle = NULL;
 
-    if (!pass || !pwd_entry)
+    if (!pass || strlen(pass) < 1 || !pwd_entry)
         return 0;
 
     PAM_username = pwd_entry->pw_name;
@@ -169,13 +169,13 @@ static int alock_auth_pam_auth(const char* pass) {
     PAM_YN;
     pam_error = pam_end(pam_handle, pam_error);
     PAM_YN;
-    
+
     return 1;
 }
 
 struct aAuth alock_auth_pam = {
     "pam",
-    alock_auth_pam_init, 
+    alock_auth_pam_init,
     alock_auth_pam_auth,
     alock_auth_pam_deinit
 };

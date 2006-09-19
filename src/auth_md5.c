@@ -32,7 +32,6 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,7 +49,6 @@ enum {
     MD5_DIGEST_STRING_LENGTH = (MD5_DIGEST_LENGTH * 2 + 1)
 };
 
-#include <sys/cdefs.h>
 
 typedef struct {
     u_int32_t state[4];                 /* state */
