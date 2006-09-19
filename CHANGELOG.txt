@@ -1,5 +1,9 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-09-19:
+	* fixed #3, buildsystem doesnt built with shadow-support
+	* added missing xcursors, updated docs
+
 2006-09-18:
 	* fixed #2, missing includes in Xrender check
 	* fixed --enable-imlib2 wasnt implying --enable-xrender

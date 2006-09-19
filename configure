@@ -266,6 +266,7 @@ check_passwd() {
     echo "configure for passwd."
     echo "#_______________________" >&4
     echo "WITH_PASSWD:=1" >&4
+    echo "CFLAGS_PASSWD:=-DHAVE_SHADOW" >&4
     echo "LIBS_PASSWD=-lcrypt" >&4
     echo "" >&4
 }

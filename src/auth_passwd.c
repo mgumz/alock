@@ -35,9 +35,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef SHADOW_PWD
+#ifdef HAVE_SHADOW
 #    include <shadow.h>
-#endif /* SHADOW_PWD */
+#endif /* HAVE_SHADOW */
 
 #include "alock.h"
 
@@ -48,10 +48,6 @@ static struct passwd* pwd_entry = NULL;
 
 static int alock_auth_passwd_init(const char* args) {
 
-#ifdef SHADOW_PWD
-    struct spwd* sp = NULL;
-#endif
-
     errno = 0;
     pwd_entry = getpwuid(getuid());
     if (!pwd_entry) {
@@ -59,11 +55,15 @@ static int alock_auth_passwd_init(const char* args) {
         return 0;
     }
 
-#ifdef SHADOW_PWD
-    sp = getspnam(pwd_entry->pw_name);
-    if (sp)
-        pwd_entry->pw_passwd = sp->sp_pwdp;
-    endspent();
+#ifdef HAVE_SHADOW 
+    {
+        struct spwd* sp = NULL;
+
+        sp = getspnam(pwd_entry->pw_name);
+        if (sp)
+            pwd_entry->pw_passwd = sp->sp_pwdp;
+
+    }
 #endif
 
     /* we can be installed setuid root to support shadow passwords,
@@ -74,7 +74,7 @@ static int alock_auth_passwd_init(const char* args) {
         perror("password entry has no pwd\n");
         return 0;
     }
-    
+
     return 1;
 }
 

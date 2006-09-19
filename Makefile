@@ -36,12 +36,23 @@ install : alock
 		$(DESTDIR)$(prefix)/share/alock/bitmaps/
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/xcursors/*
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/bitmaps/*
-	cp -fv README LICENSE CHANGELOG \
+	cp -fv README.txt LICENSE.txt CHANGELOG.txt \
 		$(DESTDIR)$(prefix)/share/alock/
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/README.txt
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/LICENSE.txt
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/CHANGELOG.txt
-
+	@if `src/alock -auth list | grep passwd > /dev/null`; then      \
+		echo ",-------------------------------------------------,"; \
+		echo "| it seems that you have compiled 'alock' with    |"; \
+		echo "| 'shadow' support. to use that binary you have   |"; \
+		echo "| set the 'suid' - bit, something like:           |"; \
+		echo "|                                                 |"; \
+		echo "|    $$> chown root:root \$$prefix/bin/alock         |";\
+		echo "|    $$> chmod 4111 \$$prefix/bin/alock              |";\
+		echo "|                                                 |"; \
+		echo "| if not you ll get 'permission denied' problems. |"; \
+		echo "\`-------------------------------------------------'";\
+	fi
 
 alock :
 	$(MAKE) -C src
