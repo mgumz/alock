@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 01 June 2006
+v1.0, 19 September 2006
 
 NAME
 ----
@@ -97,7 +97,8 @@ Written by Mathias Gumz <akira at fluxbox dot org>
 RESOURCES
 ---------
 
-link:http://darkshed.net[Home]
+- link:http://darkshed.net[Home]
+- link:http://code.google.com/p/alock/issues/list[Issue Tracker]
 
 Other Lockers ::
 - link:http://www.tux.org/~bagleyd/xlockmore.html[xlockmore]
