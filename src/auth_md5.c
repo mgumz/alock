@@ -308,7 +308,7 @@ static int alock_auth_md5_init(const char* args) {
                         if (!userhash)
                             userhash = strdup(&arg[5]);
                     } else {
-                        printf("alock: error, missing or incorrect hash for [md5].\n");
+                        fprintf(stderr, "alock: error, missing or incorrect hash for [md5].\n");
                         free(arguments);
                         return 0;
                     }
@@ -317,24 +317,26 @@ static int alock_auth_md5_init(const char* args) {
                     FILE* hashfile = fopen(&arg[5], "r");
                     if (hashfile) {
                         int c;
-                        unsigned int i = 0;
+                        size_t i = 0;
                         tmp_hash = (char*)malloc(MD5_DIGEST_STRING_LENGTH);
                         memset(tmp_hash, 0, MD5_DIGEST_STRING_LENGTH);
                         for(i = 0, c = fgetc(hashfile);
                             i < MD5_DIGEST_STRING_LENGTH - 1 && c != EOF; i++, c = fgetc(hashfile)) {
-                            tmp_hash[i] = tolower(c);
+                            tmp_hash[i] = c;
                         }
                         fclose(hashfile);
                     } else {
-                        printf("alock: error, couldnt read [%s] for [md5].\n",
+                        fprintf(stderr, "alock: error, couldnt read [%s] for [md5].\n",
                                 &arg[5]);
                         free(arguments);
                         return 0;
                     }
 
                     if (!tmp_hash || strlen(tmp_hash) != MD5_DIGEST_STRING_LENGTH - 1) {
-                        printf("alock: error, given file [%s] doesnt contain a valid hash for [md5].\n",
+                        fprintf(stderr, "alock: error, given file [%s] doesnt contain a valid hash for [md5].\n",
                                 &arg[5]);
+                        if (tmp_hash)
+                            free(tmp_hash);
                         free(arguments);
                         return 0;
                     }
@@ -350,7 +352,7 @@ static int alock_auth_md5_init(const char* args) {
     }
 
     if (!userhash) {
-        printf("alock: error, missing hash for [md5].\n");
+        fprintf(stderr, "alock: error, missing hash for [md5].\n");
         return 0;
     }
 
@@ -369,7 +371,7 @@ static int alock_auth_md5_auth(const char* pass) {
 
     unsigned char digest[MD5_DIGEST_LENGTH];
     unsigned char stringdigest[MD5_DIGEST_STRING_LENGTH];
-    unsigned int i;
+    size_t i;
     md5Context md5;
 
     if (!pass || !userhash)

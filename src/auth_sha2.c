@@ -19,7 +19,9 @@
 
   about :
 
-    provide -auth sha1:hash=<hash>,file=<filename>
+    provide -auth sha256:hash=<hash>,file=<filename>
+    provide -auth sha384:hash=<hash>,file=<filename>
+    provide -auth sha512:hash=<hash>,file=<filename>
 
 \* ---------------------------------------------------------------- */
 
@@ -868,12 +870,6 @@ void sha384_final(u_int8_t digest[], sha384Context *context) {
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-#ifndef STAND_ALONE
-
-static char* userhash = NULL;
-static unsigned int method = 0;
-static char* method_string = NULL;
-static size_t method_digest_string_length = 0;
 
 enum {
     NONE    = 0,
@@ -881,6 +877,14 @@ enum {
     SHA384  = 384,
     SHA512  = 512
 };
+
+#ifndef STAND_ALONE
+
+static char* userhash = NULL;
+static unsigned int method = 0;
+static char* method_string = NULL;
+static size_t method_digest_string_length = 0;
+
 
 static int alock_auth_sha2_init(const char* args) {
 
@@ -902,7 +906,7 @@ static int alock_auth_sha2_init(const char* args) {
         method_string = strdup("sha384");
         method_digest_string_length = SHA384_DIGEST_STRING_LENGTH;
     } else {
-        printf("alock: error, not supported hash in [sha2].\n");
+        fprintf(stderr, "alock: error, not supported hash in [sha2].\n");
         return 0;
     }
 
@@ -920,7 +924,7 @@ static int alock_auth_sha2_init(const char* args) {
                         if (!userhash)
                             userhash = strdup(&arg[5]);
                     } else {
-                        printf("alock: error, missing or incorrect hash for [%s].\n", method_string);
+                        fprintf(stderr, "alock: error, missing or incorrect hash for [%s].\n", method_string);
                         free(arguments);
                         return 0;
                     }
@@ -929,16 +933,16 @@ static int alock_auth_sha2_init(const char* args) {
                     FILE* hashfile = fopen(&arg[5], "r");
                     if (hashfile) {
                         int c;
-                        unsigned int i = 0;
+                        size_t i = 0;
                         tmp_hash = (char*)malloc(method_digest_string_length);
                         memset(tmp_hash, 0, method_digest_string_length);
                         for(i = 0, c = fgetc(hashfile);
                             i < method_digest_string_length - 1 && c != EOF; i++, c = fgetc(hashfile)) {
-                            tmp_hash[i] = tolower(c);
+                            tmp_hash[i] = c;
                         }
                         fclose(hashfile);
                     } else {
-                        printf("alock: error, couldnt read [%s] for [%s].\n",
+                        fprintf(stderr, "alock: error, couldnt read [%s] for [%s].\n",
                                 &arg[5], method_string);
                         free(method_string);
                         free(arguments);
@@ -946,8 +950,10 @@ static int alock_auth_sha2_init(const char* args) {
                     }
 
                     if (!tmp_hash || strlen(tmp_hash) != method_digest_string_length - 1) {
-                        printf("alock: error, given file [%s] doesnt contain a valid hash for [%s].\n",
+                        fprintf(stderr, "alock: error, given file [%s] doesnt contain a valid hash for [%s].\n",
                                 &arg[5], method_string);
+                        if (tmp_hash)
+                            free(tmp_hash);
                         free(method_string);
                         free(arguments);
                         return 0;
@@ -965,7 +971,7 @@ static int alock_auth_sha2_init(const char* args) {
     }
 
     if (!userhash) {
-        printf("alock: error, missing hash for [%s].\n", method_string);
+        fprintf(stderr, "alock: error, missing hash for [%s].\n", method_string);
         free(method_string);
         return 0;
     }
@@ -1009,7 +1015,7 @@ static int alock_auth_sha2_auth(const char* pass) {
             for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
                 sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
             }
-            return !strcmp((char*)stringdigest, userhash);
+            return (strcmp((char*)stringdigest, userhash) == 0);
         }
         break;
     case SHA512: {
@@ -1026,7 +1032,7 @@ static int alock_auth_sha2_auth(const char* pass) {
             for (i = 0; i < SHA512_DIGEST_LENGTH; i++) {
                 sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
             }
-            return !strcmp((char*)stringdigest, userhash);
+            return (strcmp((char*)stringdigest, userhash) == 0);
         }
         break;
     case SHA384: {
@@ -1043,7 +1049,7 @@ static int alock_auth_sha2_auth(const char* pass) {
             for (i = 0; i < SHA384_DIGEST_LENGTH; i++) {
                 sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
             }
-            return !strcmp((char*)stringdigest, userhash);
+            return (strcmp((char*)stringdigest, userhash) == 0);
         }
         break;
     };
@@ -1087,17 +1093,24 @@ void usage() {
 int main(int argc, char* argv[]) {
  
     unsigned char digest[SHA512_DIGEST_LENGTH];
-    unsigned int i;
+    size_t i;
     unsigned char c;
     unsigned int method = 0;
     size_t method_digest_length = 0;
 
-    if (argc < 2) {
+    if (argc < 2 || strlen(argv[1]) < 3) {
         usage();
         exit(EXIT_SUCCESS);
     }
 
-    method = atoi(argv[1]);
+    if (strncmp("256", argv[1], 3) == 0)
+        method = SHA256;
+    else if (strncmp("384", argv[1], 3) == 0)
+        method = SHA384;
+    else if (strncmp("512", argv[1], 3) == 0)
+        method = SHA512;
+    else
+        method = NONE;
 
     switch (method) {
 

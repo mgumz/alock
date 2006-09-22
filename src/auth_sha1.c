@@ -246,7 +246,7 @@ static int alock_auth_sha1_init(const char* args) {
                         if (!userhash)
                             userhash = strdup(&arg[5]);
                     } else {
-                        printf("alock: error, missing or incorrect hash for [sha1].\n");
+                        fprintf(stderr, "alock: error, missing or incorrect hash for [sha1].\n");
                         free(arguments);
                         return 0;
                     }
@@ -255,24 +255,26 @@ static int alock_auth_sha1_init(const char* args) {
                     FILE* hashfile = fopen(&arg[5], "r");
                     if (hashfile) {
                         int c;
-                        unsigned int i = 0;
+                        size_t i = 0;
                         tmp_hash = (char*)malloc(SHA1_DIGEST_STRING_LENGTH);
                         memset(tmp_hash, 0, SHA1_DIGEST_STRING_LENGTH);
                         for(i = 0, c = fgetc(hashfile);
                             i < SHA1_DIGEST_STRING_LENGTH - 1 && c != EOF; i++, c = fgetc(hashfile)) {
-                            tmp_hash[i] = tolower(c);
+                            tmp_hash[i] = c;
                         }
                         fclose(hashfile);
                     } else {
-                        printf("alock: error, couldnt read [%s] for [sha1].\n",
+                        fprintf(stderr, "alock: error, couldnt read [%s] for [sha1].\n",
                                 &arg[5]);
                         free(arguments);
                         return 0;
                     }
 
                     if (!tmp_hash || strlen(tmp_hash) != SHA1_DIGEST_STRING_LENGTH - 1) {
-                        printf("alock: error, given file [%s] doesnt contain a valid hash for [sha1].\n",
+                        fprintf(stderr, "alock: error, given file [%s] doesnt contain a valid hash for [sha1].\n",
                                 &arg[5]);
+                        if (tmp_hash)
+                            free(tmp_hash);
                         free(arguments);
                         return 0;
                     }
@@ -307,7 +309,7 @@ static int alock_auth_sha1_auth(const char* pass) {
 
     unsigned char digest[SHA1_DIGEST_LENGTH];
     unsigned char stringdigest[SHA1_DIGEST_STRING_LENGTH];
-    unsigned int i;
+    size_t i;
     sha1Context sha1;
 
     if (!pass || !userhash)
@@ -322,7 +324,7 @@ static int alock_auth_sha1_auth(const char* pass) {
         sprintf((char*)&stringdigest[i*2], "%02x", digest[i]);
     }
 
-    return !strcmp((char*)stringdigest, userhash);
+    return (strcmp((char*)stringdigest, userhash) == 0);
 }
 
 struct aAuth alock_auth_sha1 = {
