@@ -2,7 +2,7 @@ Version 1.0
 ----------------------------------------------------------------------
 2006-09-22:
 	* added new auth method: wpool, hash-based authentification
-	  using the whirlpool hash algorithm
+	  using the whirlpool hash algorithm, updated docs
 	* minor tweaks to buildsystem and standalones
 	* cosmetic issues on some files (fprintf, etc)
 

@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 19 September 2006
+v1.0, 22 September 2006
 
 NAME
 ----
@@ -35,23 +35,24 @@ OPTIONS
                On systems using 'shadow' alock needs the suid-flag set.
     - pam - Tries to authentificate against the users system-password
             using the 'pam-login'-module.
-    - md5 - alock creates a md5-hash from the entered unlockpassword and compares it with the hash provided
+    - md5 - alock creates a md5-hash from the entered passphrase and compares it with the hash provided
         * hash=<hash> - use <hash> as reference
         * file=<filename>  - use content of <filename> as reference
-
-    - sha1 - alock creates a sha1-hash from the entered unlockpassword and compares it with the hash provided
+    - sha1 - alock creates a sha1-hash from the entered passphrase and compares it with the hash provided
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use <filename> as reference
-    - sha256 - alock creates a sha256-hash from the entered unlockpassword and compares it with the hash provided
+    - sha256 - alock creates a sha256-hash from the entered passphrase and compares it with the hash provided
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use <filename> as reference
-    - sha384 - alock creates a sha384-hash from the entered unlockpassword and compares it with the hash provided
+    - sha384 - alock creates a sha384-hash from the entered passphrase and compares it with the hash provided
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use <filename> as reference
-    - sha512 - alock creates a sha512-hash from the entered unlockpassword and compares it with the hash provided
+    - sha512 - alock creates a sha512-hash from the entered passphrase and compares it with the hash provided
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use <filename> as reference
-
+    - wpool - alock creates a whirlpool-hash from the entered passphrase and compares it with the hash provided
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use <filename> as reference
 
 
 -bg type:options ::
@@ -97,8 +98,15 @@ Written by Mathias Gumz <akira at fluxbox dot org>
 RESOURCES
 ---------
 
+'alock' - Webpages ::
 - link:http://darkshed.net[Home]
 - link:http://code.google.com/p/alock/issues/list[Issue Tracker]
+
+Algorithms ::
+- link:http://en.wikipedia.org/wiki/WHIRLPOOL[whirlpool hash]
+- link:http://en.wikipedia.org/wiki/SHA_hash_functions[sha based hashfunctions]
+- link:http://en.wikipedia.org/wiki/Md5[md5]
+
 
 Other Lockers ::
 - link:http://www.tux.org/~bagleyd/xlockmore.html[xlockmore]
