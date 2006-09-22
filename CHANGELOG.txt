@@ -1,5 +1,11 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-09-22:
+	* added new auth method: wpool, hash-based authentification
+	  using the whirlpool hash algorithm
+	* minor tweaks to buildsystem and standalones
+	* cosmetic issues on some files (fprintf, etc)
+
 2006-09-19:
 	* fixed #3, buildsystem doesnt built with shadow-support
 	* added missing xcursors, updated docs

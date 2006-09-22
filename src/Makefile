@@ -15,6 +15,11 @@ define funcAddModule
 	endif
 endef
 
+define funcStandalone
+a$(1) : auth_$(1).c
+	$$(CC) -o $$@ -DSTAND_ALONE $$(CFLAGS) $$<
+endef
+
 ##########################
 MAKEDEP ?= gcc -MM
 CC ?= gcc
@@ -31,7 +36,8 @@ SRC_PAM = 		auth_pam.c
 SRC_PASSWD = 	auth_passwd.c
 SRC_HASH = 	auth_sha1.c \
 				auth_sha2.c \
-				auth_md5.c
+				auth_md5.c \
+				auth_wpool.c
 SRC_XRENDER = 	bg_shade.c
 SRC_IMLIB2 = 	cursor_image.c \
 			 	bg_image.c
@@ -41,6 +47,7 @@ SRC_XCURSOR = 	cursor_xcursor.c
 ######################
 
 MODULES = PAM PASSWD HASH XRENDER XCURSOR IMLIB2 XPM
+STAND_ALONES = $(subst auth_,,$(SRC_HASH:.c=))
 
 $(foreach module,$(MODULES),$(eval $(call funcAddModule,$(module))))
 
@@ -57,13 +64,19 @@ TARGET  = alock
 $(TARGET) : $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
 
+standalones : $(foreach s,$(STAND_ALONES), a$(s))
+
+$(foreach s,$(STAND_ALONES),$(eval $(call funcStandalone,$(s))))
+
+
+
 alock.o : ../config.mk
 
 clean:
-	@rm -f *.o
+	@rm -fv *.o
 
 distclean:
-	rm -f $(TARGET) *.o *.d
+	rm -fv $(TARGET) $(foreach binary,$(STAND_ALONES),a$(binary)) *.o .*.d
 
 deps: $(DEPS)
 

@@ -40,6 +40,7 @@ extern struct aAuth alock_auth_sha1;
 extern struct aAuth alock_auth_sha256;
 extern struct aAuth alock_auth_sha384;
 extern struct aAuth alock_auth_sha512;
+extern struct aAuth alock_auth_wpool;
 #endif /* HAVE_HASH */
 #ifdef HAVE_PASSWD
 extern struct aAuth alock_auth_passwd;
@@ -62,6 +63,7 @@ static struct aAuth* alock_authmodules[] = {
     &alock_auth_sha256,
     &alock_auth_sha384,
     &alock_auth_sha512,
+    &alock_auth_wpool,
 #endif /* HAVE_HASH */
     NULL
 };

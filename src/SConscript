@@ -18,7 +18,7 @@ build =  alock_env.Copy()
 if build['passwd']:
     auth_sources += [ 'auth_passwd.c' ]
 if build['hash']:
-    auth_sources += [ 'auth_md5.c', 'auth_sha1.c', 'auth_sha2.c' ]
+    auth_sources += [ 'auth_md5.c', 'auth_sha1.c', 'auth_sha2.c', 'auth_wpool' ]
 if build['pam']:
     auth_sources += [ 'auth_pam.c' ]
 
@@ -47,8 +47,14 @@ if build['asha1']:
     sha1.Program('asha1', sha1.StaticObject(target = 'asha1', source = 'auth_sha1.c'))
 
 if build['asha2']:
-    sha1 = Environment()
-    sha1.AppendUnique(CPPDEFINES = [ 'STAND_ALONE' ])
-    sha1.Program('asha2', sha1.StaticObject(target = 'asha2', source = 'auth_sha2.c'))
+    sha2 = Environment()
+    sha2.AppendUnique(CPPDEFINES = [ 'STAND_ALONE' ])
+    sha2.Program('asha2', sha2.StaticObject(target = 'asha2', source = 'auth_sha2.c'))
+
+if build['awpool']:
+    wpool = Environment()
+    wpool.AppendUnique(CPPDEFINES = [ 'STAND_ALONE' ])
+    wpool.Program('awpool', wpool.StaticObject(target = 'apool', source = 'auth_wpool.c'))
+
 
 # vim:ft=python
