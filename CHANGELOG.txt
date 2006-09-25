@@ -1,5 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-09-25:
+	* fixed #4, -bg image wasnt working, wrong loop
+
 2006-09-22:
 	* added new auth method: wpool, hash-based authentification
 	  using the whirlpool hash algorithm, updated docs

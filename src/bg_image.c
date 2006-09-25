@@ -109,7 +109,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
 
     {
         int scr;
-        for (scr = 0; xinfo->nr_screens; scr++) {
+        for (scr = 0; scr < xinfo->nr_screens; scr++) {
 
             alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
 
