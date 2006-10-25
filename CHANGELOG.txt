@@ -1,5 +1,9 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-10-25:
+	* fixed problem with configure/make, it didnt rebuilt fresh
+	  after reconfiguring
+
 2006-09-25:
 	* fixed #4, -bg image wasnt working, wrong loop
 

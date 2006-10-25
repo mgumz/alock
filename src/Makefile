@@ -69,9 +69,6 @@ standalones : $(foreach s,$(STAND_ALONES), a$(s))
 $(foreach s,$(STAND_ALONES),$(eval $(call funcStandalone,$(s))))
 
 
-
-alock.o : ../config.mk
-
 clean:
 	@rm -fv *.o
 
@@ -82,6 +79,7 @@ deps: $(DEPS)
 
 .%.d : %.c
 	$(MAKEDEP) $(CFLAGS) -o $@ $<
+	@echo "$(<:.c=.o): ../config.mk" >> $@
 
 #######################
 
