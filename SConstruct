@@ -55,6 +55,7 @@ alock_options.AddOptions(
         BoolOption('amd5', 'build a little md5-helper', 0),
         BoolOption('asha1', 'build a little sha1-helper', 0),
         BoolOption('asha2', 'build a little sha2-helper', 0),
+        BoolOption('awpool', 'build a little whirlpool-helper', 0),
 
         PathOption('PREFIX', 'install-path base', '/usr/local'),
         PathOption('DESTDIR', 'install to $DESTDIR/$PREFIX', '/')
@@ -195,6 +196,9 @@ if alock_env['asha1']:
 
 if alock_env['asha2']:
     default_targets += [ 'src/asha2' ]
+
+if alock_env['awpool']:
+    default_targets += [ 'src/awpool' ]
 
 Default(default_targets)
 
