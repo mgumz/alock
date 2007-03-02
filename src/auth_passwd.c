@@ -23,11 +23,10 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <X11/Xlib.h>
 #include <stdio.h>
+#include <X11/Xlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <crypt.h>
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
@@ -35,12 +34,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __linux
 #ifdef HAVE_SHADOW
 #    include <shadow.h>
 #endif /* HAVE_SHADOW */
+#endif /* __linux */
 
 #include "alock.h"
-
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
@@ -55,7 +55,8 @@ static int alock_auth_passwd_init(const char* args) {
         return 0;
     }
 
-#ifdef HAVE_SHADOW 
+#ifdef __linux
+#ifdef HAVE_SHADOW
     {
         struct spwd* sp = NULL;
 
@@ -64,6 +65,7 @@ static int alock_auth_passwd_init(const char* args) {
             pwd_entry->pw_passwd = sp->sp_pwdp;
 
     }
+#endif
 #endif
 
     /* we can be installed setuid root to support shadow passwords,
@@ -96,7 +98,7 @@ static int alock_auth_passwd_auth(const char* pass) {
     encr = crypt(pass, key);
     return !strcmp(encr, pw->pw_passwd);
 #else
-    if (!pass || !pwd_entry)
+    if (pass == NULL || pwd_entry == NULL)
         return 0;
 
     /* simpler, and should work with crypt() algorithms using longer

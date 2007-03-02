@@ -1,0 +1,15 @@
+TODO
+====
+
+Platforms
+---------
+    * check OpenBSD, NetBSD, DragonFly, maybe MacOS
+    * write a BSDmakefile
+    * write a port for FreeBSD
+    * write a good ebuild for gentoo based on the one from hansmi
+
+Usability
+---------
+    * feedback while typing the password?
+    * feedback on wrong password?
+

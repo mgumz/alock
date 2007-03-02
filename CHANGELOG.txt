@@ -1,5 +1,10 @@
 Version 1.0
 ----------------------------------------------------------------------
+2006-03-02:
+	* renamed Makefile to GNUmakefile (so using bsdmake wont hurt)
+	* *bsd has no shadow.h support, so we wont use it on *bsd
+	* pam doesnt need -lpam_misc on *bsd
+
 2006-10-25:
 	* fixed problem with configure/make, it didnt rebuilt fresh
 	  after reconfiguring
@@ -22,7 +27,7 @@ Version 1.0
 	* fixed --enable-imlib2 wasnt implying --enable-xrender
 
 2006-09-15:
-	+ minor tunes to src/Makefile
+	* minor tunes to src/Makefile
 	* fixed some bashisms in configure to make it work on fbsd
 	* closed issue #1, added --with-all to configure
 	* started using google-hosting for issuetracking
