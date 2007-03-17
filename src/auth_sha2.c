@@ -2,7 +2,7 @@
 
   file    : auth_sha2.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : based on: openbsd sha2.c/h
 
@@ -11,8 +11,6 @@
       100% Public Domain
 
   start   : So 08 Mai 2005 13:21:45 CEST
-
-  $Id: auth_sha1.c 31 2005-05-25 06:43:42Z mathias $
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -28,17 +26,18 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <sys/types.h>
-#include <sys/cdefs.h>
-#include <sys/param.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+
 #ifndef STAND_ALONE
 #    include <X11/Xlib.h>
 #    include "alock.h"
 #endif /* STAND_ALONE */
+
+#include <sys/types.h>
+#include <sys/cdefs.h>
+#include <sys/param.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -156,7 +155,7 @@ static void sha512_transform(sha512Context *, const u_int8_t *);
 /*------------------------------------------------------------------*\
     SHA-XYZ INITIAL HASH VALUES AND CONSTANTS
 \*------------------------------------------------------------------*/
-const static u_int32_t K256[64] = {
+static const u_int32_t K256[64] = {
     0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL,
     0x3956c25bUL, 0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL,
     0xd807aa98UL, 0x12835b01UL, 0x243185beUL, 0x550c7dc3UL,
@@ -176,7 +175,7 @@ const static u_int32_t K256[64] = {
 };
 
 /* Initial hash value H for SHA-256: */
-const static u_int32_t sha256_initial_hash_value[8] = {
+static const u_int32_t sha256_initial_hash_value[8] = {
     0x6a09e667UL,
     0xbb67ae85UL,
     0x3c6ef372UL,
@@ -188,7 +187,7 @@ const static u_int32_t sha256_initial_hash_value[8] = {
 };
 
 /* Hash constant words K for SHA-384 and SHA-512: */
-const static u_int64_t K512[80] = {
+static const u_int64_t K512[80] = {
     0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL,
     0xb5c0fbcfec4d3b2fULL, 0xe9b5dba58189dbbcULL,
     0x3956c25bf348b538ULL, 0x59f111f1b605d019ULL,
@@ -232,7 +231,7 @@ const static u_int64_t K512[80] = {
 };
 
 /* Initial hash value H for SHA-384 */
-const static u_int64_t sha384_initial_hash_value[8] = {
+static const u_int64_t sha384_initial_hash_value[8] = {
     0xcbbb9d5dc1059ed8ULL,
     0x629a292a367cd507ULL,
     0x9159015a3070dd17ULL,
@@ -244,7 +243,7 @@ const static u_int64_t sha384_initial_hash_value[8] = {
 };
 
 /* Initial hash value H for SHA-512 */
-const static u_int64_t sha512_initial_hash_value[8] = {
+static const u_int64_t sha512_initial_hash_value[8] = {
     0x6a09e667f3bcc908ULL,
     0xbb67ae8584caa73bULL,
     0x3c6ef372fe94f82bULL,
@@ -395,11 +394,11 @@ void sha256_transform(sha256Context *context, const u_int8_t *data) {
         /* Part of the message block expansion: */
         s0 = W256[(j+1)&0x0f];
         s0 = sigma0_256(s0);
-        s1 = W256[(j+14)&0x0f];    
+        s1 = W256[(j+14)&0x0f];
         s1 = sigma1_256(s1);
 
         /* Apply the SHA-256 compression function to update a..h */
-        T1 = h + Sigma1_256(e) + Ch(e, f, g) + K256[j] + 
+        T1 = h + Sigma1_256(e) + Ch(e, f, g) + K256[j] +
              (W256[j&0x0f] += s1 + W256[(j+9)&0x0f] + s0);
         T2 = Sigma0_256(a) + Maj(a, b, c);
         h = g;
@@ -1091,7 +1090,7 @@ void usage() {
 }
 
 int main(int argc, char* argv[]) {
- 
+
     unsigned char digest[SHA512_DIGEST_LENGTH];
     size_t i;
     unsigned char c;

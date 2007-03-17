@@ -2,13 +2,11 @@
 
   file    : auth_pam.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Sa 07 Mai 2005 16:21:24 CEST
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -26,10 +24,10 @@
   includes
 \* ---------------------------------------------------------------- */
 
-#include <X11/Xlib.h>
+#include "alock.h"
+
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -37,11 +35,9 @@
 #include <pwd.h>
 
 #include <security/pam_appl.h>
-#ifdef LINUX
+#ifdef __linux
 #    include <security/pam_misc.h>
 #endif /* LINUX */
-
-#include "alock.h"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */

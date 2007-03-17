@@ -2,13 +2,11 @@
 
   file    : auth_passwd.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
-  
-  start   : Sa 07 Mai 2005 16:40:01 CEST
 
-  $Id$
+  start   : Sa 07 Mai 2005 16:40:01 CEST
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -23,8 +21,9 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <stdio.h>
-#include <X11/Xlib.h>
+
+#include "alock.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -40,7 +39,6 @@
 #endif /* HAVE_SHADOW */
 #endif /* __linux */
 
-#include "alock.h"
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
@@ -80,7 +78,7 @@ static int alock_auth_passwd_init(const char* args) {
     return 1;
 }
 
-static int alock_auth_passwd_deinit() { 
+static int alock_auth_passwd_deinit() {
     return 1;
 }
 

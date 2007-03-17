@@ -23,7 +23,7 @@ endef
 ##########################
 MAKEDEP ?= gcc -MM
 CC ?= gcc
-CFLAGS += -Wall -DVERSION=$(VERSION)
+CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations -DVERSION=$(VERSION)
 LDFLAGS ?=
 LIBS ?= -lX11
 ##########################

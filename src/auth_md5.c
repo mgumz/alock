@@ -2,7 +2,7 @@
 
   file    : auth_md5.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : based on: openbsd md5.c/h
 
@@ -18,8 +18,6 @@
 
   start   : Sa 07 Mai 2005 13:21:45 CEST
 
-  $Id$
-
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
 
@@ -32,14 +30,14 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+
 #ifndef STAND_ALONE
-#   include <X11/Xlib.h>
 #   include "alock.h"
 #endif /* STAND_ALONE */
+
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -409,7 +407,7 @@ int main(int argc, char* argv[]) {
 
     if (argc > 1) {
         printf("amd5 - reads from stdin to calculate a md5-hash.\n");
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
 
     md5_init(&md5);
@@ -423,7 +421,7 @@ int main(int argc, char* argv[]) {
     printf("\n");
     fflush(stdout);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 #endif /* STAND_ALONE */

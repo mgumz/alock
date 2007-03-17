@@ -4,15 +4,13 @@
 
 /* ---------------------------------------------------------------- *\
 
-  file    : aklock.h
+  file    : alock.h
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Sa 30 Apr 2005 11:51:52 CEST
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -21,13 +19,16 @@
 
 \* ---------------------------------------------------------------- */
 
+#include <X11/Xlib.h>
+#include <stdio.h>
+
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 #ifdef DEBUG
 #    define DBGMSG fprintf(stderr, "%s : %d\n", __FUNCTION__, __LINE__); fflush(stderr)
 #else
 #    define DBGMSG
-#endif // DEBUG
+#endif /* DEBUG */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -73,7 +74,7 @@ struct aOpts {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 void alock_string2lower(char* string);
-int alock_native_byte_order();
+int alock_native_byte_order(void);
 int alock_alloc_color(const struct aXInfo* xinfo, const int scr,
         const char* color_name,
         const char* fallback_name,
@@ -89,5 +90,5 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
         unsigned int width,
         unsigned int height);
 
-#endif // _ALOCK_H_
+#endif /* _ALOCK_H_ */
 

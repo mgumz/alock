@@ -2,13 +2,11 @@
 
   file    : alock_utils.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Mo 23 Mai 2005 13:55:24 CEST
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -20,14 +18,14 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <X11/Xlib.h>
+
+#include "alock.h"
+
 #ifdef HAVE_XRENDER
 #    include <X11/extensions/Xrender.h>
 #endif /* HAVE_XRENDER */
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "alock.h"
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/

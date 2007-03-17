@@ -2,13 +2,11 @@
 
   file    : bg_shade.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Di 18 Mai 2005 10:44:20 CEST
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -22,12 +20,12 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <X11/Xlib.h>
+
+#include "alock.h"
+
 #include <X11/extensions/Xrender.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include "alock.h"
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */

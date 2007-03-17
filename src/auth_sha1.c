@@ -2,7 +2,7 @@
 
   file    : auth_sha1.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : based on: openbsd sha1.c/h
 
@@ -11,8 +11,6 @@
       100% Public Domain
 
   start   : So 08 Mai 2005 13:21:45 CEST
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -26,17 +24,17 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
+
+#ifndef STAND_ALONE
+#    include "alock.h"
+#endif /* STAND_ALONE */
+
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#ifndef STAND_ALONE
-#    include <X11/Xlib.h>
-#    include "alock.h"
-#endif /* STAND_ALONE */
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -347,7 +345,7 @@ int main(int argc, char* argv[]) {
 
     if (argc > 1) {
         printf("asha1 - reads from stdin to calculate a sha1-hash.\n");
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
 
     sha1_init(&sha1);
@@ -361,7 +359,7 @@ int main(int argc, char* argv[]) {
     printf("\n");
     fflush(stdout);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 #endif /* STAND_ALONE */

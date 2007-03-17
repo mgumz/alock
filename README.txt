@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 2 March 2007
+v1.0, 17 March 2007
 
 NAME
 ----
@@ -94,6 +94,29 @@ OPTIONS
 AUTHOR
 ------
 Written by Mathias Gumz <akira at fluxbox dot org>
+Based upon xtrlock
+
+MD5
+~~~
+Code taken from OpenBSD, which took it from public domain.
+Original author was Colin Plumb.
+
+SHA1
+~~~~
+Code based upon public domain code, originally written by
+Steve Reid <steve@edmweb.com>
+
+SHA2
+~~~~
+Code based upon OpenBSD code, originally public domain and
+written by Aaron D. Gifford <me@aarongifford.com>.
+
+Whirlpool
+~~~~~~~~~
+Based upon public domain, originally written by
+
+Paulo S. L. M. Barreto <pbarreto@scopus.com.br>
+Vincent Rijmen <vincent.rijmen@esat.kuleuven.ac.be>
 
 RESOURCES
 ---------

@@ -2,13 +2,11 @@
 
   file    : cursor_none.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
-  
-  start   : Di 17 Mai 2005 12:10:35 CEST
 
-  $Id$
+  start   : Di 17 Mai 2005 12:10:35 CEST
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -22,7 +20,7 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <X11/Xlib.h>
+
 #include "alock.h"
 
 /* ---------------------------------------------------------------- *\
@@ -43,7 +41,7 @@ static int alock_cursor_none_deinit(struct aXInfo* xinfo) {
 
 struct aCursor alock_cursor_none = {
     "none",
-    alock_cursor_none_init, 
+    alock_cursor_none_init,
     alock_cursor_none_deinit
 };
 

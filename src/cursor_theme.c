@@ -2,15 +2,11 @@
 
   file    : cursor_theme.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Sa 30 Apr 2005 12:02:47 CEST
-
-  $Id$
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -24,11 +20,11 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <X11/Xlib.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
 #include "alock.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */

@@ -2,7 +2,7 @@
 
   file    : auth_wpool.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2006 by m. gumz
+  copyr   : copyright (c) 2006 - 2007 by m. gumz
 
   license : based on: whirlpool.c nessie.h 64bit_tables2.h
 
@@ -29,8 +29,6 @@
 
   start   : Do 21 September 2006 20:27:48 CEST
 
-  $Id:  $
-
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
 
@@ -43,15 +41,16 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <limits.h>
+
 #ifndef STAND_ALONE
 #   include <X11/Xlib.h>
 #   include "alock.h"
 #endif /* STAND_ALONE */
+
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <limits.h>
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
 
@@ -104,15 +103,6 @@ enum {
 #define T16(x)  ((x) & ONE16)
 #define T32(x)  ((x) & ONE32)
 
-#ifdef _MSC_VER
-typedef unsigned __int64 u64;
-typedef signed __int64 s64;
-
-enum {
-    ONE64 = 0xffffffffffffffffi64
-};
-
-#else  /* !_MSC_VER */
 typedef unsigned long long u64;
 typedef signed long long s64;
 
@@ -120,7 +110,6 @@ enum {
     ONE64 = 0xffffffffffffffffULL
 };
 
-#endif /* ?_MSC_VER */
 #define T64(x)  ((x) & ONE64)
 #define ROTR64(v, n)   (((v) >> (n)) | T64((v) << (64 - (n))))
 /*
@@ -1116,7 +1105,7 @@ static void wpool_add(const unsigned char* const source,
  *
  * This method uses the invariant: bufferBits < 512
  */
-static void wpool_finalize(wpoolContext * const ctx, 
+static void wpool_finalize(wpoolContext * const ctx,
         unsigned char* const result) {
 
     int i;
@@ -1297,7 +1286,7 @@ struct aAuth alock_auth_wpool = {
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-#else 
+#else
 
 int main(int argc, char* argv[]) {
 

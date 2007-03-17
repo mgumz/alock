@@ -2,13 +2,11 @@
 
   file    : bg_image.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Mi 18 Mai 2005 00:51:10 CEST
-
-  $Id$
 
 \* ---------------------------------------------------------------- */
 /* ---------------------------------------------------------------- *\
@@ -22,13 +20,12 @@
 /* ---------------------------------------------------------------- *\
   includes
 \* ---------------------------------------------------------------- */
-#include <X11/Xlib.h>
-#include <Imlib2.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
 #include "alock.h"
 
+#include <Imlib2.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */

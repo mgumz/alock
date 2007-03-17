@@ -2,31 +2,25 @@
 
   file    : alock.c
   author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 by m. gumz
+  copyr   : copyright (c) 2005 - 2007 by m. gumz
 
   license : see LICENSE
 
   start   : Sa 30 April 2005 14:19:44 CEST
 
-  $Id$
-
 \* ---------------------------------------------------------------- */
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-#include <X11/X.h>
-#include <X11/Xlib.h>
+#include "alock.h"
+
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /*----------------------------------------------*\
 \*----------------------------------------------*/
 
-#include "alock.h"
 
 /*------------------------------------------------------------------*\
     globals
