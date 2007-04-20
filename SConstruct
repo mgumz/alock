@@ -160,9 +160,10 @@ if alock_env['imlib2']:
             alock_env.AppendUnique(
                 CPPDEFINES = [ 'HAVE_IMLIB2' ],
                 LIBPATH = imlib2_env.Dictionary()['LIBPATH'],
-                CPPAPTH = imlib2_env.Dictionary()['CPPPATH'],
+                CPPPATH = imlib2_env.Dictionary()['CPPPATH'],
                 LIBS = imlib2_env.Dictionary()['LIBS']
             )
+
     conf.Finish()
 
 if alock_env['xrender']:

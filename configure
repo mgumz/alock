@@ -399,6 +399,6 @@ check_xlogo16
 echo "#_______________________" >&4
 echo "" >&4
 
-true
+rm -fr tmp.c
 
 # vim:ft=sh

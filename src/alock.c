@@ -26,7 +26,7 @@
     globals
 \*------------------------------------------------------------------*/
 extern struct aAuth alock_auth_none;
-#ifdef HAVE_HASH 
+#ifdef HAVE_HASH
 extern struct aAuth alock_auth_md5;
 extern struct aAuth alock_auth_sha1;
 extern struct aAuth alock_auth_sha256;
@@ -155,6 +155,7 @@ static int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
     long timeout = 0;
 
     for(;;) {
+
         XNextEvent(xinfo->display, &ev);
         switch (ev.type) {
         case KeyPress:

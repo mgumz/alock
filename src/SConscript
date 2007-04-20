@@ -15,6 +15,7 @@ Import('alock_env')
 
 build =  alock_env.Copy()
 
+
 if build['passwd']:
     auth_sources += [ 'auth_passwd.c' ]
 if build['hash']:

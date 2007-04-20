@@ -1,6 +1,9 @@
 Version 1.0
 ----------------------------------------------------------------------
-2006-03-02:
+2007-04-20:
+	* small fixes in SConstruct
+
+2007-03-02:
 	* renamed Makefile to GNUmakefile (so using bsdmake wont hurt)
 	* *bsd has no shadow.h support, so we wont use it on *bsd
 	* pam doesnt need -lpam_misc on *bsd
