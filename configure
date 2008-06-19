@@ -350,7 +350,7 @@ EOF
 
         --prefix)
             shift
-            if [[ $# -gt 0 ]]
+            if [ $# -gt 0 ]
             then
                 prefix=$1
             else

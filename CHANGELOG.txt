@@ -1,5 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
+2008-06-19:
+	* fix #8, make it more /bin/sh compatible
+
 2007-04-20:
 	* small fixes in SConstruct
 
