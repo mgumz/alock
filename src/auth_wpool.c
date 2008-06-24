@@ -1178,7 +1178,7 @@ static char* userhash = NULL;
 static int alock_auth_wpool_init(const char* args) {
 
     if (!args) {
-        fprintf(stderr, "alock: error, missing arguments for [wpool].\n");
+        fprintf(stderr, "%s", "alock: error, missing arguments for [wpool].\n");
         return 0;
     }
 
@@ -1194,7 +1194,7 @@ static int alock_auth_wpool_init(const char* args) {
                         if (!userhash)
                             userhash = strdup(&arg[5]);
                     } else {
-                        fprintf(stderr, "alock: error, missing or incorrect hash for [wpool].\n");
+                        fprintf(stderr, "%s", "alock: error, missing or incorrect hash for [wpool].\n");
                         free(arguments);
                         return 0;
                     }
@@ -1233,12 +1233,12 @@ static int alock_auth_wpool_init(const char* args) {
         }
         free(arguments);
     } else {
-        fprintf(stderr, "alock: error, missing arguments for [wpool].\n");
+        fprintf(stderr, "%s", "alock: error, missing arguments for [wpool].\n");
         return 0;
     }
 
     if (!userhash) {
-        fprintf(stderr, "alock: error, missing hash for [wpool].\n");
+        fprintf(stderr, "%s", "alock: error, missing hash for [wpool].\n");
         return 0;
     }
 
@@ -1296,7 +1296,7 @@ int main(int argc, char* argv[]) {
     wpoolContext ctx;
 
     if (argc > 1) {
-        printf("awhirl - reads from stdin to calculate a whirpool-hash.\n");
+        printf("%s", "awhirl - reads from stdin to calculate a whirpool-hash.\n");
         exit(EXIT_SUCCESS);
     }
 
@@ -1310,7 +1310,7 @@ int main(int argc, char* argv[]) {
         printf("%02x", digest[i]);
     }
 
-    printf("\n");
+    printf("%s", "\n");
     fflush(stdout);
 
     return EXIT_SUCCESS;

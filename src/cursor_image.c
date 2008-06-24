@@ -65,12 +65,12 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
 
 
     if (!filename) {
-        printf("alock: error, missing argument for [image].\n");
+        printf("%s", "alock: error, missing argument for [image].\n");
         return 0;
     }
 
     if (!alock_check_xrender(xinfo)) {
-        printf("alock: error, no running xrender extension found [image].\n");
+        printf("%s", "alock: error, no running xrender extension found [image].\n");
         free(filename);
         return 0;
     }
@@ -166,7 +166,7 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
                 cursor = XRenderCreateCursor(xinfo->display, cursor_pic, w / 2, h / 2);
                 XRenderFreePicture(xinfo->display, cursor_pic);
             } else {
-                printf("alock: error while finding a valid XRenderPictFormat in [image].\n");
+                printf("%s", "alock: error while finding a valid XRenderPictFormat in [image].\n");
                 free(filename);
                 return 0;
             }

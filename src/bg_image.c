@@ -92,7 +92,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
     }
 
     if (!filename) {
-        printf("alock: error, no filename specified for [image]\n");
+        printf("%s", "alock: error, no filename specified for [image]\n");
         return 1;
     }
 

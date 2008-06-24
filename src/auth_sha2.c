@@ -888,7 +888,7 @@ static size_t method_digest_string_length = 0;
 static int alock_auth_sha2_init(const char* args) {
 
     if (!args) {
-        fprintf(stderr, "alock: error, missing arguments for [sha2].\n");
+        fprintf(stderr, "%s", "alock: error, missing arguments for [sha2].\n");
         return 0;
     }
 
@@ -905,7 +905,7 @@ static int alock_auth_sha2_init(const char* args) {
         method_string = strdup("sha384");
         method_digest_string_length = SHA384_DIGEST_STRING_LENGTH;
     } else {
-        fprintf(stderr, "alock: error, not supported hash in [sha2].\n");
+        fprintf(stderr, "%s", "alock: error, not supported hash in [sha2].\n");
         return 0;
     }
 
@@ -1084,7 +1084,7 @@ struct aAuth alock_auth_sha512 = {
 #else
 
 void usage() {
-    printf("asha2 - reads from stdin to calculate a sha2-hash.\n"
+    printf("%s", "asha2 - reads from stdin to calculate a sha2-hash.\n"
            "usage:\n"
            "  asha2 <256|384|512>\n");
 }
@@ -1151,7 +1151,7 @@ int main(int argc, char* argv[]) {
 
     for(i = 0; i < method_digest_length; ++i)
         printf("%02x", digest[i]);
-    printf("\n");
+    printf("%s", "\n");
     fflush(stdout);
 
     return EXIT_SUCCESS;

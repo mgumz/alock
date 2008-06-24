@@ -65,7 +65,7 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
                     if ((!tmp_shade || tmp_char != &arg[6]) && tmp_shade > 0 && tmp_shade < 100)
                         shade = tmp_shade;
                     else {
-                        printf("alock: error, given value invalid or out of range for [shade].\n");
+                        printf("%s", "alock: error, given value invalid or out of range for [shade].\n");
                         free(arguments);
                         free(color_name);
                         return 0;

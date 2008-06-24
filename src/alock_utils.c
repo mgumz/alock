@@ -74,7 +74,7 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
         if (XQueryExtension(xinfo->display, "RENDER",
                             &major_opcode,
                             &first_event, &first_error) == False) {
-            printf("alock: error, no xrender-support found\n");
+            printf("%s", "alock: error, no xrender-support found\n");
             have_xrender = 0;
         } else
             have_xrender = 1;
@@ -83,7 +83,7 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
     }
     return have_xrender;
 #else
-    printf("alock: error, i wasnt compiled to support xrender.\n");
+    printf("%s", "alock: error, i wasnt compiled to support xrender.\n");
     return 0;
 #endif /* HAVE_XRENDER */
 }
@@ -116,7 +116,7 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
     }
 
     if (!format) {
-        printf("error, couldnt find valid format for alpha.\n");
+        printf("%s", "error, couldnt find valid format for alpha.\n");
         XFreePixmap(dpy, dst_pm);
         XFreePixmap(dpy, src_pm);
         return 0;

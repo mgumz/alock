@@ -1,5 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
+2008-06-24:
+	* (f)printf formatstring issues fixed
+
 2008-06-19:
 	* fix #8, make it more /bin/sh compatible
 

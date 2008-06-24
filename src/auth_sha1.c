@@ -228,7 +228,7 @@ static char* userhash = NULL;
 static int alock_auth_sha1_init(const char* args) {
 
     if (!args) {
-        fprintf(stderr, "alock: error, missing arguments for [sha1].\n");
+        fprintf(stderr, "%s", "alock: error, missing arguments for [sha1].\n");
         return 0;
     }
 
@@ -244,7 +244,7 @@ static int alock_auth_sha1_init(const char* args) {
                         if (!userhash)
                             userhash = strdup(&arg[5]);
                     } else {
-                        fprintf(stderr, "alock: error, missing or incorrect hash for [sha1].\n");
+                        fprintf(stderr, "%s", "alock: error, missing or incorrect hash for [sha1].\n");
                         free(arguments);
                         return 0;
                     }
@@ -283,12 +283,12 @@ static int alock_auth_sha1_init(const char* args) {
         }
         free(arguments);
     } else {
-        fprintf(stderr, "alock: error, missing arguments for [sha1].\n");
+        fprintf(stderr, "%s", "alock: error, missing arguments for [sha1].\n");
         return 0;
     }
 
     if (!userhash) {
-        printf("alock: error, missing hash for [sha1].\n");
+        printf("%s", "alock: error, missing hash for [sha1].\n");
         return 0;
     }
 
@@ -344,7 +344,7 @@ int main(int argc, char* argv[]) {
     sha1Context sha1;
 
     if (argc > 1) {
-        printf("asha1 - reads from stdin to calculate a sha1-hash.\n");
+        printf("%s", "asha1 - reads from stdin to calculate a sha1-hash.\n");
         exit(EXIT_SUCCESS);
     }
 
@@ -356,7 +356,7 @@ int main(int argc, char* argv[]) {
 
     for(i = 0; i < SHA1_DIGEST_LENGTH; ++i)
         printf("%02x", digest[i]);
-    printf("\n");
+    printf("%s", "\n");
     fflush(stdout);
 
     return EXIT_SUCCESS;

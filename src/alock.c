@@ -109,8 +109,8 @@ static struct aCursor* alock_cursors[] = {
 \*------------------------------------------------------------------*/
 
 static void displayUsage() {
-    printf("alock [-hv] [-bg type:options] [-cursor type:options] ");
-    printf("[-auth type:options]\n");
+    printf("%s", "alock [-hv] [-bg type:options] [-cursor type:options] "
+                 "[-auth type:options]\n");
 }
 
 /*------------------------------------------------------------------*\
@@ -265,12 +265,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (bg_tmp == NULL) {
-                        printf("alock: error, couldnt find the bg-module you specified.\n");
+                        printf("%s", "alock: error, couldnt find the bg-module you specified.\n");
                         exit(EXIT_FAILURE);
                     }
 
                 } else {
-                    printf("alock, error, missing argument\n");
+                    printf("%s", "alock, error, missing argument\n");
                     displayUsage();
                     exit(EXIT_FAILURE);
                 }
@@ -302,12 +302,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (auth_tmp == NULL) {
-                        printf("alock: error, couldnt find the auth-module you specified.\n");
+                        printf("%s", "alock: error, couldnt find the auth-module you specified.\n");
                         exit(EXIT_FAILURE);
                     }
 
                 } else {
-                    printf("alock, error, missing argument\n");
+                    printf("%s", "alock, error, missing argument\n");
                     displayUsage();
                     exit(EXIT_FAILURE);
                 }
@@ -336,12 +336,12 @@ int main(int argc, char **argv) {
                     }
 
                     if (!cursor_tmp) {
-                        printf("alock: error, couldnt find the cursor-module you specified.\n");
+                        printf("%s", "alock: error, couldnt find the cursor-module you specified.\n");
                         exit(EXIT_FAILURE);
                     }
 
                 } else {
-                    printf("alock, error, missing argument\n");
+                    printf("%s", "alock, error, missing argument\n");
                     displayUsage();
                     exit(EXIT_FAILURE);
                 }
@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
     }
 
     if (!opts.auth) {
-        printf("alock: error, no auth-method specified.\n");
+        printf("%s", "alock: error, no auth-method specified.\n");
         displayUsage();
         exit(EXIT_FAILURE);
     }
@@ -395,7 +395,7 @@ int main(int argc, char **argv) {
         sleep(1);
         if ((XGrabKeyboard(xinfo.display, xinfo.window[0], True, GrabModeAsync, GrabModeAsync,
                         CurrentTime)) != GrabSuccess) {
-            printf("alock: couldnt grab the keyboard.\n");
+            printf("%s", "alock: couldnt grab the keyboard.\n");
             exit(EXIT_FAILURE);
         }
     }
@@ -406,7 +406,7 @@ int main(int argc, char **argv) {
     if (XGrabPointer(xinfo.display, xinfo.window[0], False, None,
                      GrabModeAsync, GrabModeAsync, None, xinfo.cursor[0], CurrentTime) != GrabSuccess) {
         XUngrabKeyboard(xinfo.display, CurrentTime);
-        printf("alock: couldnt grab the pointer.\n");
+        printf("%s", "alock: couldnt grab the pointer.\n");
         exit(EXIT_FAILURE);
     }
 
