@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 17 March 2007
+v1.0, 24 June 2008
 
 NAME
 ----
@@ -22,12 +22,12 @@ and never will. Its just for locking the current X session.
 
 OPTIONS
 -------
--h ::
+-h::
     Print a short help
--v ::
+-v::
     Print the version number
 
--auth type:options ::
+-auth type:options::
     Define the type of the authentification, depends strongly on
     how alock was built:
     - list - Displays a list of available types
@@ -55,7 +55,7 @@ OPTIONS
         * file=<filename> - use <filename> as reference
 
 
--bg type:options ::
+-bg type:options::
     Define the type of alock should handle the background:
     - list - Displays a list of available types
     - none - You can see everything like it is
@@ -72,7 +72,7 @@ OPTIONS
         * color=<color> - Use <color>
         * shade=<perc> - Valid from 1 to 99
 
--cursor type:options ::
+-cursor type:options::
     Define the look-a-like of the cursor/mouse pointer:
     - list - Displays a list of available types
     - theme - Use the given internal cursor
@@ -140,6 +140,6 @@ Other Lockers ::
 
 COPYING
 -------
-Copyright (C) 2005 - 2007 Mathias Gumz. Free use of this software is
+Copyright (C) 2005 - 2008 Mathias Gumz. Free use of this software is
 granted under the terms of the MIT. See LICENSE provided in the
 distribution.
