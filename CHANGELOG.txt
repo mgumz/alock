@@ -1,6 +1,7 @@
 Version 1.0
 ----------------------------------------------------------------------
 2008-06-24:
+	* minor fixes to scons
 	* minor docu issues
 	* (f)printf formatstring issues fixed
 

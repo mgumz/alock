@@ -13,7 +13,7 @@ cursor_sources = [ 'cursor_none.c', 'cursor_theme.c', 'cursor_glyph.c' ]
 
 Import('alock_env')
 
-build =  alock_env.Copy()
+build =  alock_env.Clone()
 
 
 if build['passwd']:

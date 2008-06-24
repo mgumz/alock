@@ -152,23 +152,23 @@ if alock_env['imlib2']:
     else:
         imlib2_env = Environment()
         imlib2_env.ParseConfig('imlib2-config --cflags --libs')
-        if not imlib2_env.Dictionary()['LIBS']:
+        if not imlib2_env.Dictionary().get('LIBS'):
             print "missing imlib2, install it."
             alock_env['imlib2'] = 0
         else:
             print "yes"
             alock_env.AppendUnique(
                 CPPDEFINES = [ 'HAVE_IMLIB2' ],
-                LIBPATH = imlib2_env.Dictionary()['LIBPATH'],
-                CPPPATH = imlib2_env.Dictionary()['CPPPATH'],
-                LIBS = imlib2_env.Dictionary()['LIBS']
+                LIBPATH = imlib2_env.Dictionary().get('LIBPATH'),
+                CPPPATH = imlib2_env.Dictionary().get('CPPPATH'),
+                LIBS = imlib2_env.Dictionary().get('LIBS')
             )
 
     conf.Finish()
 
 if alock_env['xrender']:
     conf = alock_env.Configure()
-    if conf.CheckLib('Xrender', 'XRenderCreatePicture', 1):
+    if conf.CheckLib('libXrender'):
         alock_env.AppendUnique(
             CPPDEFINES = [ 'HAVE_XRENDER' ],
             LIBS = [ 'Xrender' ]
