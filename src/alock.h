@@ -36,6 +36,8 @@ struct aXInfo {
 
     Display*  display;
 
+    Atom      pid_atom;
+
     int       nr_screens;
 
     Window*   root;

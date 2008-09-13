@@ -1,5 +1,9 @@
 Version 1.0
 ----------------------------------------------------------------------
+2008-09-13:
+	* disallow running multiple instances on the same xserver at 
+	  the same time
+
 2008-06-24:
 	* minor fixes to scons
 	* minor docu issues

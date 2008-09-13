@@ -13,10 +13,14 @@
 #include "alock.h"
 
 #include <X11/Xutil.h>
+#include <X11/Xproto.h>
+#include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
 /*----------------------------------------------*\
 \*----------------------------------------------*/
@@ -127,6 +131,7 @@ static void initXInfo(struct aXInfo* xinfo) {
 
     {
         xinfo->display = dpy;
+        xinfo->pid_atom = XInternAtom(dpy, "_ALOCK_PID", False);
         xinfo->nr_screens = ScreenCount(dpy);
         xinfo->window = (Window*)calloc((size_t)xinfo->nr_screens, sizeof(Window));
         xinfo->root = (Window*)calloc((size_t)xinfo->nr_screens, sizeof(Window));
@@ -143,7 +148,7 @@ static void initXInfo(struct aXInfo* xinfo) {
     }
 }
 
-static int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
+static int eventLoop(struct aOpts* opts, struct aXInfo* xinfo) {
 
     XEvent ev;
     KeySym ks;
@@ -222,6 +227,61 @@ static int event_loop(struct aOpts* opts, struct aXInfo* xinfo) {
 
     return 0;
 }
+
+static pid_t getPidAtom(struct aXInfo* xinfo) {
+
+    Atom ret_type;
+    int ret_fmt;
+    unsigned long nr_read;
+    unsigned long nr_bytes_left;
+    pid_t* ret_data;
+
+    if (XGetWindowProperty(xinfo->display, xinfo->root[0], 
+                xinfo->pid_atom, 0L, 1L, False, XA_CARDINAL, 
+                &ret_type, &ret_fmt, &nr_read, &nr_bytes_left,
+                (unsigned char**)&ret_data) == Success && ret_type != None && ret_data) {
+        pid_t pid = *ret_data;
+        XFree(ret_data);
+        return pid;
+    }
+
+    return 0;
+}
+
+static int detectOtherInstance(struct aXInfo* xinfo) {
+
+    pid_t pid = getPidAtom(xinfo);
+    int process_alive = kill(pid, 0);
+
+    if (pid > 0 && process_alive == 0) {
+        return 1;
+    }
+
+    if (process_alive) {
+        perror("alock: info, found _ALOCK_PID");
+    }
+
+    return 0;
+}
+
+static int registerInstance(struct aXInfo* xinfo) {
+
+    pid_t pid = getpid();
+    XChangeProperty(xinfo->display, xinfo->root[0],
+            xinfo->pid_atom, XA_CARDINAL,
+            sizeof(pid_t) * 8, PropModeReplace, 
+            (unsigned char*)&pid, 1);
+    return 1;
+}
+
+static int unregisterInstance(struct aXInfo* xinfo) {
+
+    XDeleteProperty(xinfo->display, xinfo->root[0], xinfo->pid_atom);
+    return 1;
+}
+
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
 
 int main(int argc, char **argv) {
 
@@ -355,13 +415,17 @@ int main(int argc, char **argv) {
         }
     }
 
+    initXInfo(&xinfo);
+    if (detectOtherInstance(&xinfo)) {
+        printf("%s", "alock: error, another instance seems to be running\n");
+        exit(EXIT_FAILURE);
+    }
+
     if (!opts.auth) {
         printf("%s", "alock: error, no auth-method specified.\n");
         displayUsage();
         exit(EXIT_FAILURE);
     }
-
-    initXInfo(&xinfo);
 
     if (opts.background->init(background_args, &xinfo) == 0) {
         printf("alock: error, couldnt init [%s] with [%s].\n",
@@ -410,7 +474,9 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    event_loop(&opts, &xinfo);
+    registerInstance(&xinfo);
+    eventLoop(&opts, &xinfo);
+    unregisterInstance(&xinfo);
 
     opts.auth->deinit();
     opts.cursor->deinit(&xinfo);
