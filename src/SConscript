@@ -5,7 +5,7 @@
 #
 ##########################################################
 
-alock_sources = [ 'alock.c', 'alock_utils.c' ]
+alock_sources = [ 'alock.c', 'alock_utils.c', 'alock_frame.c' ]
 
 auth_sources = [ 'auth_none.c' ]
 bg_sources = [ 'bg_none.c', 'bg_blank.c' ]

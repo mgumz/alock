@@ -93,12 +93,9 @@ static int alock_bg_shade_init(const char* args, struct aXInfo* xinfo) {
             /* get a color from color_name */
             alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
 
-            { /* get dimension of the screen */
-                XWindowAttributes xgwa;
-                XGetWindowAttributes(xinfo->display, xinfo->root[scr], &xgwa);
-                width = xgwa.width;
-                height = xgwa.height;
-            }
+            width = xinfo->width_of_root[scr];
+            height = xinfo->height_of_root[scr];
+
             { /* xrender stuff */
                 Display* dpy = xinfo->display;
                 Window root = xinfo->root[scr];

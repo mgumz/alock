@@ -11,6 +11,7 @@
 \* ---------------------------------------------------------------- */
 
 #include "alock.h"
+#include "alock_frame.h"
 
 #include <X11/Xutil.h>
 #include <X11/Xproto.h>
@@ -21,6 +22,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <poll.h>
 
 /*----------------------------------------------*\
 \*----------------------------------------------*/
@@ -120,7 +122,7 @@ static void displayUsage() {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-static void initXInfo(struct aXInfo* xinfo) {
+static void initXInfo(struct aXInfo* xi) {
 
     Display* dpy = XOpenDisplay(NULL);
 
@@ -130,101 +132,173 @@ static void initXInfo(struct aXInfo* xinfo) {
     }
 
     {
-        xinfo->display = dpy;
-        xinfo->pid_atom = XInternAtom(dpy, "_ALOCK_PID", False);
-        xinfo->nr_screens = ScreenCount(dpy);
-        xinfo->window = (Window*)calloc((size_t)xinfo->nr_screens, sizeof(Window));
-        xinfo->root = (Window*)calloc((size_t)xinfo->nr_screens, sizeof(Window));
-        xinfo->colormap = (Colormap*)calloc((size_t)xinfo->nr_screens, sizeof(Colormap));
-        xinfo->cursor = (Cursor*)calloc((size_t)xinfo->nr_screens, sizeof(Cursor));
+        xi->display = dpy;
+        xi->pid_atom = XInternAtom(dpy, "_ALOCK_PID", False);
+        xi->nr_screens = ScreenCount(dpy);
+        xi->window = (Window*)calloc((size_t)xi->nr_screens, sizeof(Window));
+        xi->root = (Window*)calloc((size_t)xi->nr_screens, sizeof(Window));
+        xi->colormap = (Colormap*)calloc((size_t)xi->nr_screens, sizeof(Colormap));
+        xi->cursor = (Cursor*)calloc((size_t)xi->nr_screens, sizeof(Cursor));
+        xi->width_of_root = calloc(xi->nr_screens, sizeof(int));
+        xi->height_of_root = calloc(xi->nr_screens, sizeof(int));
     }
     {
+        XWindowAttributes xgwa;
         int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
-            xinfo->window[scr] = None;
-            xinfo->root[scr] = RootWindow(dpy, scr);
-            xinfo->colormap[scr] = DefaultColormap(dpy, scr);
+        for (scr = 0; scr < xi->nr_screens; scr++) {
+            xi->window[scr] = None;
+            xi->root[scr] = RootWindow(dpy, scr);
+            xi->colormap[scr] = DefaultColormap(dpy, scr);
+
+            XGetWindowAttributes(dpy, xi->root[scr], &xgwa);
+            xi->width_of_root[scr] = xgwa.width;
+            xi->height_of_root[scr] = xgwa.height;
         }
     }
 }
 
-static int eventLoop(struct aOpts* opts, struct aXInfo* xinfo) {
+enum {
+    INITIAL = 0,
+    READY,
+    TYPING,
+    WRONG
+};
 
+static void visualFeedback(struct aFrame* frame, int mode) {
+
+    static int old_mode = INITIAL;
+    int redraw = 0;
+
+    if (old_mode != mode)
+        redraw = 1;
+
+    old_mode = mode;
+
+    switch (mode) {
+    case READY:
+        if (redraw) {
+            alock_draw_frame(frame, "green");
+        }
+        fprintf(stderr, "READY\n");
+        break;
+    case TYPING:
+        fprintf(stderr, "TYPING\n");
+        break;
+    case WRONG:
+        if (redraw) {
+            alock_draw_frame(frame, "red");
+        }
+        fprintf(stderr, "WRONG\n");
+        break;
+    };
+}
+
+static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
+
+    Display* dpy = xi->display;
     XEvent ev;
     KeySym ks;
-    char cbuf[10], rbuf[50];
+    char cbuf[10];
+    char rbuf[50];
     unsigned int clen, rlen = 0;
 
     const long max_goodwill = 5 * 30000; /* 150 seconds */
     long goodwill = max_goodwill;
     long timeout = 0;
+    int mode = READY;
+
+    struct aFrame* frame = alock_create_frame(xi, 0, 0, xi->width_of_root[0], xi->height_of_root[0], 10);
 
     for(;;) {
 
-        XNextEvent(xinfo->display, &ev);
-        switch (ev.type) {
-        case KeyPress:
+        // check for any keypresses
+        if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask|KeyReleaseMask, &ev) == True) {
 
-            if (ev.xkey.time < timeout) {
-                XBell(xinfo->display, 0);
-                break;
-            }
+            switch (ev.type) {
+            case KeyPress:
 
-            clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
-            switch (ks) {
-            case XK_Escape:
-            case XK_Clear:
-                rlen = 0;
-                break;
-            case XK_Delete:
-            case XK_BackSpace:
-                if (rlen > 0)
-                    rlen--;
-                break;
-            case XK_Linefeed:
-            case XK_Return:
-                if (rlen == 0)
+                if (ev.xkey.time < timeout) {
+                    XBell(dpy, 0);
                     break;
-                if (rlen < sizeof(rbuf))
-                    rbuf[rlen] = 0;
-
-                if (opts->auth->auth(rbuf))
-                    return 1;
-
-                XSync(xinfo->display, True); /* discard pending events to start really fresh */
-                XBell(xinfo->display, 0);
-                rlen = 0;
-
-                if (timeout) {
-                    goodwill += ev.xkey.time - timeout;
-                    if (goodwill > max_goodwill) {
-                        goodwill = max_goodwill;
-                    }
                 }
 
-                {
-                    long offset;
+                // swallow up first keypress after timeout
+                if (mode == WRONG) {
+                    mode = READY;
+                    break;
+                }
+                else
+                    mode = TYPING;
 
-                    offset = goodwill * 0.3;
-                    goodwill = goodwill - offset;
-                    timeout = ev.xkey.time + 30000 - offset;
+                clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
+                switch (ks) {
+                case XK_Escape:
+                case XK_Clear:
+                    rlen = 0;
+                    break;
+                case XK_Delete:
+                case XK_BackSpace:
+                    if (rlen > 0)
+                        rlen--;
+                    break;
+                case XK_Linefeed:
+                case XK_Return:
+                    if (rlen == 0)
+                        break;
+                    if (rlen < sizeof(rbuf))
+                        rbuf[rlen] = 0;
+
+                    if (opts->auth->auth(rbuf)) {
+                        alock_free_frame(frame);
+                        return 1;
+                    }
+
+                    mode = WRONG;
+
+                    XSync(dpy, True); /* discard pending events to start really fresh */
+                    XBell(dpy, 0);
+                    rlen = 0;
+
+                    if (timeout) {
+                        goodwill += ev.xkey.time - timeout;
+                        if (goodwill > max_goodwill) {
+                            goodwill = max_goodwill;
+                        }
+                    }
+
+                    {
+                        long offset;
+
+                        offset = goodwill * 0.3;
+                        goodwill = goodwill - offset;
+                        timeout = ev.xkey.time + 30000 - offset;
+                    }
+                    break;
+                default:
+                    if (clen != 1)
+                        break;
+                    if (rlen < (sizeof(rbuf) - 1)) {
+                        rbuf[rlen] = cbuf[0];
+                        rlen++;
+                    }
+                    break;
                 }
                 break;
             default:
-                if (clen != 1)
-                    break;
-                if (rlen < (sizeof(rbuf) - 1)) {
-                    rbuf[rlen] = cbuf[0];
-                    rlen++;
-                }
                 break;
             }
-            break;
-        default:
-            break;
+
+        } else { // wait a bit
+            poll(NULL, 0, 25);
+
+            //fprintf(stderr, "timeout: %ld <=> \n", timeout, ); fflush(stderr);
+            visualFeedback(frame, mode);
         }
+
     }
 
+    // normally, we shouldnt arrive here at all
+    alock_free_frame(frame);
     return 0;
 }
 
@@ -236,8 +310,8 @@ static pid_t getPidAtom(struct aXInfo* xinfo) {
     unsigned long nr_bytes_left;
     pid_t* ret_data;
 
-    if (XGetWindowProperty(xinfo->display, xinfo->root[0], 
-                xinfo->pid_atom, 0L, 1L, False, XA_CARDINAL, 
+    if (XGetWindowProperty(xinfo->display, xinfo->root[0],
+                xinfo->pid_atom, 0L, 1L, False, XA_CARDINAL,
                 &ret_type, &ret_fmt, &nr_read, &nr_bytes_left,
                 (unsigned char**)&ret_data) == Success && ret_type != None && ret_data) {
         pid_t pid = *ret_data;
@@ -269,7 +343,7 @@ static int registerInstance(struct aXInfo* xinfo) {
     pid_t pid = getpid();
     XChangeProperty(xinfo->display, xinfo->root[0],
             xinfo->pid_atom, XA_CARDINAL,
-            sizeof(pid_t) * 8, PropModeReplace, 
+            sizeof(pid_t) * 8, PropModeReplace,
             (unsigned char*)&pid, 1);
     return 1;
 }

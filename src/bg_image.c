@@ -42,7 +42,6 @@ static XColor* color = NULL;
 
 static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
 
-    XWindowAttributes xgwa;
     XSetWindowAttributes xswa;
     long xsmask = 0;
     long options = ALOCK_SCALE;
@@ -108,9 +107,9 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
         int scr;
         for (scr = 0; scr < xinfo->nr_screens; scr++) {
 
+            const int rwidth = xinfo->width_of_root[scr];
+            const int rheight = xinfo->height_of_root[scr];
             alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
-
-            XGetWindowAttributes(xinfo->display, xinfo->root[scr], &xgwa);
 
             { /* get image and set it as the background pixmap for the window */
                 Imlib_Context context = NULL;
@@ -131,7 +130,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                     int h;
 
                     pixmap[scr] = XCreatePixmap(xinfo->display, xinfo->root[scr],
-                                       xgwa.width, xgwa.height,
+                                       rwidth, rheight,
                                        DefaultDepth(xinfo->display, scr));
 
                     imlib_context_set_drawable(pixmap[scr]);
@@ -147,7 +146,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
 
                         gcval.foreground = color[scr].pixel;
                         gc = XCreateGC(xinfo->display, xinfo->root[scr], GCForeground, &gcval);
-                        XFillRectangle(xinfo->display, pixmap[scr], gc, 0, 0, xgwa.width, xgwa.height);
+                        XFillRectangle(xinfo->display, pixmap[scr], gc, 0, 0, rwidth, rheight);
                         XFreeGC(xinfo->display, gc);
                     }
 
@@ -181,7 +180,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                     }
 
                     if (options & ALOCK_CENTER) {
-                        imlib_render_image_on_drawable((xgwa.width - w)/2, (xgwa.height - h)/2);
+                        imlib_render_image_on_drawable((rwidth - w)/2, (rheight - h)/2);
                     } else if (options & ALOCK_TILED) {
                         Pixmap tile;
                         GC gc;
@@ -195,12 +194,12 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                         gcval.fill_style = FillTiled;
                         gcval.tile = tile;
                         gc = XCreateGC(xinfo->display, tile, GCFillStyle|GCTile, &gcval);
-                        XFillRectangle(xinfo->display, pixmap[scr], gc, 0, 0, xgwa.width, xgwa.height);
+                        XFillRectangle(xinfo->display, pixmap[scr], gc, 0, 0, rwidth, rheight);
 
                         XFreeGC(xinfo->display, gc);
                         XFreePixmap(xinfo->display, tile);
                     } else {/* fallback is ALOCK_SCALE */
-                        imlib_render_image_on_drawable_at_size(0, 0, xgwa.width, xgwa.height);
+                        imlib_render_image_on_drawable_at_size(0, 0, rwidth, rheight);
                     }
                     imlib_free_image_and_decache();
 
@@ -225,7 +224,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
             xsmask |= CWBackPixmap;
 
             window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
-                                   0, 0, xgwa.width, xgwa.height,
+                                   0, 0, rwidth, rheight,
                                    0, /* borderwidth */
                                    CopyFromParent, /* depth */
                                    InputOutput, /* class */

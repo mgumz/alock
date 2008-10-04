@@ -38,7 +38,7 @@ void alock_string2lower(char* string) {
 
 /* ---------------------------------------------------------------- *\
 \* ---------------------------------------------------------------- */
-int alock_alloc_color(const struct aXInfo* xinfo, const int scr, const char* color_name,
+int alock_alloc_color(const struct aXInfo* xinfo, int scr, const char* color_name,
         const char* fallback_name, XColor* result) {
 
     static XColor tmp;
@@ -57,7 +57,7 @@ int alock_alloc_color(const struct aXInfo* xinfo, const int scr, const char* col
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 int alock_native_byte_order() {
-    int	x = 1;
+    int x = 1;
     return (*((char *) &x) == 1) ? LSBFirst : MSBFirst;
 }
 

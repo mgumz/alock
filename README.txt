@@ -1,11 +1,11 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 24 June 2008
+v1.0, 04 October 2008
 
 NAME
 ----
-alock - locks the local X display until a password is entered.
+alock - locks the local X display until the correct password is entered.
 
 SYNOPSIS
 --------
@@ -13,12 +13,19 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-'alock' locks the X server till the user enters a password at the
-keyboard. If the authentification was successful the X server is
+'alock' locks the X server until the user enters the correct password at the
+keyboard. If the authentification was successful, the X server is
 unlocked and the user can continue to work.
 
 'alock' does not provide fancy animations like 'xlock' and 'xscreensaver'
-and never will. Its just for locking the current X session.
+and never will. It's just for locking the current X session.
+
+When 'alock' is started it just waits for the first keypress. This first
+keypress is to indicate that the user now wants to type in the password.
+A colored frame is draw around the screen and the user can now type in
+his password. If it was typed in incorrectly, the colored frame turns red and
+the user has to wait a certain timeout. Then he can activate the typeing mode
+again.
 
 OPTIONS
 -------

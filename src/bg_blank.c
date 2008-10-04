@@ -34,7 +34,6 @@ static XColor* color = NULL;
 
 static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
 
-    XWindowAttributes xgwa;
     XSetWindowAttributes xswa;
     long xsmask = 0;
     char* color_name = strdup("black");
@@ -69,8 +68,6 @@ static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
 
             alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
 
-            XGetWindowAttributes(xinfo->display, xinfo->root[scr], &xgwa);
-
             xswa.override_redirect = True;
             xswa.colormap = xinfo->colormap[scr];
             xswa.background_pixel = color[scr].pixel;
@@ -80,7 +77,8 @@ static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
             xsmask |= CWColormap;
 
             window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
-                                  0, 0, xgwa.width, xgwa.height,
+                                  0, 0,
+                                  xinfo->width_of_root[scr], xinfo->height_of_root[scr],
                                   0, /* borderwidth */
                                   CopyFromParent, /* depth */
                                   InputOutput, /* class */

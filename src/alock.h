@@ -40,6 +40,9 @@ struct aXInfo {
 
     int       nr_screens;
 
+    int*      width_of_root;
+    int*      height_of_root;
+
     Window*   root;
     Colormap* colormap;
 
@@ -72,12 +75,11 @@ struct aOpts {
     struct aBackground* background;
 };
 
-
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 void alock_string2lower(char* string);
 int alock_native_byte_order(void);
-int alock_alloc_color(const struct aXInfo* xinfo, const int scr,
+int alock_alloc_color(const struct aXInfo* xinfo, int scr,
         const char* color_name,
         const char* fallback_name,
         XColor* result);
