@@ -205,7 +205,7 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     const long max_goodwill = 5 * 30000; /* 150 seconds */
     long goodwill = max_goodwill;
     long timeout = 0;
-    int mode = READY;
+    int mode = INITIAL;
 
     struct aFrame* frame = alock_create_frame(xi, 0, 0, xi->width_of_root[0], xi->height_of_root[0], 10);
 
@@ -223,7 +223,7 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
                 }
 
                 // swallow up first keypress after timeout
-                if (mode == WRONG) {
+                if (mode == WRONG || mode == INITIAL) {
                     mode = READY;
                     break;
                 }
