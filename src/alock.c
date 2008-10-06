@@ -13,8 +13,8 @@
 #include "alock.h"
 #include "alock_frame.h"
 
-#include <X11/Xutil.h>
 #include <X11/Xproto.h>
+#include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
@@ -111,6 +111,37 @@ static struct aCursor* alock_cursors[] = {
 #endif /* HAVE_XCURSOR */
     NULL
 };
+/* ---------------------------------------------------------------- *\
+\* ---------------------------------------------------------------- */
+static struct timeval alock_start_time;
+
+static void initStartTime() {
+    X_GETTIMEOFDAY(&alock_start_time);
+}
+
+// taken from gdk.c
+static long elapsedTime() {
+
+    static struct timeval end;
+    static struct timeval elapsed;
+    long milliseconds;
+
+    X_GETTIMEOFDAY(&end);
+
+    if( alock_start_time.tv_usec > end.tv_usec ) {
+
+        end.tv_usec += 1000000;
+        end.tv_sec--;
+    }
+
+    elapsed.tv_sec = end.tv_sec - alock_start_time.tv_sec;
+    elapsed.tv_usec = end.tv_usec - alock_start_time.tv_usec;
+
+    milliseconds = (elapsed.tv_sec * 1000) + (elapsed.tv_usec / 1000);
+
+    return milliseconds;
+}
+
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -157,9 +188,11 @@ static void initXInfo(struct aXInfo* xi) {
     }
 }
 
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
+
 enum {
     INITIAL = 0,
-    READY,
     TYPING,
     WRONG
 };
@@ -175,20 +208,18 @@ static void visualFeedback(struct aFrame* frame, int mode) {
     old_mode = mode;
 
     switch (mode) {
-    case READY:
+    case INITIAL:
+        alock_hide_frame(frame);
+        break;
+    case TYPING:
         if (redraw) {
             alock_draw_frame(frame, "green");
         }
-        fprintf(stderr, "READY\n");
-        break;
-    case TYPING:
-        fprintf(stderr, "TYPING\n");
         break;
     case WRONG:
         if (redraw) {
             alock_draw_frame(frame, "red");
         }
-        fprintf(stderr, "WRONG\n");
         break;
     };
 }
@@ -201,15 +232,21 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     char cbuf[10];
     char rbuf[50];
     unsigned int clen, rlen = 0;
+    long current_time = 0;
+    long last_key_time = 0;
 
     const long max_goodwill = 5 * 30000; /* 150 seconds */
     long goodwill = max_goodwill;
     long timeout = 0;
+    long offset = 0;
     int mode = INITIAL;
 
     struct aFrame* frame = alock_create_frame(xi, 0, 0, xi->width_of_root[0], xi->height_of_root[0], 10);
 
     for(;;) {
+
+        current_time = elapsedTime();
+        //fprintf(stderr, "ct: %ld lk: %ld, to: %ld gw: %ld\n", current_time, last_key_time, timeout, goodwill);
 
         // check for any keypresses
         if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask|KeyReleaseMask, &ev) == True) {
@@ -217,18 +254,20 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
             switch (ev.type) {
             case KeyPress:
 
-                if (ev.xkey.time < timeout) {
+                last_key_time = current_time;
+
+                if (last_key_time < timeout) {
                     XBell(dpy, 0);
                     break;
                 }
 
-                // swallow up first keypress after timeout
-                if (mode == WRONG || mode == INITIAL) {
-                    mode = READY;
+                // swallow up first keypress to indicate "enter mode"
+                if (mode == INITIAL) {
+                    mode = TYPING;
                     break;
                 }
-                else
-                    mode = TYPING;
+
+                mode = TYPING;
 
                 clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
                 switch (ks) {
@@ -259,19 +298,28 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
                     XBell(dpy, 0);
                     rlen = 0;
 
-                    if (timeout) {
-                        goodwill += ev.xkey.time - timeout;
+                    // calculation of the timeout works such that the first 3
+                    // attempts should be almost without any punishment
+                    // (goodwill). after that the maximum of 30000s timeout
+                    // should be reached pretty soon.
+
+                    if (offset) {
+                        goodwill += last_key_time - offset;
                         if (goodwill > max_goodwill) {
                             goodwill = max_goodwill;
                         }
                     }
 
                     {
-                        long offset;
-
-                        offset = goodwill * 0.3;
+                        offset = goodwill / 3;
                         goodwill = goodwill - offset;
-                        timeout = ev.xkey.time + 30000 - offset;
+                        offset = last_key_time + 30000 - offset;
+
+                        if (offset > last_key_time)
+                            timeout = offset;
+                        else
+                            timeout = last_key_time;
+
                     }
                     break;
                 default:
@@ -289,10 +337,19 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
             }
 
         } else { // wait a bit
-            poll(NULL, 0, 25);
 
-            //fprintf(stderr, "timeout: %ld <=> \n", timeout, ); fflush(stderr);
+            long delta = current_time - last_key_time;
+
+            if (mode == TYPING && (delta > 10000)) { // user fell asleep while typing .)
+                mode = INITIAL;
+            } else if (mode == WRONG && (current_time > timeout)) { // end of timeout for wrong password
+                mode = TYPING;
+                last_key_time = timeout; // start 'idle' timer correctly by a fake keypress
+            }
+
             visualFeedback(frame, mode);
+
+            poll(NULL, 0, 25);
         }
 
     }
@@ -301,6 +358,9 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     alock_free_frame(frame);
     return 0;
 }
+
+/*------------------------------------------------------------------*\
+\*------------------------------------------------------------------*/
 
 static pid_t getPidAtom(struct aXInfo* xinfo) {
 
@@ -489,6 +549,8 @@ int main(int argc, char **argv) {
         }
     }
 
+
+    initStartTime();
     initXInfo(&xinfo);
     if (detectOtherInstance(&xinfo)) {
         printf("%s", "alock: error, another instance seems to be running\n");

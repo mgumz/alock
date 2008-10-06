@@ -35,6 +35,7 @@ struct aSide {
 };
 
 struct aFrame {
+    int visible;
     struct aSide top;
     struct aSide left;
     struct aSide right;
@@ -105,10 +106,10 @@ struct aFrame* alock_create_frame(struct aXInfo* xi, int x, int y, int width, in
                 0, CopyFromParent, InputOutput, CopyFromParent, CWOverrideRedirect|CWColormap, &xswa);
 
 
+//    alock_show_frame(frame);
+
     side = (struct aSide*)&frame->top;
     for (i = 0; i < 4; i++) {
-        XMapWindow(dpy, side[i].win);
-        XRaiseWindow(dpy, side[i].win);
         side[i].gc = XCreateGC(dpy, side[i].win, 0, 0);
     }
 
@@ -137,6 +138,10 @@ void alock_draw_frame(struct aFrame* frame, const char* color_name) {
     XColor tmp;
     int i;
 
+    if (!frame->visible) {
+        alock_show_frame(frame);
+    }
+
     XAllocNamedColor(dpy, xi->colormap[0], color_name, &frame->color, &tmp);
     gcvals.foreground = frame->color.pixel;
 
@@ -144,6 +149,37 @@ void alock_draw_frame(struct aFrame* frame, const char* color_name) {
         XChangeGC(dpy, side[i].gc, GCForeground, &gcvals);
         XFillRectangle(dpy, side[i].win, side[i].gc, 0, 0, side[i].width, side[i].height);
     }
+}
+
+void alock_show_frame(struct aFrame* frame) {
+
+    int i;
+    struct aSide* side = (struct aSide*)&frame->top;
+
+    if (frame->visible)
+        return;
+
+    for (i = 0; i < 4; i++) {
+        XMapWindow(frame->xi->display, side[i].win);
+        XRaiseWindow(frame->xi->display, side[i].win);
+    }
+
+    frame->visible = 1;
+}
+
+void alock_hide_frame(struct aFrame* frame) {
+
+    int i;
+    struct aSide* side = (struct aSide*)&frame->top;
+
+    if (!frame->visible)
+        return;
+
+    for (i = 0; i < 4; i++) {
+        XUnmapWindow(frame->xi->display, side[i].win);
+    }
+
+    frame->visible = 0;
 }
 
 /* ---------------------------------------------------------------- *\

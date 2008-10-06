@@ -28,6 +28,8 @@ struct aFrame;
 
 struct aFrame* alock_create_frame(struct aXInfo* xi, int x, int y, int width, int height, int line_width);
 void alock_draw_frame(struct aFrame* frame, const char* color_name);
+void alock_show_frame(struct aFrame* frame);
+void alock_hide_frame(struct aFrame* frame);
 void alock_free_frame(struct aFrame* frame);
 
 /* ---------------------------------------------------------------- *\
