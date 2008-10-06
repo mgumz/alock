@@ -234,11 +234,8 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     unsigned int clen, rlen = 0;
     long current_time = 0;
     long last_key_time = 0;
-
-    const long max_goodwill = 5 * 30000; /* 150 seconds */
-    long goodwill = max_goodwill;
+    const long penalty = 1000;
     long timeout = 0;
-    long offset = 0;
     int mode = INITIAL;
 
     struct aFrame* frame = alock_create_frame(xi, 0, 0, xi->width_of_root[0], xi->height_of_root[0], 10);
@@ -246,7 +243,6 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     for(;;) {
 
         current_time = elapsedTime();
-        //fprintf(stderr, "ct: %ld lk: %ld, to: %ld gw: %ld\n", current_time, last_key_time, timeout, goodwill);
 
         // check for any keypresses
         if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask|KeyReleaseMask, &ev) == True) {
@@ -298,30 +294,9 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
                     XBell(dpy, 0);
                     rlen = 0;
 
-                    // calculation of the timeout works such that the first 3
-                    // attempts should be almost without any punishment
-                    // (goodwill). after that the maximum of 30000s timeout
-                    // should be reached pretty soon.
-
-                    if (offset) {
-                        goodwill += last_key_time - offset;
-                        if (goodwill > max_goodwill) {
-                            goodwill = max_goodwill;
-                        }
-                    }
-
-                    {
-                        offset = goodwill / 3;
-                        goodwill = goodwill - offset;
-                        offset = last_key_time + 30000 - offset;
-
-                        if (offset > last_key_time)
-                            timeout = offset;
-                        else
-                            timeout = last_key_time;
-
-                    }
+                    timeout = last_key_time + penalty;
                     break;
+
                 default:
                     if (clen != 1)
                         break;
