@@ -284,28 +284,19 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
                         rbuf[rlen] = 0;
 
                     // some auth() methods have their own penalty system
-                    // so we assume that the auth() fails, visualize 'failed'
-                    // for as long as the auth needs.
-                    //
-                    // if it comes back 'ok', the visualization frame is
-                    // destroyed anyway. if it comes back 'false', then
-                    // we would need to show it anyway + we measure the
-                    // auth() penalty time to use it for the timeout.
+                    // so we draw a 'yellow' frame to show 'checking' state.
 
-                    mode = WRONG;
-                    visualFeedback(frame, mode);
+                    alock_draw_frame(frame, "yellow");
                     XSync(dpy, True);
-                    XBell(dpy, 0);
 
                     if (opts->auth->auth(rbuf)) {
                         alock_free_frame(frame);
                         return 1;
                     }
 
-                    timeout = last_key_time;
-                    if (elapsedTime() - last_key_time < penalty)
-                        timeout += penalty;
-
+                    XBell(dpy, 0);
+                    mode = WRONG;
+                    timeout = elapsedTime() + penalty;
                     rlen = 0;
                     break;
 

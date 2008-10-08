@@ -1,5 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
+2008-10-08:
+	* improved visual feedback
+
 2008-10-04:
 	* first version with visual feedback (still rough)
 
