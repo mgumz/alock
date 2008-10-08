@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 04 October 2008
+v1.0, 08 October 2008
 
 NAME
 ----
@@ -24,8 +24,7 @@ When 'alock' is started it just waits for the first keypress. This first
 keypress is to indicate that the user now wants to type in the password.
 A colored frame is draw around the screen and the user can now type in
 his password. If it was typed in incorrectly, the colored frame turns red and
-the user has to wait a certain timeout. Then he can activate the typeing mode
-again.
+the user has to wait a certain timeout.
 
 OPTIONS
 -------
