@@ -18,13 +18,24 @@ distclean:
 	$(MAKE) -C src distclean
 	rm -f config.mk config.log tmp.c
 
+ifdef WITH_DOCS
+install : alock docs
+else
 install : alock
+endif
 	mkdir -p $(DESTDIR)$(prefix)/bin/
 	cp -fv src/alock $(DESTDIR)$(prefix)/bin/alock
 	chmod 755 $(DESTDIR)$(prefix)/bin/alock
-	mkdir -p $(DESTDIR)$(prefix)/man/man1/
-	cp -fv alock.1 $(DESTDIR)$(prefix)/man/man1/alock.1
-	chmod 444 $(DESTDIR)$(prefix)/man/man1/alock.1
+	@if [ -f alock.1 ]; then \
+		mkdir -p $(DESTDIR)$(prefix)/man/man1/ ;\
+		cp -fv alock.1 $(DESTDIR)$(prefix)/man/man1/alock.1 ;\
+		chmod 444 $(DESTDIR)$(prefix)/man/man1/alock.1 ;\
+	else \
+		echo ",-----------------------------------------------------------," ;\
+		echo "| not installing the documentation because it was not built |" ;\
+		echo "| install 'asciidoc' and run './configure && make' again    |" ; \
+		echo "\`-----------------------------------------------------------'" ;\
+	fi
 	mkdir -p $(DESTDIR)$(prefix)/share/alock/xcursors
 	cp -fv contrib/xcursor-alock contrib/xcursor-gentoo \
 		contrib/xcursor-fluxbox contrib/xcursor-pekwm \
@@ -41,7 +52,7 @@ install : alock
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/README.txt
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/LICENSE.txt
 	chmod 444 $(DESTDIR)$(prefix)/share/alock/CHANGELOG.txt
-	@if `src/alock -auth list | grep passwd > /dev/null`; then      \
+	@if `./src/alock -auth list | grep passwd > /dev/null`; then      \
 		echo ",-------------------------------------------------,"; \
 		echo "| it seems that you have compiled 'alock' with    |"; \
 		echo "| 'shadow' support. to use that binary you have   |"; \
@@ -56,6 +67,8 @@ install : alock
 
 alock :
 	$(MAKE) -C src
+
+ifdef WITH_DOCS
 
 ASCIIDOC := asciidoc
 XMLTO := xmlto
@@ -75,4 +88,5 @@ alock.html : alock.txt
 alock.pdf : alock.xml
 	$(XMLTO) fo $< && $(FOP) $(@:.pdf=.fo) $@ 
 
+endif
 
