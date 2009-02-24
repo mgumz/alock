@@ -161,6 +161,8 @@ static int alock_auth_pam_auth(const char* pass) {
     PAM_password = pass;
     pam_error = pam_start("login", PAM_username, &PAM_conversation, &pam_handle);
     PAM_YN;
+    pam_error = pam_set_item(pam_handle, PAM_TTY, ttyname(0));
+    PAM_YN;
     pam_error = pam_authenticate(pam_handle, 0);
     PAM_YN;
     pam_error = pam_end(pam_handle, pam_error);
