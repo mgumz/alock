@@ -22,7 +22,7 @@ and never will. It's just for locking the current X session.
 
 When 'alock' is started it just waits for the first keypress. This first
 keypress is to indicate that the user now wants to type in the password.
-A colored frame is draw around the screen and the user can now type in
+A colored frame is drawn around the screen and the user can now type in
 his password. If it was typed in incorrectly, the colored frame turns red and
 the user has to wait a certain timeout.
 
