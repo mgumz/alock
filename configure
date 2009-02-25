@@ -60,9 +60,10 @@ check_imlib2() {
         cat << EOF > tmp.c
 #include <X11/Xlib.h>
 #include <Imlib2.h>
-void main() {
+int main() {
     Imlib_Context ctx = NULL;
     ctx = imlib_context_new();
+    return 0;
 }
 EOF
         msg_chkfor "compile with imlib2"
@@ -102,8 +103,9 @@ check_xrender() {
     cat << EOF > tmp.c
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
-void main() {
+int main() {
     XRenderFindVisualFormat(NULL, NULL);
+    return 0;
 }
 EOF
     msg_chkfor "Xrender.h"
@@ -134,8 +136,9 @@ check_xcursor() {
     cat << EOF > tmp.c
 #include <X11/Xlib.h>
 #include <X11/Xcursor/Xcursor.h>
-void main() {
+int main() {
     XcursorFilenameLoadCursor(NULL, NULL);
+    return 0;
 }
 EOF
     msg_chkfor "Xcursor.h"
@@ -162,12 +165,52 @@ EOF
     fi
 }
 
+check_xf86misc() {
+
+    cat << EOF > tmp.c
+#include <X11/Xlib.h>
+#include <X11/extensions/xf86misc.h>
+int main() {
+    XF86MiscSetGrabKeysState(NULL, True);
+    return 0;
+}
+EOF
+    msg_chkfor "extensions/xf86misc.h"
+    if ${CC} ${CFLAGS} -c tmp.c -o /dev/null 2>&3
+    then
+        echo "ok."
+        msg_chkfor "xf86misc"
+        if ${CC} ${CFLAGS} tmp.c -o /dev/null ${LDFLAGS} -lX11 -lXxf86misc 2>&3
+        then
+            echo "ok."
+            echo "#_______________________" >&4
+            echo "WITH_XF86MISC:=1" >&4
+            echo "LIBS += -lXxf86misc" >&4
+            echo "" >&4
+            return
+        fi
+    fi
+    echo "no."
+    echo " "
+    echo "!!! WARNING !!!"
+    echo "   if the xserver is configured to allow"
+    echo "   'AllowDeactivateGrabs' or 'AllowClosedownGrabs'"
+    echo "   people can bypass alock !!! consider"
+    echo "   to install the xf86misc extension!"
+    echo "!!! WARNING !!!"
+    echo " "
+}
+
+
+
+
 check_xlib() {
 
     cat << EOF > tmp.c
 #include <X11/Xlib.h>
-void main() {
+int main() {
     XOpenDisplay(NULL);
+    return 0;
 }
 EOF
     msg_chkfor "Xlib.h"
@@ -196,7 +239,7 @@ EOF
 check_xlogo16() {
     cat << EOF > tmp.c
 #include <X11/bitmaps/xlogo16>
-void main() {
+int main() {
     return 0;
 }
 EOF
@@ -216,8 +259,9 @@ EOF
 check_xpm() {
     cat << EOF > tmp.c
 #include <X11/xpm.h>
-void main() {
+int main() {
     XpmReadFileToImage(NULL, NULL, NULL, NULL, NULL);
+    return 0;
 }
 EOF
     msg_chkfor "X11/xpm.h"
@@ -270,8 +314,9 @@ check_passwd() {
 
     cat << EOF > tmp.c
 #include <shadow.h>
-void main() {
+int main() {
     /* TODO: write the test */;
+    return 0;
 }
 EOF
     msg_chkfor "shadow.h"
@@ -388,6 +433,7 @@ echo "" >&4
 check_docs
 check_tools
 check_xlib
+check_xf86misc
 check_xlogo16
 [ "$CHECK_XPM" -eq 1 ] && check_xpm
 [ "$CHECK_XRENDER" -eq 1 ] && check_xrender

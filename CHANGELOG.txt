@@ -1,6 +1,8 @@
 Version 1.0
 ----------------------------------------------------------------------
 2009-02-25:
+	* fix for #5, avoid beeing bypassed by disabling 'AllowClosedownGrabs'
+	  and 'AllowDeactivateGrabs'
 	* fix for #16, install man page into fhs compliant place
 	  (thanx ibtaylor)
 

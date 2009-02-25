@@ -24,6 +24,10 @@
 #include <unistd.h>
 #include <poll.h>
 
+#ifdef HAVE_XF86MISC
+#include <X11/extensions/xf86misc.h>
+#endif
+
 /*----------------------------------------------*\
 \*----------------------------------------------*/
 
@@ -401,6 +405,11 @@ int main(int argc, char **argv) {
     struct aXInfo xinfo;
     struct aOpts opts;
 
+#if HAVE_XF86MISC
+    int xf86misc_major = 0;
+    int xf86misc_minor = 0;
+#endif
+
     int arg = 0;
     const char* cursor_args = NULL;
     const char* background_args = NULL;
@@ -578,6 +587,25 @@ int main(int argc, char **argv) {
         }
     }
 
+#if HAVE_XF86MISC
+    {
+        if (XF86MiscQueryVersion(xinfo.display, &xf86misc_major, &xf86misc_minor) == False) {
+
+            printf("%s", "alock: failed to call XF86MiscQueryVersion.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if (xf86misc_major >= 0 && 
+            xf86misc_minor >= 5 && 
+            XF86MiscSetGrabKeysState(xinfo.display, False) == MiscExtGrabStateLocked) {
+
+            printf("%s", "alock: cant disable xserver hotkeys to remove grabs.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("%s", "disabled AllowDeactivateGrabs and AllowClosedownGrabs\n.");
+    }
+#endif
 
     /* TODO: think about it: do we really need NR_SCREEN cursors ? we grab the
      * pointer on :*.0 anyway ... */
@@ -595,6 +623,14 @@ int main(int argc, char **argv) {
     opts.auth->deinit();
     opts.cursor->deinit(&xinfo);
     opts.background->deinit(&xinfo);
+
+#if HAVE_XF86MISC
+    if (xf86misc_major >= 0 && xf86misc_minor >= 5) {
+        XF86MiscSetGrabKeysState(xinfo.display, True);
+        XFlush(xinfo.display);
+    }
+#endif
+
     XCloseDisplay(xinfo.display);
 
     return EXIT_SUCCESS;
