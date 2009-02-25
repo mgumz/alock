@@ -1,7 +1,7 @@
 ALOCK(1)
 ========
 Mathias Gumz <akira@fluxbox.org>
-v1.0, 08 October 2008
+v1.0, 25 February 2009
 
 NAME
 ----
@@ -146,6 +146,6 @@ Other Lockers ::
 
 COPYING
 -------
-Copyright (C) 2005 - 2008 Mathias Gumz. Free use of this software is
+Copyright (C) 2005 - 2009 Mathias Gumz. Free use of this software is
 granted under the terms of the MIT. See LICENSE provided in the
 distribution.
