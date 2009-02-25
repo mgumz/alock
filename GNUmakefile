@@ -23,35 +23,37 @@ install : alock docs
 else
 install : alock
 endif
-	mkdir -p $(DESTDIR)$(prefix)/bin/
-	cp -fv src/alock $(DESTDIR)$(prefix)/bin/alock
-	chmod 755 $(DESTDIR)$(prefix)/bin/alock
-	@if [ -f alock.1 ]; then \
-		mkdir -p $(DESTDIR)$(prefix)/man/man1/ ;\
-		cp -fv alock.1 $(DESTDIR)$(prefix)/man/man1/alock.1 ;\
-		chmod 444 $(DESTDIR)$(prefix)/man/man1/alock.1 ;\
+	install -d \
+		$(DESTDIR)$(prefix)/bin \
+		$(DESTDIR)$(prefix)/share/alock/xcursors \
+		$(DESTDIR)$(prefix)/share/alock/bitmaps
+	install -m755 \
+		src/alock \
+		$(DESTDIR)$(prefix)/bin/alock
+	if [ -f alock.1 ]; then \
+		install -d \
+			$(DESTDIR)$(prefix)/share/man/man1 ; \
+		install -m444 \
+			alock.1 \
+			$(DESTDIR)$(prefix)/share/man/man1/alock.1 ; \
 	else \
-		echo ",-----------------------------------------------------------," ;\
-		echo "| not installing the documentation because it was not built |" ;\
-		echo "| install 'asciidoc' and run './configure && make' again    |" ; \
-		echo "\`-----------------------------------------------------------'" ;\
+		echo ",-----------------------------------------------------------,"; \
+		echo "| not installing the documentation because it was not built |"; \
+		echo "| install 'asciidoc' and run './configure && make' again    |"; \
+		echo "\`-----------------------------------------------------------'"; \
 	fi
-	mkdir -p $(DESTDIR)$(prefix)/share/alock/xcursors
-	cp -fv contrib/xcursor-alock contrib/xcursor-gentoo \
+	install -m444 \
+		contrib/xcursor-alock contrib/xcursor-gentoo \
 		contrib/xcursor-fluxbox contrib/xcursor-pekwm \
 		$(DESTDIR)$(prefix)/share/alock/xcursors/
-	mkdir -p $(DESTDIR)$(prefix)/share/alock/bitmaps
-	cp -fv bitmaps/alock.xbm bitmaps/alock_mask.xbm \
+	install -m444 \
+		bitmaps/alock.xbm bitmaps/alock_mask.xbm \
 		bitmaps/mini.xbm bitmaps/mini_mask.xbm \
 		bitmaps/xtr.xbm bitmaps/xtr_mask.xbm \
 		$(DESTDIR)$(prefix)/share/alock/bitmaps/
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/xcursors/*
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/bitmaps/*
-	cp -fv README.txt LICENSE.txt CHANGELOG.txt \
+	install -m444 \
+		README.txt LICENSE.txt CHANGELOG.txt \
 		$(DESTDIR)$(prefix)/share/alock/
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/README.txt
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/LICENSE.txt
-	chmod 444 $(DESTDIR)$(prefix)/share/alock/CHANGELOG.txt
 	@if `./src/alock -auth list | grep passwd > /dev/null`; then      \
 		echo ",-------------------------------------------------,"; \
 		echo "| it seems that you have compiled 'alock' with    |"; \

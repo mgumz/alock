@@ -1,5 +1,9 @@
 Version 1.0
 ----------------------------------------------------------------------
+2009-02-25:
+	* fix for #16, install man page into fhs compliant place
+	  (thanx ibtaylor)
+
 2009-02-24:
 	* fix for #17, setting PAM_TTY helps root
 
