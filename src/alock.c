@@ -406,8 +406,8 @@ int main(int argc, char **argv) {
     struct aOpts opts;
 
 #if HAVE_XF86MISC
-    int xf86misc_major = 0;
-    int xf86misc_minor = 0;
+    int xf86misc_major = -1;
+    int xf86misc_minor = -1;
 #endif
 
     int arg = 0;
@@ -589,21 +589,18 @@ int main(int argc, char **argv) {
 
 #if HAVE_XF86MISC
     {
-        if (XF86MiscQueryVersion(xinfo.display, &xf86misc_major, &xf86misc_minor) == False) {
+        if (XF86MiscQueryVersion(xinfo.display, &xf86misc_major, &xf86misc_minor) == True) {
 
-            printf("%s", "alock: failed to call XF86MiscQueryVersion.\n");
-            exit(EXIT_FAILURE);
+            if (xf86misc_major >= 0 &&
+                xf86misc_minor >= 5 &&
+                XF86MiscSetGrabKeysState(xinfo.display, False) == MiscExtGrabStateLocked) {
+
+                printf("%s", "alock: cant disable xserver hotkeys to remove grabs.\n");
+                exit(EXIT_FAILURE);
+            }
+
+            printf("%s", "disabled AllowDeactivateGrabs and AllowClosedownGrabs\n.");
         }
-
-        if (xf86misc_major >= 0 && 
-            xf86misc_minor >= 5 && 
-            XF86MiscSetGrabKeysState(xinfo.display, False) == MiscExtGrabStateLocked) {
-
-            printf("%s", "alock: cant disable xserver hotkeys to remove grabs.\n");
-            exit(EXIT_FAILURE);
-        }
-
-        printf("%s", "disabled AllowDeactivateGrabs and AllowClosedownGrabs\n.");
     }
 #endif
 

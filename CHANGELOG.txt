@@ -1,5 +1,11 @@
 Version 1.0
 ----------------------------------------------------------------------
+2009-05-03:
+	* fix for #20, not beeing able to use the xf86-misc extensions shouldn't
+	  make alock stop working. background: xorg removed xf86-misc and
+	  'AllowDeactivateGrabs' etc.
+	* typos and minor stuff in 'configure'
+
 2009-02-25:
 	* fix for #5, avoid beeing bypassed by disabling 'AllowClosedownGrabs'
 	  and 'AllowDeactivateGrabs'

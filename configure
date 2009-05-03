@@ -89,7 +89,7 @@ EOF
         else
             echo "no."
             echo "error, can't compile with imlib2 support. check 'config.log'"
-            echo "for further detailts."
+            echo "for further details."
             exit 1
         fi
     else
@@ -121,14 +121,13 @@ EOF
             echo "CFLAGS_XRENDER:=" >&4
             echo "LDFLAGS_XRENDER:=-lXrender" >&4
             echo "" >&4
-        else
-            echo "no."
-            exit 1
+            return
         fi
-    else
-        echo "no."
-        exit 1
     fi
+    echo "no."
+    echo "error, can't compile/link with xrender support."
+    echo "check 'config.log' for further details."
+    exit 1
 }
 
 check_xcursor() {
@@ -155,14 +154,13 @@ EOF
             echo "LDFLAGS_XCURSOR:=" >&4
             echo "LIBS_XCURSOR:=-lXcursor" >&4
             echo "" >&4
-        else
-            echo "no."
-            exit 1
+            return
         fi
-    else
-        echo "no."
-        exit 1
     fi
+    echo "no."
+    echo "error, can't compile/link with xcursor support."
+    echo "check 'config.log' for further details."
+    exit 1
 }
 
 check_xf86misc() {
