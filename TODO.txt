@@ -10,6 +10,4 @@ Platforms
 
 Usability
 ---------
-    * feedback while typing the password?
-    * feedback on wrong password?
 
