@@ -174,8 +174,8 @@ static void initXInfo(struct aXInfo* xi) {
         xi->root = (Window*)calloc((size_t)xi->nr_screens, sizeof(Window));
         xi->colormap = (Colormap*)calloc((size_t)xi->nr_screens, sizeof(Colormap));
         xi->cursor = (Cursor*)calloc((size_t)xi->nr_screens, sizeof(Cursor));
-        xi->width_of_root = calloc(xi->nr_screens, sizeof(int));
-        xi->height_of_root = calloc(xi->nr_screens, sizeof(int));
+        xi->width_of_root = (int*)calloc(xi->nr_screens, sizeof(int));
+        xi->height_of_root = (int*)calloc(xi->nr_screens, sizeof(int));
     }
     {
         XWindowAttributes xgwa;
@@ -312,6 +312,11 @@ static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
                         rlen++;
                     }
                     break;
+                }
+                break;
+            case Expose: {
+                    XExposeEvent* eev = (XExposeEvent*)&ev;
+                    XClearWindow(xi->display, eev->window);
                 }
                 break;
             default:
