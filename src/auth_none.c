@@ -40,8 +40,8 @@ static int alock_auth_none_auth(const char* passwd) {
 struct aAuth alock_auth_none = {
     "none",
     alock_auth_none_init,
-    alock_auth_none_deinit,
-    alock_auth_none_auth
+    alock_auth_none_auth,
+    alock_auth_none_deinit
 };
 
 /* ---------------------------------------------------------------- *\
