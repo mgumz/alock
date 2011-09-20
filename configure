@@ -5,6 +5,8 @@ test x"$CC" != "x" || CC=gcc
 test x"$CFLAGS" != "x" || CFLAGS="-I/usr/X11R6/include"
 test x"$LDFLAGS" != "x" || LDFLAGS="-L/usr/X11R6/lib"
 
+echo "CC: $CC"
+
 CHECK_XRENDER=0
 CHECK_XCURSOR=0
 CHECK_XPM=0
@@ -37,7 +39,7 @@ check_docs() {
 
 check_tools() {
 
-    msg_chkfor "gcc"
+    msg_chkfor "compiler $CC"
     if which "$CC" 1> /dev/null 2>&3
     then
         echo "ok."
