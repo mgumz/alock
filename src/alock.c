@@ -52,7 +52,6 @@ extern struct aAuth alock_auth_pam;
 #endif /* HAVE_PAM */
 
 static struct aAuth* alock_authmodules[] = {
-    &alock_auth_none,
 #ifdef HAVE_PAM
     &alock_auth_pam,
 #endif /* HAVE_PAM */
@@ -67,6 +66,7 @@ static struct aAuth* alock_authmodules[] = {
     &alock_auth_sha512,
     &alock_auth_wpool,
 #endif /* HAVE_HASH */
+    &alock_auth_none,
     NULL
 };
 /*------------------------------------------------------------------*\
@@ -81,7 +81,6 @@ extern struct aBackground alock_bg_shade;
 #endif /* HAVE_XRENDER */
 
 static struct aBackground* alock_backgrounds[] = {
-    &alock_bg_none,
     &alock_bg_blank,
 #ifdef HAVE_IMLIB2
     &alock_bg_image,
@@ -89,6 +88,7 @@ static struct aBackground* alock_backgrounds[] = {
 #ifdef HAVE_XRENDER
     &alock_bg_shade,
 #endif /* HAVE_XRENDER */
+    &alock_bg_none,
     NULL
 };
 /* ---------------------------------------------------------------- *\
@@ -418,9 +418,9 @@ int main(int argc, char **argv) {
     const char* optarg;
     const char* auth_args = NULL;
     const char* cursor_args = NULL;
-    const char* background_args = NULL;
+    const char* background_args = "blank:color=black";
 
-    opts.auth = NULL;
+    opts.auth = alock_authmodules[0];
     opts.cursor = alock_cursors[0];
     opts.background = alock_backgrounds[0];
 
@@ -485,7 +485,7 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "alock: missing argument\n");
                     exit(EXIT_FAILURE);
                 }
-            } else if (strcmp(argv[arg], "-cursor") == 0) {
+            } else if (!strcmp(argv[arg], "-cursor")) {
                 optarg = argv[++arg];
                 if (optarg != NULL) {
 
@@ -529,11 +529,6 @@ int main(int argc, char **argv) {
     if (detectOtherInstance(&xinfo)) {
         fprintf(stderr, "alock: another instance seems to be running\n");
         exit(EXIT_FAILURE);
-    }
-
-    if (opts.auth == NULL) {
-      fprintf(stderr, "alock: no auth-method specified\n");
-      exit(EXIT_FAILURE);
     }
 
     if (opts.auth->init(auth_args) == 0) {
