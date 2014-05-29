@@ -150,8 +150,8 @@ static long elapsedTime() {
 \*------------------------------------------------------------------*/
 
 static void displayUsage() {
-    printf("%s", "alock [-hv] [-bg type:options] [-cursor type:options] "
-                 "[-auth type:options]\n");
+    printf("alock [-h] [-bg type:options] [-cursor type:options] "
+           "[-auth type:options]\n");
 }
 
 /*------------------------------------------------------------------*\
@@ -406,7 +406,6 @@ static int unregisterInstance(struct aXInfo* xinfo) {
 
 int main(int argc, char **argv) {
 
-
     struct aXInfo xinfo;
     struct aOpts opts;
 
@@ -415,7 +414,9 @@ int main(int argc, char **argv) {
     int xf86misc_minor = -1;
 #endif
 
-    int arg = 0;
+    int arg;
+    const char* optarg;
+    const char* auth_args = NULL;
     const char* cursor_args = NULL;
     const char* background_args = NULL;
 
@@ -424,15 +425,14 @@ int main(int argc, char **argv) {
     opts.background = alock_backgrounds[0];
 
     /*  parse options */
-    if (argc != 1) {
-        for(arg = 1; arg <= argc; arg++) {
-            if (!strcmp(argv[arg - 1], "-bg")) {
-                if (arg < argc) {
+    if (argc > 1) {
+        for(arg = 1; arg < argc; arg++) {
+            if (!strcmp(argv[arg], "-bg")) {
+                optarg = argv[++arg];
+                if (optarg != NULL) {
 
-                    char* char_tmp;
-                    struct aBackground* bg_tmp = NULL;
                     struct aBackground** i;
-                    if (strcmp(argv[arg], "list") == 0) {
+                    if (strcmp(optarg, "list") == 0) {
                         for(i = alock_backgrounds; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
@@ -440,33 +440,28 @@ int main(int argc, char **argv) {
                     }
 
                     for(i = alock_backgrounds; *i; ++i) {
-                        char_tmp = strstr(argv[arg], (*i)->name);
-                        if(char_tmp && char_tmp == argv[arg]) {
-                            background_args = char_tmp;
-                            bg_tmp = *i;
-                            opts.background = bg_tmp;
-                            ++arg;
+                        if(strstr(optarg, (*i)->name) == optarg) {
+                            background_args = optarg;
+                            opts.background = *i;
                             break;
                         }
                     }
 
-                    if (bg_tmp == NULL) {
-                        printf("%s", "alock: error, couldnt find the bg-module you specified.\n");
+                    if (*i == NULL) {
+                        fprintf(stderr, "alock: couldnt find the bg-module you specified\n");
                         exit(EXIT_FAILURE);
                     }
 
                 } else {
-                    printf("%s", "alock, error, missing argument\n");
-                    displayUsage();
+                    fprintf(stderr, "alock: missing argument\n");
                     exit(EXIT_FAILURE);
                 }
-            } else if (!strcmp(argv[arg - 1], "-auth")) {
-                if (arg < argc) {
+            } else if (!strcmp(argv[arg], "-auth")) {
+                optarg = argv[++arg];
+                if (optarg != NULL) {
 
-                    char* char_tmp;
-                    struct aAuth* auth_tmp = NULL;
                     struct aAuth** i;
-                    if (!strcmp(argv[arg], "list")) {
+                    if (strcmp(optarg, "list") == 0) {
                         for(i = alock_authmodules; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
@@ -474,34 +469,26 @@ int main(int argc, char **argv) {
                     }
 
                     for(i = alock_authmodules; *i; ++i) {
-                        char_tmp = strstr(argv[arg], (*i)->name);
-                        if(char_tmp && char_tmp == argv[arg]) {
-                            auth_tmp = (*i);
-                            if (auth_tmp->init(argv[arg]) == 0) {
-                                printf("alock: error, failed init of [%s].\n", auth_tmp->name);
-                                exit(EXIT_FAILURE);
-                            }
-                            opts.auth = auth_tmp;
-                            ++arg;
+                        if(strstr(optarg, (*i)->name) == optarg) {
+                            auth_args = optarg;
+                            opts.auth = *i;
                             break;
                         }
                     }
 
-                    if (auth_tmp == NULL) {
-                        printf("%s", "alock: error, couldnt find the auth-module you specified.\n");
+                    if (*i == NULL) {
+                        fprintf(stderr, "alock: couldnt find the auth-module you specified\n");
                         exit(EXIT_FAILURE);
                     }
 
                 } else {
-                    printf("%s", "alock, error, missing argument\n");
-                    displayUsage();
+                    fprintf(stderr, "alock: missing argument\n");
                     exit(EXIT_FAILURE);
                 }
-            } else if (strcmp(argv[arg - 1], "-cursor") == 0) {
-                if (arg < argc) {
+            } else if (strcmp(argv[arg], "-cursor") == 0) {
+                optarg = argv[++arg];
+                if (optarg != NULL) {
 
-                    char* char_tmp;
-                    struct aCursor* cursor_tmp = NULL;
                     struct aCursor** i;
                     if (strcmp(argv[arg], "list") == 0) {
                         for(i = alock_cursors; *i; ++i) {
@@ -511,61 +498,62 @@ int main(int argc, char **argv) {
                     }
 
                     for(i = alock_cursors; *i; ++i) {
-                        char_tmp = strstr(argv[arg], (*i)->name);
-                        if(char_tmp && char_tmp == argv[arg]) {
-                            cursor_args = char_tmp;
-                            cursor_tmp = *i;
-                            opts.cursor= cursor_tmp;
-                            ++arg;
+                        if(strstr(optarg, (*i)->name) == optarg) {
+                            cursor_args = optarg;
+                            opts.cursor = *i;
                             break;
                         }
                     }
 
-                    if (!cursor_tmp) {
-                        printf("%s", "alock: error, couldnt find the cursor-module you specified.\n");
+                    if (*i == NULL) {
+                        fprintf(stderr, "alock: couldnt find the cursor-module you specified\n");
                         exit(EXIT_FAILURE);
                     }
 
                 } else {
-                    printf("%s", "alock, error, missing argument\n");
-                    displayUsage();
+                    fprintf(stderr, "alock: missing argument\n");
                     exit(EXIT_FAILURE);
                 }
-            } else if (strcmp(argv[arg - 1], "-h") == 0) {
+            } else if (strcmp(argv[arg], "-h") == 0) {
                 displayUsage();
                 exit(EXIT_SUCCESS);
-            } else if (strcmp(argv[arg - 1], "-v") == 0) {
-                printf("alock-%s by m.gumz 2005 - 2006\n", VERSION);
-                exit(EXIT_SUCCESS);
+            } else {
+                fprintf(stderr, "alock: invalid option '%s'\n", argv[arg]);
+                exit(EXIT_FAILURE);
             }
         }
     }
 
-
     initStartTime();
     initXInfo(&xinfo);
     if (detectOtherInstance(&xinfo)) {
-        printf("%s", "alock: error, another instance seems to be running\n");
+        fprintf(stderr, "alock: another instance seems to be running\n");
         exit(EXIT_FAILURE);
     }
 
-    if (!opts.auth) {
-        printf("%s", "alock: error, no auth-method specified.\n");
-        displayUsage();
+    if (opts.auth == NULL) {
+      fprintf(stderr, "alock: no auth-method specified\n");
+      exit(EXIT_FAILURE);
+    }
+
+    if (opts.auth->init(auth_args) == 0) {
+        fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
+                opts.auth->name,
+                auth_args);
         exit(EXIT_FAILURE);
     }
 
     if (opts.background->init(background_args, &xinfo) == 0) {
-        printf("alock: error, couldnt init [%s] with [%s].\n",
-               opts.background->name,
-               background_args);
+        fprintf(stderr, "alock: couldnt init [%s] with [%s]\n",
+                opts.background->name,
+                background_args);
         exit(EXIT_FAILURE);
     }
 
     if (opts.cursor->init(cursor_args, &xinfo) == 0) {
-        printf("alock: error, couldnt init [%s] with [%s].\n",
-               opts.cursor->name,
-               cursor_args);
+        fprintf(stderr, "alock: couldnt init [%s] with [%s]\n",
+                opts.cursor->name,
+                cursor_args);
         exit(EXIT_FAILURE);
     }
 
@@ -587,7 +575,7 @@ int main(int argc, char **argv) {
         sleep(1);
         if ((XGrabKeyboard(xinfo.display, xinfo.window[0], True, GrabModeAsync, GrabModeAsync,
                         CurrentTime)) != GrabSuccess) {
-            printf("%s", "alock: couldnt grab the keyboard.\n");
+            printf("alock: couldnt grab the keyboard\n");
             exit(EXIT_FAILURE);
         }
     }
@@ -600,11 +588,11 @@ int main(int argc, char **argv) {
                 xf86misc_minor >= 5 &&
                 XF86MiscSetGrabKeysState(xinfo.display, False) == MiscExtGrabStateLocked) {
 
-                printf("%s", "alock: cant disable xserver hotkeys to remove grabs.\n");
+                fprintf(stderr, "alock: cant disable xserver hotkeys to remove grabs\n");
                 exit(EXIT_FAILURE);
             }
 
-            printf("%s", "disabled AllowDeactivateGrabs and AllowClosedownGrabs\n.");
+            printf("disabled AllowDeactivateGrabs and AllowClosedownGrabs\n");
         }
     }
 #endif
@@ -614,7 +602,7 @@ int main(int argc, char **argv) {
     if (XGrabPointer(xinfo.display, xinfo.window[0], False, None,
                      GrabModeAsync, GrabModeAsync, None, xinfo.cursor[0], CurrentTime) != GrabSuccess) {
         XUngrabKeyboard(xinfo.display, CurrentTime);
-        printf("%s", "alock: couldnt grab the pointer.\n");
+        fprintf(stderr, "alock: couldnt grab the pointer\n");
         exit(EXIT_FAILURE);
     }
 
@@ -637,4 +625,3 @@ int main(int argc, char **argv) {
 
     return EXIT_SUCCESS;
 }
-
