@@ -1,40 +1,31 @@
-/* ---------------------------------------------------------------- *\
+/*
+ * alock - alock.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ */
 
-  file    : alock.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Sa 30 April 2005 14:19:44 CEST
-
-\* ---------------------------------------------------------------- */
-
-#include "alock.h"
-#include "alock_frame.h"
-
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
-#include <poll.h>
 
 #ifdef HAVE_XF86MISC
 #include <X11/extensions/xf86misc.h>
 #endif
 
-/*----------------------------------------------*\
-\*----------------------------------------------*/
+#include "alock.h"
 
 
-/*------------------------------------------------------------------*\
-    globals
-\*------------------------------------------------------------------*/
 extern struct aAuth alock_auth_none;
 #ifdef HAVE_HASH
 extern struct aAuth alock_auth_md5;
@@ -50,7 +41,6 @@ extern struct aAuth alock_auth_passwd;
 #ifdef HAVE_PAM
 extern struct aAuth alock_auth_pam;
 #endif /* HAVE_PAM */
-
 static struct aAuth* alock_authmodules[] = {
 #ifdef HAVE_PAM
     &alock_auth_pam,
@@ -69,8 +59,15 @@ static struct aAuth* alock_authmodules[] = {
     &alock_auth_none,
     NULL
 };
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
+
+extern struct aInput alock_input_none;
+extern struct aInput alock_input_frame;
+static struct aInput* alock_inputs[] = {
+    &alock_input_frame,
+    &alock_input_none,
+    NULL
+};
+
 extern struct aBackground alock_bg_none;
 extern struct aBackground alock_bg_blank;
 #ifdef HAVE_IMLIB2
@@ -79,7 +76,6 @@ extern struct aBackground alock_bg_image;
 #ifdef HAVE_XRENDER
 extern struct aBackground alock_bg_shade;
 #endif /* HAVE_XRENDER */
-
 static struct aBackground* alock_backgrounds[] = {
     &alock_bg_blank,
 #ifdef HAVE_IMLIB2
@@ -91,8 +87,7 @@ static struct aBackground* alock_backgrounds[] = {
     &alock_bg_none,
     NULL
 };
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
+
 extern struct aCursor alock_cursor_none;
 extern struct aCursor alock_cursor_glyph;
 extern struct aCursor alock_cursor_theme;
@@ -102,7 +97,6 @@ extern struct aCursor alock_cursor_xcursor;
 extern struct aCursor alock_cursor_image;
 #endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
 #endif /* HAVE_XCURSOR */
-
 static struct aCursor* alock_cursors[] = {
     &alock_cursor_none,
     &alock_cursor_theme,
@@ -115,47 +109,7 @@ static struct aCursor* alock_cursors[] = {
 #endif /* HAVE_XCURSOR */
     NULL
 };
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
-static struct timeval alock_start_time;
 
-static void initStartTime() {
-    X_GETTIMEOFDAY(&alock_start_time);
-}
-
-// taken from gdk.c
-static long elapsedTime() {
-
-    static struct timeval end;
-    static struct timeval elapsed;
-    long milliseconds;
-
-    X_GETTIMEOFDAY(&end);
-
-    if( alock_start_time.tv_usec > end.tv_usec ) {
-
-        end.tv_usec += 1000000;
-        end.tv_sec--;
-    }
-
-    elapsed.tv_sec = end.tv_sec - alock_start_time.tv_sec;
-    elapsed.tv_usec = end.tv_usec - alock_start_time.tv_usec;
-
-    milliseconds = (elapsed.tv_sec * 1000) + (elapsed.tv_usec / 1000);
-
-    return milliseconds;
-}
-
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
-static void displayUsage() {
-    printf("alock [-h] [-bg type:options] [-cursor type:options] "
-           "[-auth type:options]\n");
-}
-
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
 
 static void initXInfo(struct aXInfo* xi) {
 
@@ -192,162 +146,91 @@ static void initXInfo(struct aXInfo* xi) {
     }
 }
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
-enum {
-    INITIAL = 0,
-    TYPING,
-    WRONG
-};
-
-static void visualFeedback(struct aFrame* frame, int mode) {
-
-    static int old_mode = INITIAL;
-    int redraw = 0;
-
-    if (old_mode != mode)
-        redraw = 1;
-
-    old_mode = mode;
-
-    switch (mode) {
-    case INITIAL:
-        alock_hide_frame(frame);
-        break;
-    case TYPING:
-        if (redraw) {
-            alock_draw_frame(frame, "green");
-        }
-        break;
-    case WRONG:
-        if (redraw) {
-            alock_draw_frame(frame, "red");
-        }
-        break;
-    };
-}
-
-static int eventLoop(struct aOpts* opts, struct aXInfo* xi) {
+static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
 
     Display* dpy = xi->display;
     XEvent ev;
     KeySym ks;
     char cbuf[10];
-    char rbuf[50];
+    char pass[128];
     unsigned int clen, rlen = 0;
-    long current_time = 0;
-    long last_key_time = 0;
-    const long penalty = 1000;
-    long timeout = 0;
-    int mode = INITIAL;
+    unsigned long keypress_time = 0;
 
-    struct aFrame* frame = alock_create_frame(xi, 0, 0, xi->width_of_root[0], xi->height_of_root[0], 10);
-
+    debug("entering event main loop");
     for(;;) {
 
-        current_time = elapsedTime();
+        if (keypress_time) {
+            /* check for any key press event */
+            if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask | KeyReleaseMask, &ev) == False) {
 
-        // check for any keypresses
-        if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask|KeyReleaseMask, &ev) == True) {
-
-            switch (ev.type) {
-            case KeyPress:
-
-                last_key_time = current_time;
-
-                if (last_key_time < timeout) {
-                    XBell(dpy, 0);
-                    break;
+                /* user fell asleep while typing (5 seconds inactivity) */
+                if (alock_mtime() - keypress_time > 5000) {
+                    opts->input->setstate(AINPUT_STATE_NONE);
+                    keypress_time = 0;
                 }
 
-                // swallow up first keypress to indicate "enter mode"
-                if (mode == INITIAL) {
-                    mode = TYPING;
-                    break;
-                }
-
-                mode = TYPING;
-
-                clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
-                switch (ks) {
-                case XK_Escape:
-                case XK_Clear:
-                    rlen = 0;
-                    break;
-                case XK_Delete:
-                case XK_BackSpace:
-                    if (rlen > 0)
-                        rlen--;
-                    break;
-                case XK_Linefeed:
-                case XK_Return:
-                    if (rlen == 0)
-                        break;
-                    if (rlen < sizeof(rbuf))
-                        rbuf[rlen] = 0;
-
-                    // some auth() methods have their own penalty system
-                    // so we draw a 'yellow' frame to show 'checking' state.
-
-                    alock_draw_frame(frame, "yellow");
-                    XSync(dpy, True);
-
-                    if (opts->auth->auth(rbuf)) {
-                        alock_free_frame(frame);
-                        return 1;
-                    }
-
-                    XBell(dpy, 0);
-                    mode = WRONG;
-                    timeout = elapsedTime() + penalty;
-                    rlen = 0;
-                    break;
-
-                default:
-                    if (clen != 1)
-                        break;
-                    if (rlen < (sizeof(rbuf) - 1)) {
-                        rbuf[rlen] = cbuf[0];
-                        rlen++;
-                    }
-                    break;
-                }
-                break;
-            case Expose: {
-                    XExposeEvent* eev = (XExposeEvent*)&ev;
-                    XClearWindow(xi->display, eev->window);
-                }
-                break;
-            default:
-                break;
+                /* wait a bit */
+                usleep(25000);
+                continue;
             }
-
-        } else { // wait a bit
-
-            long delta = current_time - last_key_time;
-
-            if (mode == TYPING && (delta > 10000)) { // user fell asleep while typing .)
-                mode = INITIAL;
-            } else if (mode == WRONG && (current_time > timeout)) { // end of timeout for wrong password
-                mode = TYPING;
-                last_key_time = timeout; // start 'idle' timer correctly by a fake keypress
-            }
-
-            visualFeedback(frame, mode);
-
-            poll(NULL, 0, 25);
+        } else {
+            /* block until any key press event arrives */
+            XWindowEvent(dpy, xi->window[0], KeyPressMask | KeyReleaseMask, &ev);
         }
 
+        switch (ev.type) {
+        case KeyPress:
+
+            /* swallow up first key press to indicate "enter mode" */
+            if (keypress_time == 0) {
+                opts->input->setstate(AINPUT_STATE_INIT);
+                keypress_time = alock_mtime();
+                break;
+            }
+
+            /* TODO: utf8 support */
+            keypress_time = alock_mtime();
+            clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
+            switch (ks) {
+            case XK_Escape:
+            case XK_Clear:
+                rlen = 0;
+                break;
+            case XK_Delete:
+            case XK_BackSpace:
+                if (rlen > 0)
+                    rlen--;
+                break;
+            case XK_Linefeed:
+            case XK_Return:
+                pass[rlen] = 0;
+                opts->input->setstate(AINPUT_STATE_CHECK);
+                if (opts->auth->auth(pass)) {
+                    opts->input->setstate(AINPUT_STATE_VALID);
+                    return;
+                }
+                opts->input->setstate(AINPUT_STATE_ERROR);
+                opts->input->setstate(AINPUT_STATE_INIT);
+                rlen = 0;
+                break;
+            default:
+                if (clen != 1)
+                    break;
+                if (rlen < sizeof(pass) - 1) {
+                    opts->input->keypress('*');
+                    pass[rlen++] = cbuf[0];
+                }
+                break;
+            }
+            debug("entered phrase: `%s`", pass);
+            break;
+
+        case Expose:
+            XClearWindow(xi->display, ((XExposeEvent*)&ev)->window);
+            break;
+        }
     }
-
-    // normally, we shouldnt arrive here at all
-    alock_free_frame(frame);
-    return 0;
 }
-
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
 
 static pid_t getPidAtom(struct aXInfo* xinfo) {
 
@@ -401,9 +284,6 @@ static int unregisterInstance(struct aXInfo* xinfo) {
     return 1;
 }
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
 int main(int argc, char **argv) {
 
     struct aXInfo xinfo;
@@ -417,29 +297,31 @@ int main(int argc, char **argv) {
     int arg;
     const char* optarg;
     const char* auth_args = NULL;
+    const char* input_args = NULL;
     const char* cursor_args = NULL;
     const char* background_args = "blank:color=black";
 
     opts.auth = alock_authmodules[0];
+    opts.input = alock_inputs[0];
     opts.cursor = alock_cursors[0];
     opts.background = alock_backgrounds[0];
 
-    /*  parse options */
+    /* parse options */
     if (argc > 1) {
-        for(arg = 1; arg < argc; arg++) {
+        for (arg = 1; arg < argc; arg++) {
             if (!strcmp(argv[arg], "-bg")) {
                 optarg = argv[++arg];
                 if (optarg != NULL) {
 
                     struct aBackground** i;
                     if (strcmp(optarg, "list") == 0) {
-                        for(i = alock_backgrounds; *i; ++i) {
+                        for (i = alock_backgrounds; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
                         exit(EXIT_SUCCESS);
                     }
 
-                    for(i = alock_backgrounds; *i; ++i) {
+                    for (i = alock_backgrounds; *i; ++i) {
                         if(strstr(optarg, (*i)->name) == optarg) {
                             background_args = optarg;
                             opts.background = *i;
@@ -462,13 +344,13 @@ int main(int argc, char **argv) {
 
                     struct aAuth** i;
                     if (strcmp(optarg, "list") == 0) {
-                        for(i = alock_authmodules; *i; ++i) {
+                        for (i = alock_authmodules; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
                         exit(EXIT_SUCCESS);
                     }
 
-                    for(i = alock_authmodules; *i; ++i) {
+                    for (i = alock_authmodules; *i; ++i) {
                         if(strstr(optarg, (*i)->name) == optarg) {
                             auth_args = optarg;
                             opts.auth = *i;
@@ -491,13 +373,13 @@ int main(int argc, char **argv) {
 
                     struct aCursor** i;
                     if (strcmp(argv[arg], "list") == 0) {
-                        for(i = alock_cursors; *i; ++i) {
+                        for (i = alock_cursors; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
                         exit(EXIT_SUCCESS);
                     }
 
-                    for(i = alock_cursors; *i; ++i) {
+                    for (i = alock_cursors; *i; ++i) {
                         if(strstr(optarg, (*i)->name) == optarg) {
                             cursor_args = optarg;
                             opts.cursor = *i;
@@ -514,8 +396,38 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "alock: missing argument\n");
                     exit(EXIT_FAILURE);
                 }
+            } else if (!strcmp(argv[arg], "-input")) {
+                optarg = argv[++arg];
+                if (optarg != NULL) {
+
+                    struct aInput** i;
+                    if (strcmp(argv[arg], "list") == 0) {
+                        for (i = alock_inputs; *i; ++i) {
+                            printf("%s\n", (*i)->name);
+                        }
+                        exit(EXIT_SUCCESS);
+                    }
+
+                    for (i = alock_inputs; *i; ++i) {
+                        if(strstr(optarg, (*i)->name) == optarg) {
+                            input_args = optarg;
+                            opts.input = *i;
+                            break;
+                        }
+                    }
+
+                    if (*i == NULL) {
+                        fprintf(stderr, "alock: couldnt find the input-module you specified\n");
+                        exit(EXIT_FAILURE);
+                    }
+
+                } else {
+                    fprintf(stderr, "alock: missing argument\n");
+                    exit(EXIT_FAILURE);
+                }
             } else if (strcmp(argv[arg], "-h") == 0) {
-                displayUsage();
+                printf("alock [-h] [-bg type:options] [-cursor type:options] "
+                       "[-auth type:options] [-input type:options]\n");
                 exit(EXIT_SUCCESS);
             } else {
                 fprintf(stderr, "alock: invalid option '%s'\n", argv[arg]);
@@ -524,7 +436,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    initStartTime();
     initXInfo(&xinfo);
     if (detectOtherInstance(&xinfo)) {
         fprintf(stderr, "alock: another instance seems to be running\n");
@@ -538,15 +449,22 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    if (opts.input->init(input_args, &xinfo) == 0) {
+        fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
+                opts.input->name,
+                input_args);
+        exit(EXIT_FAILURE);
+    }
+
     if (opts.background->init(background_args, &xinfo) == 0) {
-        fprintf(stderr, "alock: couldnt init [%s] with [%s]\n",
+        fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
                 opts.background->name,
                 background_args);
         exit(EXIT_FAILURE);
     }
 
     if (opts.cursor->init(cursor_args, &xinfo) == 0) {
-        fprintf(stderr, "alock: couldnt init [%s] with [%s]\n",
+        fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
                 opts.cursor->name,
                 cursor_args);
         exit(EXIT_FAILURE);
@@ -606,6 +524,7 @@ int main(int argc, char **argv) {
     unregisterInstance(&xinfo);
 
     opts.auth->deinit();
+    opts.input->deinit(&xinfo);
     opts.cursor->deinit(&xinfo);
     opts.background->deinit(&xinfo);
 

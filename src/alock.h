@@ -1,36 +1,26 @@
+/*
+ * alock - alock.h
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ */
 
-#ifndef _ALOCK_H_
-#define _ALOCK_H_
+#ifndef __ALOCK_H
+#define __ALOCK_H
 
-/* ---------------------------------------------------------------- *\
-
-  file    : alock.h
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Sa 30 Apr 2005 11:51:52 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about :
-
-\* ---------------------------------------------------------------- */
-
-#include <X11/Xlib.h>
 #include <stdio.h>
+#include <X11/Xlib.h>
 
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
 #ifdef DEBUG
-#    define DBGMSG fprintf(stderr, "%s : %d\n", __FUNCTION__, __LINE__); fflush(stderr)
+#define debug(M, ...) fprintf(stderr, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
-#    define DBGMSG
+#define debug(M, ...)
 #endif /* DEBUG */
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
+
 
 struct aXInfo {
 
@@ -57,6 +47,21 @@ struct aAuth {
     int (*deinit)();
 };
 
+enum aInputState {
+    AINPUT_STATE_NONE,
+    AINPUT_STATE_INIT,
+    AINPUT_STATE_CHECK,
+    AINPUT_STATE_VALID,
+    AINPUT_STATE_ERROR,
+};
+struct aInput {
+    const char* name;
+    int (*init)(const char* args, struct aXInfo* xinfo);
+    int (*deinit)(struct aXInfo* xinfo);
+    void (*setstate)(enum aInputState state);
+    void (*keypress)(char chr);
+};
+
 struct aCursor {
     const char* name;
     int (*init)(const char* args, struct aXInfo* xinfo);
@@ -71,13 +76,14 @@ struct aBackground {
 
 struct aOpts {
     struct aAuth* auth;
+    struct aInput* input;
     struct aCursor* cursor;
     struct aBackground* background;
 };
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
+
 void alock_string2lower(char* string);
+unsigned long alock_mtime(void);
 int alock_native_byte_order(void);
 int alock_alloc_color(const struct aXInfo* xinfo, int scr,
         const char* color_name,
@@ -94,5 +100,4 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
         unsigned int width,
         unsigned int height);
 
-#endif /* _ALOCK_H_ */
-
+#endif /* __ALOCK_H */

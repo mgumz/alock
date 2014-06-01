@@ -1,34 +1,24 @@
-/* ---------------------------------------------------------------- *\
+/*
+ * alock - alock.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ */
 
-  file    : alock_utils.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Mo 23 Mai 2005 13:55:24 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about : collection of shared code among the modules
-
-\* ---------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------- *\
-  includes
-\* ---------------------------------------------------------------- */
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
+#ifdef HAVE_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif /* HAVE_XRENDER */
 
 #include "alock.h"
 
-#ifdef HAVE_XRENDER
-#    include <X11/extensions/Xrender.h>
-#endif /* HAVE_XRENDER */
-#include <string.h>
-#include <ctype.h>
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
 void alock_string2lower(char* string) {
     const size_t s = strlen(string);
     size_t i;
@@ -36,8 +26,15 @@ void alock_string2lower(char* string) {
         string[i] = tolower(string[i]);
 }
 
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
+/* Get system time-stamp in milliseconds without discontinuities. */
+unsigned long alock_mtime() {
+    struct timespec t;
+    clock_gettime(CLOCK_BOOTTIME, &t);
+    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
+}
+
+/* Allocate colormap entry by the given color name. When the color_name
+ * parameter is NULL, then fallback value is used right away. */
 int alock_alloc_color(const struct aXInfo* xinfo, int scr, const char* color_name,
         const char* fallback_name, XColor* result) {
 
@@ -45,17 +42,15 @@ int alock_alloc_color(const struct aXInfo* xinfo, int scr, const char* color_nam
 
     if (!xinfo ||
         !xinfo->colormap || xinfo->nr_screens < scr || scr < 0 ||
-        !color_name || !fallback_name || !result)
+        !fallback_name || !result)
         return 0;
 
-    if((XAllocNamedColor(xinfo->display, xinfo->colormap[scr], color_name, &tmp, result)) == 0)
-        if ((XAllocNamedColor(xinfo->display, xinfo->colormap[scr], fallback_name, &tmp, result)) == 0)
+    if (!color_name || XAllocNamedColor(xinfo->display, xinfo->colormap[scr], color_name, &tmp, result) == 0)
+        if (XAllocNamedColor(xinfo->display, xinfo->colormap[scr], fallback_name, &tmp, result) == 0)
             return 0;
     return 1;
 }
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
 int alock_native_byte_order() {
     int x = 1;
     return (*((char *) &x) == 1) ? LSBFirst : MSBFirst;
@@ -74,7 +69,7 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
         if (XQueryExtension(xinfo->display, "RENDER",
                             &major_opcode,
                             &first_event, &first_error) == False) {
-            printf("%s", "alock: error, no xrender-support found\n");
+            fprintf(stderr, "alock: no xrender-support found\n");
             have_xrender = 0;
         } else
             have_xrender = 1;
@@ -83,7 +78,7 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
     }
     return have_xrender;
 #else
-    printf("%s", "alock: error, i wasnt compiled to support xrender.\n");
+    fprintf(stderr, "alock: i wasnt compiled to support xrender\n");
     return 0;
 #endif /* HAVE_XRENDER */
 }
@@ -116,7 +111,7 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
     }
 
     if (!format) {
-        printf("%s", "error, couldnt find valid format for alpha.\n");
+        fprintf(stderr, "alock: couldnt find valid format for alpha\n");
         XFreePixmap(dpy, dst_pm);
         XFreePixmap(dpy, src_pm);
         return 0;
@@ -158,7 +153,3 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
     return 0;
 #endif /* HAVE_XRENDER */
 }
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
-

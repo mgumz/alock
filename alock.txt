@@ -9,29 +9,24 @@ alock - locks the local X display until the correct password is entered.
 
 SYNOPSIS
 --------
-'alock' [-h] [-v] [-bg type:opts] [-cursor type:opts] [-auth type:opts]
+'alock' [-h] [-bg type:opts] [-cursor type:opts] [-auth type:opts] [-input type:opts]
 
 DESCRIPTION
 -----------
 'alock' locks the X server until the user enters the correct password at the
 keyboard. If the authentification was successful, the X server is
-unlocked and the user can continue to work.
+unlocked and the user can continue to work. When 'alock' is started it just
+waits for the first keypress. This first keypress is to indicate that the user
+now wants to type in the password.
 
-'alock' does not provide fancy animations like 'xlock' and 'xscreensaver'
-and never will. It's just for locking the current X session.
+Note, that 'alock' does not provide fancy animations like 'xlock' and
+'xscreensaver' and never will. It's just for locking the current X session.
 
-When 'alock' is started it just waits for the first keypress. This first
-keypress is to indicate that the user now wants to type in the password.
-A colored frame is drawn around the screen and the user can now type in
-his password. If it was typed in incorrectly, the colored frame turns red and
-the user has to wait a certain timeout.
 
 OPTIONS
 -------
 -h::
     Print a short help
--v::
-    Print the version number
 
 -auth type:options::
     Define the type of the authentification, depends strongly on
@@ -60,6 +55,13 @@ OPTIONS
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use <filename> as reference
 
+-input type:options
+    Define the type of the input indicator, which should be used while typing password:
+    - list - Displays a list of available types
+    - none - No input feedback for user
+    - frame - Display frame on the current display
+        * width=<int> - Valid from 1 upwards
+        * color=<color1>|<color2>|<color3> - Use <color> while typing, checking and upon error respectively
 
 -bg type:options::
     Define the type of alock should handle the background:
