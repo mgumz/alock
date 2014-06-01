@@ -28,8 +28,9 @@ LDFLAGS ?=
 LIBS ?= -lX11
 ##########################
 
-SRC = 			alock.c alock_utils.c alock_frame.c \
+SRC = 			main.c utils.c \
 				auth_none.c \
+				input_none.c input_frame.c \
 				bg_none.c bg_blank.c \
 				cursor_none.c cursor_glyph.c cursor_theme.c
 SRC_PAM = 		auth_pam.c
