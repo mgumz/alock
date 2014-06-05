@@ -25,8 +25,9 @@ static void alock_input_none_setstate(enum aInputState state) {
     debug("setstate: %d", state);
 }
 
-static void alock_input_none_keypress(char chr) {
-    debug("keypress: %c", chr);
+static KeySym alock_input_none_keypress(KeySym ks) {
+    debug("keypress: %lx", ks);
+    return ks;
 }
 
 

@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <locale.h>
+#include <ctype.h>
+#include <wchar.h>
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -152,16 +155,18 @@ static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     XEvent ev;
     KeySym ks;
     char cbuf[10];
-    char pass[128];
-    unsigned int clen, rlen = 0;
+    wchar_t pass[128];
+    unsigned int clen;
+    unsigned int pass_pos = 0, pass_len = 0;
     unsigned long keypress_time = 0;
+    char rbuf[sizeof(pass)];
 
     debug("entering event main loop");
     for(;;) {
 
         if (keypress_time) {
             /* check for any key press event */
-            if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask | KeyReleaseMask, &ev) == False) {
+            if (XCheckWindowEvent(dpy, xi->window[0], KeyPressMask, &ev) == False) {
 
                 /* user fell asleep while typing (5 seconds inactivity) */
                 if (alock_mtime() - keypress_time > 5000) {
@@ -175,7 +180,7 @@ static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
             }
         } else {
             /* block until any key press event arrives */
-            XWindowEvent(dpy, xi->window[0], KeyPressMask | KeyReleaseMask, &ev);
+            XWindowEvent(dpy, xi->window[0], KeyPressMask, &ev);
         }
 
         switch (ev.type) {
@@ -185,44 +190,89 @@ static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
             if (keypress_time == 0) {
                 opts->input->setstate(AINPUT_STATE_INIT);
                 keypress_time = alock_mtime();
+                pass_pos = pass_len = 0;
+                pass[0] = '\0';
                 break;
             }
 
-            /* TODO: utf8 support */
             keypress_time = alock_mtime();
-            clen = XLookupString(&ev.xkey, cbuf, 9, &ks, 0);
+            clen = XLookupString(&ev.xkey, cbuf, sizeof(cbuf), &ks, NULL);
+            debug("key input: %lx, %d, `%s`", ks, clen, cbuf);
+
+            /* translate key press symbol */
+            ks = opts->input->keypress(ks);
+
             switch (ks) {
+            case NoSymbol:
+                break;
+
+            /* clear/initialize input buffer */
             case XK_Escape:
             case XK_Clear:
-                rlen = 0;
+                pass_pos = pass_len = 0;
+                pass[0] = '\0';
                 break;
+
+            /* input position navigation */
+            case XK_Begin:
+            case XK_Home:
+                pass_pos = 0;
+                break;
+            case XK_End:
+                pass_pos = pass_len;
+                break;
+            case XK_Left:
+                if (pass_pos > 0)
+                    pass_pos--;
+                break;
+            case XK_Right:
+                if (pass_pos < pass_len)
+                    pass_pos++;
+                break;
+
+            /* remove entered characters */
             case XK_Delete:
-            case XK_BackSpace:
-                if (rlen > 0)
-                    rlen--;
+                if (pass_pos < pass_len) {
+                    wmemmove(&pass[pass_pos], &pass[pass_pos + 1], pass_len - pass_pos);
+                    pass_len--;
+                }
                 break;
+            case XK_BackSpace:
+                if (pass_pos > 0) {
+                    wmemmove(&pass[pass_pos - 1], &pass[pass_pos], pass_len - pass_pos + 1);
+                    pass_pos--;
+                    pass_len--;
+                }
+                break;
+
+            /* input confirmation and authentication test */
             case XK_Linefeed:
             case XK_Return:
-                pass[rlen] = 0;
                 opts->input->setstate(AINPUT_STATE_CHECK);
-                if (opts->auth->auth(pass)) {
+                wcstombs(rbuf, pass, sizeof(rbuf));
+                if (opts->auth->auth(rbuf)) {
                     opts->input->setstate(AINPUT_STATE_VALID);
                     return;
                 }
                 opts->input->setstate(AINPUT_STATE_ERROR);
                 opts->input->setstate(AINPUT_STATE_INIT);
-                rlen = 0;
+                keypress_time = alock_mtime();
+                pass_pos = pass_len = 0;
+                pass[0] = '\0';
                 break;
+
+            /* input new character at the current input position */
             default:
-                if (clen != 1)
-                    break;
-                if (rlen < sizeof(pass) - 1) {
-                    opts->input->keypress('*');
-                    pass[rlen++] = cbuf[0];
+                if (clen > 0 && !iscntrl(cbuf[0]) && pass_len < (sizeof(pass) / sizeof(*pass) - 1)) {
+                    wmemmove(&pass[pass_pos + 1], &pass[pass_pos], pass_len - pass_pos + 1);
+                    mbtowc(&pass[pass_pos], cbuf, clen);
+                    pass_pos++;
+                    pass_len++;
                 }
                 break;
             }
-            debug("entered phrase: `%s`", pass);
+
+            debug("entered phrase [%zu]: `%ls`", wcslen(pass), pass);
             break;
 
         case Expose:
@@ -435,6 +485,9 @@ int main(int argc, char **argv) {
             }
         }
     }
+
+    /* required for correct input handling */
+    setlocale(LC_ALL, "");
 
     initXInfo(&xinfo);
     if (detectOtherInstance(&xinfo)) {
