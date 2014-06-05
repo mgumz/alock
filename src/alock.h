@@ -59,7 +59,7 @@ struct aInput {
     int (*init)(const char* args, struct aXInfo* xinfo);
     int (*deinit)(struct aXInfo* xinfo);
     void (*setstate)(enum aInputState state);
-    void (*keypress)(char chr);
+    KeySym (*keypress)(KeySym ks);
 };
 
 struct aCursor {

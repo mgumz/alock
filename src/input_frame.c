@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
+#include <X11/keysym.h>
 
 #include "alock.h"
 
@@ -155,8 +156,15 @@ static void alock_input_frame_setstate(enum aInputState state) {
     }
 }
 
-static void alock_input_frame_keypress(char chr) {
-    debug("keypress: %c", chr);
+static KeySym alock_input_frame_keypress(KeySym ks) {
+    /* suppress navigation of input current position */
+    if (ks == XK_Begin || ks == XK_Home || ks == XK_End ||
+            ks == XK_Left || ks == XK_Right)
+        return NoSymbol;
+    /* treat delete key as backspace */
+    if (ks == XK_Delete)
+        return XK_BackSpace;
+    return ks;
 }
 
 
