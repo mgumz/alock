@@ -288,10 +288,35 @@ EOF
 }
 
 check_hash() {
-    echo "configure for hash."
-    echo "#_______________________" >&4
-    echo "WITH_HASH:=1" >&4
-    echo "" >&4
+    cat << EOF > tmp.c
+#include <gcrypt.h>
+int main() {
+    gcry_md_hd_t gcry_md_hd;
+    gcry_md_open(&gcry_md_hd, GCRY_MD_MD5, 0);
+    return 0;
+}
+EOF
+    msg_chkfor "gcrypt.h"
+    if ${CC} ${CFLAGS} -c tmp.c -o /dev/null 2>&3
+    then
+        echo "ok."
+        msg_chkfor "libgcrypt"
+        if ${CC} ${CFLAGS} tmp.c -o /dev/null ${LDFLAGS} -lgcrypt 2>&3
+        then
+            echo "ok."
+            echo "#_______________________" >&4
+            echo "WITH_HASH:=1" >&4
+            echo "LIBS_HASH:=-lgcrypt" >&4
+            echo "" >&4
+        else
+            echo "no."
+            exit 1
+        fi
+    else
+        echo "no."
+        echo "maybe you should install a package called 'libgcrypt'."
+        exit 1
+    fi
 }
 
 check_pam() {
@@ -406,7 +431,7 @@ EOF
             ;;
 
         --debug)
-            CFLAGS="${CFLAGS} -g"
+            CFLAGS="${CFLAGS} -g -DDEBUG"
             LDFLAGS="${LDFLAGS} -g"
             ;;
     esac
