@@ -1,5 +1,5 @@
 /*
- * alock - alock.c
+ * alock - utils.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
  *               2014 Arkadiusz Bokowy
  *

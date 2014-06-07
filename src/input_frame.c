@@ -8,6 +8,7 @@
  *
  * This input module provides:
  *  -input frame:color=<input_color>|<check_color>|<error_color>,width=<int>
+ *
  */
 
 #include <unistd.h>
