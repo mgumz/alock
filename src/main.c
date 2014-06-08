@@ -32,12 +32,6 @@
 extern struct aAuth alock_auth_none;
 #ifdef HAVE_HASH
 extern struct aAuth alock_auth_hash;
-extern struct aAuth alock_auth_md5;
-extern struct aAuth alock_auth_sha1;
-extern struct aAuth alock_auth_sha256;
-extern struct aAuth alock_auth_sha384;
-extern struct aAuth alock_auth_sha512;
-extern struct aAuth alock_auth_wpool;
 #endif /* HAVE_HASH */
 #ifdef HAVE_PASSWD
 extern struct aAuth alock_auth_passwd;
@@ -54,12 +48,6 @@ static struct aAuth* alock_authmodules[] = {
 #endif /* HAVE_PASSWD */
 #ifdef HAVE_HASH
     &alock_auth_hash,
-    &alock_auth_md5,
-    &alock_auth_sha1,
-    &alock_auth_sha256,
-    &alock_auth_sha384,
-    &alock_auth_sha512,
-    &alock_auth_wpool,
 #endif /* HAVE_HASH */
     &alock_auth_none,
     NULL
