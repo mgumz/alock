@@ -7,7 +7,7 @@
  * This projected is licensed under the terms of the MIT license.
  *
  * This authentication module provides:
- *  -input hash:type=<type>,hash=<hash>,file=<filename>
+ *  -auth hash:type=<type>,hash=<hash>,file=<filename>
  *
  */
 
@@ -76,6 +76,7 @@ static char *mem2hex(char *str, const unsigned char *mem, int len) {
 static int alock_auth_hash_init(const char *args) {
 
     char *user_hash = NULL;
+    int status = 1;
     int len;
 
     if (args && strstr(args, "hash:") == args) {
@@ -85,12 +86,13 @@ static int alock_auth_hash_init(const char *args) {
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
             if (strcmp(arg, "list") == 0) {
-                int i;
+                unsigned int i;
+                printf("list of available hashing algorithms:\n");
                 for (i = 0; i < sizeof(algorithms) / sizeof(int); i++) {
                     if (gcry_md_test_algo(algorithms[i]) == 0)
                         printf("%s\n", gcry_md_algo_name(algorithms[i]));
                 }
-                exit(0);
+                exit(EXIT_SUCCESS);
             }
             if (strstr(arg, "type=") == arg) {
                 selected_algorithm = gcry_md_map_name(&arg[5]);
@@ -103,16 +105,14 @@ static int alock_auth_hash_init(const char *args) {
                 FILE *f;
                 int len;
 
-                /* make sure that we do not leave any garbage */
-                free(user_hash);
-
                 if ((f = fopen(&arg[5], "r")) == NULL) {
-                    perror("alock: unable to read file for [hash]");
+                    perror("[hash]: unable to read file");
                     free(arguments);
-                    return 0;
+                    goto return_error;
                 }
 
                 /* allocate enough memory to contain all kind of hashes */
+                free(user_hash);
                 user_hash = (char*)malloc(HASH_DIGEST_MAX_LEN * 2 + 1);
 
                 fgets(user_hash, HASH_DIGEST_MAX_LEN * 2 + 1, f);
@@ -128,15 +128,13 @@ static int alock_auth_hash_init(const char *args) {
     }
 
     if (selected_algorithm == 0) {
-        fprintf(stderr, "alock: invalid or not specified type for [hash]\n");
-        free(user_hash);
-        return 0;
+        fprintf(stderr, "[hash]: invalid or not specified type\n");
+        goto return_error;
     }
 
     if (user_hash == NULL) {
-        fprintf(stderr, "alock: not specified hash nor file for [hash]\n");
-        free(user_hash);
-        return 0;
+        fprintf(stderr, "[hash]: not specified hash nor file\n");
+        goto return_error;
     }
 
     /* initialize gcrypt subsystem */
@@ -146,15 +144,22 @@ static int alock_auth_hash_init(const char *args) {
     len = strlen(user_hash);
 
     if (selected_digest_len * 2 > len) {
-        fprintf(stderr, "alock: incorrect hash for given type for [hash]\n");
-        free(user_hash);
-        return 0;
+        fprintf(stderr, "[hash]: incorrect hash for given type\n");
+        goto return_error;
     }
 
     user_digest = (unsigned char*)malloc(selected_digest_len);
     hex2mem(user_digest, user_hash, selected_digest_len * 2);
+
+    goto return_success;
+
+return_error:
+    status = 0;
+    selected_algorithm = 0;
+
+return_success:
     free(user_hash);
-    return 1;
+    return status;
 }
 
 static int alock_auth_hash_deinit() {
@@ -192,6 +197,6 @@ static int alock_auth_hash_auth(const char *pass) {
 struct aAuth alock_auth_hash = {
     "hash",
     alock_auth_hash_init,
-    alock_auth_hash_auth,
     alock_auth_hash_deinit,
+    alock_auth_hash_auth,
 };

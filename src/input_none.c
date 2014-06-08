@@ -11,12 +11,12 @@
 #include "alock.h"
 
 
-static int alock_input_none_init(const char* args, struct aXInfo* xinfo) {
+static int alock_input_none_init(const char *args, struct aXInfo *xinfo) {
     debug("init: %s", args);
     return 1;
 }
 
-static int alock_input_none_deinit(struct aXInfo* xinfo) {
+static int alock_input_none_deinit(struct aXInfo *xinfo) {
     debug("deinit");
     return 1;
 }
@@ -36,5 +36,5 @@ struct aInput alock_input_none = {
     alock_input_none_init,
     alock_input_none_deinit,
     alock_input_none_setstate,
-    alock_input_none_keypress
+    alock_input_none_keypress,
 };

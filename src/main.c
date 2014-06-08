@@ -29,17 +29,7 @@
 #include "alock.h"
 
 
-extern struct aAuth alock_auth_none;
-#ifdef HAVE_HASH
-extern struct aAuth alock_auth_hash;
-#endif /* HAVE_HASH */
-#ifdef HAVE_PASSWD
-extern struct aAuth alock_auth_passwd;
-#endif /* HAVE_PASSWD */
-#ifdef HAVE_PAM
-extern struct aAuth alock_auth_pam;
-#endif /* HAVE_PAM */
-static struct aAuth* alock_authmodules[] = {
+static struct aAuth *alock_authmodules[] = {
 #ifdef HAVE_PAM
     &alock_auth_pam,
 #endif /* HAVE_PAM */
@@ -53,23 +43,13 @@ static struct aAuth* alock_authmodules[] = {
     NULL
 };
 
-extern struct aInput alock_input_none;
-extern struct aInput alock_input_frame;
-static struct aInput* alock_inputs[] = {
+static struct aInput *alock_inputs[] = {
     &alock_input_frame,
     &alock_input_none,
     NULL
 };
 
-extern struct aBackground alock_bg_none;
-extern struct aBackground alock_bg_blank;
-#ifdef HAVE_IMLIB2
-extern struct aBackground alock_bg_image;
-#endif /* HAVE_IMLIB2 */
-#ifdef HAVE_XRENDER
-extern struct aBackground alock_bg_shade;
-#endif /* HAVE_XRENDER */
-static struct aBackground* alock_backgrounds[] = {
+static struct aBackground *alock_backgrounds[] = {
     &alock_bg_blank,
 #ifdef HAVE_IMLIB2
     &alock_bg_image,
@@ -81,16 +61,7 @@ static struct aBackground* alock_backgrounds[] = {
     NULL
 };
 
-extern struct aCursor alock_cursor_none;
-extern struct aCursor alock_cursor_glyph;
-extern struct aCursor alock_cursor_theme;
-#ifdef HAVE_XCURSOR
-extern struct aCursor alock_cursor_xcursor;
-#if (defined(HAVE_XRENDER) && (defined(HAVE_XPM) || (defined(HAVE_IMLIB2))))
-extern struct aCursor alock_cursor_image;
-#endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
-#endif /* HAVE_XCURSOR */
-static struct aCursor* alock_cursors[] = {
+static struct aCursor *alock_cursors[] = {
     &alock_cursor_none,
     &alock_cursor_theme,
     &alock_cursor_glyph,
@@ -104,9 +75,9 @@ static struct aCursor* alock_cursors[] = {
 };
 
 
-static void initXInfo(struct aXInfo* xi) {
+static void initXInfo(struct aXInfo *xi) {
 
-    Display* dpy = XOpenDisplay(NULL);
+    Display *dpy = XOpenDisplay(NULL);
 
     if (!dpy) {
         perror("alock: error, can't open connection to X");
@@ -139,9 +110,9 @@ static void initXInfo(struct aXInfo* xi) {
     }
 }
 
-static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
+static void eventLoop(struct aOpts *opts, struct aXInfo *xi) {
 
-    Display* dpy = xi->display;
+    Display *dpy = xi->display;
     XEvent ev;
     KeySym ks;
     char cbuf[10];
@@ -152,7 +123,7 @@ static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     char rbuf[sizeof(pass)];
 
     debug("entering event main loop");
-    for(;;) {
+    for (;;) {
 
         if (keypress_time) {
             /* check for any key press event */
@@ -168,7 +139,8 @@ static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
                 usleep(25000);
                 continue;
             }
-        } else {
+        }
+        else {
             /* block until any key press event arrives */
             XWindowEvent(dpy, xi->window[0], KeyPressMask, &ev);
         }
@@ -272,13 +244,13 @@ static void eventLoop(struct aOpts* opts, struct aXInfo* xi) {
     }
 }
 
-static pid_t getPidAtom(struct aXInfo* xinfo) {
+static pid_t getPidAtom(struct aXInfo *xinfo) {
 
     Atom ret_type;
     int ret_fmt;
     unsigned long nr_read;
     unsigned long nr_bytes_left;
-    pid_t* ret_data;
+    pid_t *ret_data;
 
     if (XGetWindowProperty(xinfo->display, xinfo->root[0],
                 xinfo->pid_atom, 0L, 1L, False, XA_CARDINAL,
@@ -292,7 +264,7 @@ static pid_t getPidAtom(struct aXInfo* xinfo) {
     return 0;
 }
 
-static int detectOtherInstance(struct aXInfo* xinfo) {
+static int detectOtherInstance(struct aXInfo *xinfo) {
 
     pid_t pid = getPidAtom(xinfo);
     int process_alive = kill(pid, 0);
@@ -308,7 +280,7 @@ static int detectOtherInstance(struct aXInfo* xinfo) {
     return 0;
 }
 
-static int registerInstance(struct aXInfo* xinfo) {
+static int registerInstance(struct aXInfo *xinfo) {
 
     pid_t pid = getpid();
     XChangeProperty(xinfo->display, xinfo->root[0],
@@ -318,7 +290,7 @@ static int registerInstance(struct aXInfo* xinfo) {
     return 1;
 }
 
-static int unregisterInstance(struct aXInfo* xinfo) {
+static int unregisterInstance(struct aXInfo *xinfo) {
 
     XDeleteProperty(xinfo->display, xinfo->root[0], xinfo->pid_atom);
     return 1;
@@ -327,7 +299,12 @@ static int unregisterInstance(struct aXInfo* xinfo) {
 int main(int argc, char **argv) {
 
     struct aXInfo xinfo;
-    struct aOpts opts;
+    struct aOpts opts = {
+        alock_authmodules[0],
+        alock_inputs[0],
+        alock_cursors[0],
+        alock_backgrounds[0],
+    };
 
 #if HAVE_XF86MISC
     int xf86misc_major = -1;
@@ -335,16 +312,11 @@ int main(int argc, char **argv) {
 #endif
 
     int arg;
-    const char* optarg;
-    const char* auth_args = NULL;
-    const char* input_args = NULL;
-    const char* cursor_args = NULL;
-    const char* background_args = "blank:color=black";
-
-    opts.auth = alock_authmodules[0];
-    opts.input = alock_inputs[0];
-    opts.cursor = alock_cursors[0];
-    opts.background = alock_backgrounds[0];
+    const char *optarg;
+    const char *auth_args = NULL;
+    const char *input_args = NULL;
+    const char *cursor_args = NULL;
+    const char *background_args = "blank:color=black";
 
     /* parse options */
     if (argc > 1) {
@@ -353,8 +325,9 @@ int main(int argc, char **argv) {
                 optarg = argv[++arg];
                 if (optarg != NULL) {
 
-                    struct aBackground** i;
+                    struct aBackground **i;
                     if (strcmp(optarg, "list") == 0) {
+                        printf("list of available background modules:\n");
                         for (i = alock_backgrounds; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
@@ -362,7 +335,7 @@ int main(int argc, char **argv) {
                     }
 
                     for (i = alock_backgrounds; *i; ++i) {
-                        if(strstr(optarg, (*i)->name) == optarg) {
+                        if (strstr(optarg, (*i)->name) == optarg) {
                             background_args = optarg;
                             opts.background = *i;
                             break;
@@ -370,20 +343,23 @@ int main(int argc, char **argv) {
                     }
 
                     if (*i == NULL) {
-                        fprintf(stderr, "alock: couldnt find the bg-module you specified\n");
+                        fprintf(stderr, "alock: background module not found\n");
                         exit(EXIT_FAILURE);
                     }
 
-                } else {
-                    fprintf(stderr, "alock: missing argument\n");
+                }
+                else {
+                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "bg");
                     exit(EXIT_FAILURE);
                 }
-            } else if (!strcmp(argv[arg], "-auth")) {
+            }
+            else if (!strcmp(argv[arg], "-auth")) {
                 optarg = argv[++arg];
                 if (optarg != NULL) {
 
-                    struct aAuth** i;
+                    struct aAuth **i;
                     if (strcmp(optarg, "list") == 0) {
+                        printf("list of available authentication modules:\n");
                         for (i = alock_authmodules; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
@@ -391,7 +367,7 @@ int main(int argc, char **argv) {
                     }
 
                     for (i = alock_authmodules; *i; ++i) {
-                        if(strstr(optarg, (*i)->name) == optarg) {
+                        if (strstr(optarg, (*i)->name) == optarg) {
                             auth_args = optarg;
                             opts.auth = *i;
                             break;
@@ -399,20 +375,23 @@ int main(int argc, char **argv) {
                     }
 
                     if (*i == NULL) {
-                        fprintf(stderr, "alock: couldnt find the auth-module you specified\n");
+                        fprintf(stderr, "alock: authentication module not found\n");
                         exit(EXIT_FAILURE);
                     }
 
-                } else {
-                    fprintf(stderr, "alock: missing argument\n");
+                }
+                else {
+                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "auth");
                     exit(EXIT_FAILURE);
                 }
-            } else if (!strcmp(argv[arg], "-cursor")) {
+            }
+            else if (!strcmp(argv[arg], "-cursor")) {
                 optarg = argv[++arg];
                 if (optarg != NULL) {
 
-                    struct aCursor** i;
+                    struct aCursor **i;
                     if (strcmp(argv[arg], "list") == 0) {
+                        printf("list of available cursor modules:\n");
                         for (i = alock_cursors; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
@@ -420,7 +399,7 @@ int main(int argc, char **argv) {
                     }
 
                     for (i = alock_cursors; *i; ++i) {
-                        if(strstr(optarg, (*i)->name) == optarg) {
+                        if (strstr(optarg, (*i)->name) == optarg) {
                             cursor_args = optarg;
                             opts.cursor = *i;
                             break;
@@ -428,20 +407,23 @@ int main(int argc, char **argv) {
                     }
 
                     if (*i == NULL) {
-                        fprintf(stderr, "alock: couldnt find the cursor-module you specified\n");
+                        fprintf(stderr, "alock: cursor module not found\n");
                         exit(EXIT_FAILURE);
                     }
 
-                } else {
-                    fprintf(stderr, "alock: missing argument\n");
+                }
+                else {
+                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "cursor");
                     exit(EXIT_FAILURE);
                 }
-            } else if (!strcmp(argv[arg], "-input")) {
+            }
+            else if (!strcmp(argv[arg], "-input")) {
                 optarg = argv[++arg];
                 if (optarg != NULL) {
 
-                    struct aInput** i;
+                    struct aInput **i;
                     if (strcmp(argv[arg], "list") == 0) {
+                        printf("list of available input modules:\n");
                         for (i = alock_inputs; *i; ++i) {
                             printf("%s\n", (*i)->name);
                         }
@@ -449,7 +431,7 @@ int main(int argc, char **argv) {
                     }
 
                     for (i = alock_inputs; *i; ++i) {
-                        if(strstr(optarg, (*i)->name) == optarg) {
+                        if (strstr(optarg, (*i)->name) == optarg) {
                             input_args = optarg;
                             opts.input = *i;
                             break;
@@ -457,19 +439,22 @@ int main(int argc, char **argv) {
                     }
 
                     if (*i == NULL) {
-                        fprintf(stderr, "alock: couldnt find the input-module you specified\n");
+                        fprintf(stderr, "alock: input module not found\n");
                         exit(EXIT_FAILURE);
                     }
 
-                } else {
-                    fprintf(stderr, "alock: missing argument\n");
+                }
+                else {
+                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "input");
                     exit(EXIT_FAILURE);
                 }
-            } else if (strcmp(argv[arg], "-h") == 0) {
+            }
+            else if (strcmp(argv[arg], "-h") == 0) {
                 printf("alock [-h] [-bg type:options] [-cursor type:options] "
                        "[-auth type:options] [-input type:options]\n");
                 exit(EXIT_SUCCESS);
-            } else {
+            }
+            else {
                 fprintf(stderr, "alock: invalid option '%s'\n", argv[arg]);
                 exit(EXIT_FAILURE);
             }
@@ -487,29 +472,27 @@ int main(int argc, char **argv) {
 
     if (opts.auth->init(auth_args) == 0) {
         fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
-                opts.auth->name,
-                auth_args);
+                opts.auth->name, auth_args);
         exit(EXIT_FAILURE);
     }
+
+    /* We can be installed setuid root to support shadow passwords,
+       and we don't need root privileges any longer.  --marekm */
+    setuid(getuid());
 
     if (opts.input->init(input_args, &xinfo) == 0) {
         fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
-                opts.input->name,
-                input_args);
+                opts.input->name, input_args);
         exit(EXIT_FAILURE);
     }
-
     if (opts.background->init(background_args, &xinfo) == 0) {
         fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
-                opts.background->name,
-                background_args);
+                opts.background->name, background_args);
         exit(EXIT_FAILURE);
     }
-
     if (opts.cursor->init(cursor_args, &xinfo) == 0) {
         fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
-                opts.cursor->name,
-                cursor_args);
+                opts.cursor->name, cursor_args);
         exit(EXIT_FAILURE);
     }
 

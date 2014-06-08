@@ -41,10 +41,10 @@ struct aXInfo {
 };
 
 struct aAuth {
-    const char* name;
-    int (*init)(const char* args);
-    int (*auth)(const char* pass);
+    const char *name;
+    int (*init)(const char *args);
     int (*deinit)();
+    int (*auth)(const char *pass);
 };
 
 enum aInputState {
@@ -55,42 +55,80 @@ enum aInputState {
     AINPUT_STATE_ERROR,
 };
 struct aInput {
-    const char* name;
-    int (*init)(const char* args, struct aXInfo* xinfo);
-    int (*deinit)(struct aXInfo* xinfo);
+    const char *name;
+    int (*init)(const char *args, struct aXInfo *xinfo);
+    int (*deinit)(struct aXInfo *xinfo);
     void (*setstate)(enum aInputState state);
     KeySym (*keypress)(KeySym ks);
 };
 
 struct aCursor {
-    const char* name;
-    int (*init)(const char* args, struct aXInfo* xinfo);
-    int (*deinit)(struct aXInfo* xinfo);
+    const char *name;
+    int (*init)(const char *args, struct aXInfo *xinfo);
+    int (*deinit)(struct aXInfo *xinfo);
 };
 
 struct aBackground {
-    const char* name;
-    int (*init)(const char* args, struct aXInfo* xinfo);
-    int (*deinit)(struct aXInfo* xinfo);
+    const char *name;
+    int (*init)(const char *args, struct aXInfo *xinfo);
+    int (*deinit)(struct aXInfo *xinfo);
 };
 
 struct aOpts {
-    struct aAuth* auth;
-    struct aInput* input;
-    struct aCursor* cursor;
-    struct aBackground* background;
+    struct aAuth *auth;
+    struct aInput *input;
+    struct aCursor *cursor;
+    struct aBackground *background;
 };
 
 
-void alock_string2lower(char* string);
+/* authentication modules */
+extern struct aAuth alock_auth_none;
+#ifdef HAVE_HASH
+extern struct aAuth alock_auth_hash;
+#endif /* HAVE_HASH */
+#ifdef HAVE_PASSWD
+extern struct aAuth alock_auth_passwd;
+#endif /* HAVE_PASSWD */
+#ifdef HAVE_PAM
+extern struct aAuth alock_auth_pam;
+#endif /* HAVE_PAM */
+
+/* input modules */
+extern struct aInput alock_input_none;
+extern struct aInput alock_input_frame;
+
+/* background modules */
+extern struct aBackground alock_bg_none;
+extern struct aBackground alock_bg_blank;
+#ifdef HAVE_IMLIB2
+extern struct aBackground alock_bg_image;
+#endif /* HAVE_IMLIB2 */
+#ifdef HAVE_XRENDER
+extern struct aBackground alock_bg_shade;
+#endif /* HAVE_XRENDER */
+
+/* cursor modules */
+extern struct aCursor alock_cursor_none;
+extern struct aCursor alock_cursor_glyph;
+extern struct aCursor alock_cursor_theme;
+#ifdef HAVE_XCURSOR
+extern struct aCursor alock_cursor_xcursor;
+#if (defined(HAVE_XRENDER) && (defined(HAVE_XPM) || (defined(HAVE_IMLIB2))))
+extern struct aCursor alock_cursor_image;
+#endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
+#endif /* HAVE_XCURSOR */
+
+
 unsigned long alock_mtime(void);
 int alock_native_byte_order(void);
-int alock_alloc_color(const struct aXInfo* xinfo, int scr,
-        const char* color_name,
-        const char* fallback_name,
-        XColor* result);
-int alock_check_xrender(const struct aXInfo* xinfo);
-int alock_shade_pixmap(const struct aXInfo* xinfo,
+int alock_alloc_color(const struct aXInfo *xinfo,
+        int scr,
+        const char *color_name,
+        const char *fallback_name,
+        XColor *result);
+int alock_check_xrender(const struct aXInfo *xinfo);
+int alock_shade_pixmap(const struct aXInfo *xinfo,
         int scr,
         const Pixmap src_pm,
         Pixmap dst_pm,

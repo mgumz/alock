@@ -19,13 +19,6 @@
 #include "alock.h"
 
 
-void alock_string2lower(char* string) {
-    const size_t s = strlen(string);
-    size_t i;
-    for(i = 0; i < s; i++)
-        string[i] = tolower(string[i]);
-}
-
 /* Get system time-stamp in milliseconds without discontinuities. */
 unsigned long alock_mtime() {
     struct timespec t;
@@ -35,8 +28,11 @@ unsigned long alock_mtime() {
 
 /* Allocate colormap entry by the given color name. When the color_name
  * parameter is NULL, then fallback value is used right away. */
-int alock_alloc_color(const struct aXInfo* xinfo, int scr, const char* color_name,
-        const char* fallback_name, XColor* result) {
+int alock_alloc_color(const struct aXInfo *xinfo,
+        int scr,
+        const char *color_name,
+        const char *fallback_name,
+        XColor *result) {
 
     static XColor tmp;
 
@@ -71,7 +67,8 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
                             &first_event, &first_error) == False) {
             fprintf(stderr, "alock: no xrender-support found\n");
             have_xrender = 0;
-        } else
+        }
+        else
             have_xrender = 1;
 
         checked_already = 1;
