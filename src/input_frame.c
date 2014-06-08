@@ -21,7 +21,7 @@
 
 
 struct aFrame {
-    struct aXInfo* xi;
+    struct aXInfo *xi;
     Window window;
     GC gc;
 
@@ -31,31 +31,32 @@ struct aFrame {
     int width;
 };
 
-static struct aFrame* frame = NULL;
+static struct aFrame *frame = NULL;
 
 
-static int alock_input_frame_init(const char* args, struct aXInfo* xinfo) {
+static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
     debug("init: %s", args);
 
     if (!xinfo)
         return 0;
 
-    Display* dpy = xinfo->display;
+    Display *dpy = xinfo->display;
     XSetWindowAttributes xswa;
-    char* color_name[3] = { NULL };
+    char *color_name[3] = { NULL };
+    int status = 1;
 
-    frame = (struct aFrame*)calloc(1, sizeof(struct aFrame));
+    frame = (struct aFrame*)malloc(sizeof(struct aFrame));
     frame->xi = xinfo;
     frame->width = 10;
 
     if (args && strstr(args, "frame:") == args) {
-        char* arguments = strdup(&args[6]);
-        char* arg;
-        char* tmp;
+        char *arguments = strdup(&args[6]);
+        char *arg;
+        char *tmp;
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
             if (strstr(arg, "color=") == arg) {
-                char* tmp2;
+                char *tmp2;
                 int i;
                 for (tmp2 = &arg[6], i = 0; tmp2 && i < 3; i++) {
                     free(color_name[i]);
@@ -65,12 +66,9 @@ static int alock_input_frame_init(const char* args, struct aXInfo* xinfo) {
             else if (strstr(arg, "width=") == arg) {
                 frame->width = strtol(&arg[6], NULL, 0);
                 if (frame->width < 1) {
-                    fprintf(stderr, "alock: invalid width value for [frame]\n");
-                    free(color_name[0]);
-                    free(color_name[1]);
-                    free(color_name[2]);
-                    free(frame);
-                    return 0;
+                    fprintf(stderr, "[frame]: invalid width value\n");
+                    free(arguments);
+                    goto return_error;
                 }
             }
         }
@@ -89,20 +87,32 @@ static int alock_input_frame_init(const char* args, struct aXInfo* xinfo) {
     alock_alloc_color(xinfo, 0, color_name[1], "yellow", &frame->color_check);
     alock_alloc_color(xinfo, 0, color_name[2], "red", &frame->color_error);
 
+    goto return_success;
+
+return_error:
+    free(frame);
+    status = 0;
+    frame = NULL;
+
+return_success:
     free(color_name[0]);
     free(color_name[1]);
     free(color_name[2]);
-    return 1;
+    return status;
 }
 
-static int alock_input_frame_deinit(struct aXInfo* xinfo) {
+static int alock_input_frame_deinit(struct aXInfo *xinfo) {
     debug("deinit");
+
     if (!xinfo || !frame)
         return 0;
-    Display* dpy = xinfo->display;
+
+    Display *dpy = xinfo->display;
+
     XFreeGC(dpy, frame->gc);
     XDestroyWindow(dpy, frame->window);
     free(frame);
+
     return 1;
 }
 
@@ -112,7 +122,7 @@ static void alock_input_frame_setstate(enum aInputState state) {
     if (!frame)
         return;
 
-    Display* dpy = frame->xi->display;
+    Display *dpy = frame->xi->display;
     Window window = frame->window;
     XGCValues gcvals;
     int height, width;
@@ -158,13 +168,16 @@ static void alock_input_frame_setstate(enum aInputState state) {
 }
 
 static KeySym alock_input_frame_keypress(KeySym ks) {
+
     /* suppress navigation of input current position */
     if (ks == XK_Begin || ks == XK_Home || ks == XK_End ||
             ks == XK_Left || ks == XK_Right)
         return NoSymbol;
+
     /* treat delete key as backspace */
     if (ks == XK_Delete)
         return XK_BackSpace;
+
     return ks;
 }
 
@@ -174,5 +187,5 @@ struct aInput alock_input_frame = {
     alock_input_frame_init,
     alock_input_frame_deinit,
     alock_input_frame_setstate,
-    alock_input_frame_keypress
+    alock_input_frame_keypress,
 };

@@ -1,30 +1,18 @@
-/* ---------------------------------------------------------------- *\
-
-  file    : auth_pam.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Sa 07 Mai 2005 16:21:24 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about :
-
-    provide -auth pam, pam-authentification for alock
-
-    taken from pure-ftpd's authstuff, but you can see similar stuff
-    in xlockmore, openssh and basicly all pam-related apps :)
-
-\* ---------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------- *\
-  includes
-\* ---------------------------------------------------------------- */
-
-#include "alock.h"
+/*
+ * alock - auth_pam.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ * This authentication module provides:
+ *  -auth pam
+ *
+ * Taken from pure-ftpd's authstuff, but you can see similar stuff
+ * in xlockmore, openssh and basically all pam-related apps :)
+ *
+ */
 
 #include <string.h>
 #include <stdlib.h>
@@ -36,15 +24,15 @@
 
 #include <security/pam_appl.h>
 #ifdef __linux
-#    include <security/pam_misc.h>
-#endif /* LINUX */
+#include <security/pam_misc.h>
+#endif /* __linux */
 
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
+#include "alock.h"
+
 
 #define PAM_YN { \
     if (PAM_error != 0 || pam_error != PAM_SUCCESS) { \
-        fprintf(stderr, "pam error:%s\n", pam_strerror(pam_handle, pam_error)); \
+        fprintf(stderr, "[pam]: %s\n", pam_strerror(pam_handle, pam_error)); \
         pam_end(pam_handle, pam_error); \
         PAM_username = NULL; \
         PAM_password = NULL; \
@@ -59,10 +47,12 @@
        return PAM_CONV_ERR; \
    }
 
-static const char* PAM_username = NULL;
-static const char* PAM_password = NULL;
+
+static const char *PAM_username = NULL;
+static const char *PAM_password = NULL;
 static int PAM_error = 0;
 static int pam_error = PAM_SUCCESS;
+
 
 static int PAM_conv(int num_msg, const struct pam_message **msgs,
                     struct pam_response **resp, void *appdata_ptr) {
@@ -93,9 +83,9 @@ static int PAM_conv(int num_msg, const struct pam_message **msgs,
             GET_MEM;
             memset(&reply[replies], 0, sizeof reply[replies]);
             if ((reply[replies].resp = strdup(PAM_password)) == NULL) {
-#    ifdef PAM_BUF_ERR
+#ifdef PAM_BUF_ERR
                 reply[replies].resp_retcode = PAM_BUF_ERR;
-#    endif
+#endif
                 PAM_error = 1;
                 return PAM_CONV_ERR;
             }
@@ -122,24 +112,17 @@ static struct pam_conv PAM_conversation = {
 };
 
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
-static struct passwd* pwd_entry = NULL;
+static struct passwd *pwd_entry = NULL;
 
 
-static int alock_auth_pam_init(const char* args) {
+static int alock_auth_pam_init(const char *args) {
+
     errno = 0;
     pwd_entry = getpwuid(getuid());
     if (!pwd_entry) {
-        perror("password entry for uid not found");
+        perror("[pam]: password entry for uid not found");
         return 0;
     }
-
-    /* we can be installed setuid root to support shadow passwords,
-       and we don't need root privileges any longer.  --marekm */
-    setuid(getuid());
-
     return 1;
 }
 
@@ -150,9 +133,9 @@ static int alock_auth_pam_deinit() {
     return 0;
 }
 
-static int alock_auth_pam_auth(const char* pass) {
+static int alock_auth_pam_auth(const char *pass) {
 
-    pam_handle_t* pam_handle = NULL;
+    pam_handle_t *pam_handle = NULL;
 
     if (!pass || strlen(pass) < 1 || !pwd_entry)
         return 0;
@@ -174,11 +157,6 @@ static int alock_auth_pam_auth(const char* pass) {
 struct aAuth alock_auth_pam = {
     "pam",
     alock_auth_pam_init,
+    alock_auth_pam_deinit,
     alock_auth_pam_auth,
-    alock_auth_pam_deinit
 };
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
-
-
