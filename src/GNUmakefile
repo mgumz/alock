@@ -35,10 +35,7 @@ SRC = 			main.c utils.c \
 				cursor_none.c cursor_glyph.c cursor_theme.c
 SRC_PAM = 		auth_pam.c
 SRC_PASSWD = 	auth_passwd.c
-SRC_HASH = 	auth_hash.c auth_sha1.c \
-				auth_sha2.c \
-				auth_md5.c \
-				auth_wpool.c
+SRC_HASH = 	auth_hash.c
 SRC_XRENDER = 	bg_shade.c
 SRC_IMLIB2 = 	cursor_image.c \
 			 	bg_image.c
