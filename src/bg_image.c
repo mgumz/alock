@@ -1,34 +1,23 @@
-/* ---------------------------------------------------------------- *\
+/*
+ * alock - bg_image.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ * This background module provides:
+ *  -bg image:file=<file>,shade=<int>,scale,center,tiled
+ *
+ */
 
-  file    : bg_image.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Mi 18 Mai 2005 00:51:10 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about :
-
-    provide -bg image:filename via imlib2
-
-\* ---------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------- *\
-  includes
-\* ---------------------------------------------------------------- */
+#include <stdlib.h>
+#include <string.h>
+#include <Imlib2.h>
 
 #include "alock.h"
 
-#include <Imlib2.h>
-#include <stdlib.h>
-#include <string.h>
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
 
 enum {
     ALOCK_SCALE = 1,
@@ -36,72 +25,68 @@ enum {
     ALOCK_TILED = 4
 };
 
-static Window* window = NULL;
-static Pixmap* pixmap = NULL;
-static XColor* color = NULL;
+static Window *window = NULL;
+static Pixmap *pixmap = NULL;
 
-static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
 
-    XSetWindowAttributes xswa;
-    long xsmask = 0;
-    long options = ALOCK_SCALE;
-    char* filename = NULL;
-    char* color_name = strdup("black");
-    unsigned int shade = 0;
+static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
 
-    if (!xinfo || !args)
+    if (!xinfo)
         return 0;
 
-    if (strstr(args, "image:") == args && strlen(&args[6]) > 0) {
-        char* arguments = strdup(&args[6]);
-        char* tmp;
-        char* arg = NULL;
+    XSetWindowAttributes xswa;
+    XColor color;
+    long options = ALOCK_SCALE;
+    char *file_name = NULL;
+    char *color_name = NULL;
+    unsigned int shade = 0;
+    int status = 1;
+
+    if (args && strstr(args, "image:") == args) {
+        char *arguments = strdup(&args[6]);
+        char *arg;
+        char *tmp;
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
-            if (arg) {
-                if (strstr(arg, "scale") == arg) {
-                    options = ALOCK_SCALE;
-                } else if (strstr(arg, "center")) {
-                    options = ALOCK_CENTER;
-                } else if (strstr(arg, "tile")) {
-                    options = ALOCK_TILED;
-                } else if (strstr(arg, "color=") == arg && strlen(arg) > 6 && strlen(&arg[6])) {
-                    free(color_name);
-                    color_name = strdup(&arg[6]);
-                } else if (strstr(arg, "shade=") == arg && strlen(arg) > 6 && strlen(&arg[6])) {
-                    unsigned int tmp_shade = atoi(&arg[6]);
-                    if (tmp_shade > 0 && tmp_shade < 100) {
-                        shade = tmp_shade;
-                    } else {
-                        printf("alock: error, shade not in range [1, 99] for [image].\n");
-                        free(color_name);
-                        if (filename)
-                            free(filename);
-                        free(arguments);
-                        return 0;
-                    }
-
-                } else if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
-                    if (!filename)
-                        filename = strdup(&arg[5]);
+            if (strstr(arg, "file=") == arg) {
+                free(file_name);
+                file_name = strdup(&arg[5]);
+            }
+            else if (strcmp(arg, "scale") == 0) {
+                options = ALOCK_SCALE;
+            }
+            else if (strcmp(arg, "center") == 0) {
+                options = ALOCK_CENTER;
+            }
+            else if (strcmp(arg, "tiled") == 0) {
+                options = ALOCK_TILED;
+            }
+            else if (strstr(arg, "color=") == arg) {
+                free(color_name);
+                color_name = strdup(&arg[6]);
+            }
+            else if (strstr(arg, "shade=") == arg) {
+                shade = strtol(&arg[6], NULL, 0);
+                if (shade > 99) {
+                    fprintf(stderr, "[image]: shade not in range [0, 99]\n");
+                    free(arguments);
+                    goto return_error;
                 }
             }
         }
         free(arguments);
     }
 
-    if (!filename) {
-        printf("%s", "alock: error, no filename specified for [image]\n");
-        return 1;
+    if (!file_name) {
+        fprintf(stderr, "[image]: file name not specified\n");
+        goto return_error;
     }
 
-    if (!alock_check_xrender(xinfo)) {
+    if (!alock_check_xrender(xinfo))
         shade = 0;
-    }
 
-    pixmap = (Pixmap*)calloc(xinfo->nr_screens, sizeof(Pixmap));
-    window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
-    color = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+    window = (Window*)malloc(sizeof(Window) * xinfo->nr_screens);
+    pixmap = (Pixmap*)malloc(sizeof(Pixmap) * xinfo->nr_screens);
 
     {
         int scr;
@@ -109,7 +94,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
 
             const int rwidth = xinfo->width_of_root[scr];
             const int rheight = xinfo->height_of_root[scr];
-            alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
+            alock_alloc_color(xinfo, scr, color_name, "black", &color);
 
             { /* get image and set it as the background pixmap for the window */
                 Imlib_Context context = NULL;
@@ -122,10 +107,9 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                                          DefaultScreen(xinfo->display)));
                 imlib_context_set_colormap(xinfo->colormap[scr]);
 
-                image = imlib_load_image_without_cache(filename);
+                image = imlib_load_image_without_cache(file_name);
                 if (image) {
 
-                    char do_shade = shade > 0 && shade < 100;
                     int w;
                     int h;
 
@@ -139,18 +123,18 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                     w = imlib_image_get_width();
                     h = imlib_image_get_height();
 
-                    if (do_shade || options & ALOCK_CENTER) {
+                    if (shade || options & ALOCK_CENTER) {
 
                         GC gc;
                         XGCValues gcval;
 
-                        gcval.foreground = color[scr].pixel;
+                        gcval.foreground = color.pixel;
                         gc = XCreateGC(xinfo->display, xinfo->root[scr], GCForeground, &gcval);
                         XFillRectangle(xinfo->display, pixmap[scr], gc, 0, 0, rwidth, rheight);
                         XFreeGC(xinfo->display, gc);
                     }
 
-                    if (do_shade) {
+                    if (shade) {
                         GC gc;
                         XGCValues gcval;
 
@@ -158,7 +142,7 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                                                           DefaultDepth(xinfo->display, scr));
                         Pixmap shaded_pixmap = XCreatePixmap(xinfo->display, xinfo->root[scr], w, h,
                                                           DefaultDepth(xinfo->display, scr));
-                        gcval.foreground = color[scr].pixel;
+                        gcval.foreground = color.pixel;
                         gc = XCreateGC(xinfo->display, xinfo->root[scr], GCForeground, &gcval);
                         XFillRectangle(xinfo->display, shaded_pixmap, gc, 0, 0, w, h);
 
@@ -181,7 +165,8 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
 
                     if (options & ALOCK_CENTER) {
                         imlib_render_image_on_drawable((rwidth - w)/2, (rheight - h)/2);
-                    } else if (options & ALOCK_TILED) {
+                    }
+                    else if (options & ALOCK_TILED) {
                         Pixmap tile;
                         GC gc;
                         XGCValues gcval;
@@ -203,12 +188,10 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                     }
                     imlib_free_image_and_decache();
 
-                } else {
-                    printf("alock: error, couldnt load [%s].\n", filename);
-                    if (filename)
-                        free(filename);
-                    XDestroyWindow(xinfo->display, window[scr]);
-                    return 0;
+                }
+                else {
+                    fprintf(stderr, "[image]: unable to load image from file\n");
+                    goto return_error;
                 }
 
                 imlib_context_pop();
@@ -219,17 +202,11 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
             xswa.colormap = xinfo->colormap[scr];
             xswa.background_pixmap = pixmap[scr];
 
-            xsmask |= CWOverrideRedirect;
-            xsmask |= CWColormap;
-            xsmask |= CWBackPixmap;
-
             window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
-                                   0, 0, rwidth, rheight,
-                                   0, /* borderwidth */
-                                   CopyFromParent, /* depth */
-                                   InputOutput, /* class */
-                                   CopyFromParent, /* visual */
-                                   xsmask, &xswa);
+                    0, 0, rwidth, rheight, 0,
+                    CopyFromParent, InputOutput, CopyFromParent,
+                    CWOverrideRedirect | CWColormap | CWBackPixmap,
+                    &xswa);
 
             XMapWindow(xinfo->display, window[scr]);
 
@@ -237,40 +214,42 @@ static int alock_bg_image_init(const char* args, struct aXInfo* xinfo) {
                 xinfo->window[scr] = window[scr];
 
         }
-
-        free(color_name);
     }
 
-    if (filename)
-        free(filename);
+    goto return_success;
 
-    return (window != 0);
+return_error:
+    status = 0;
+    free(window);
+    free(pixmap);
+    window = NULL;
+    pixmap = NULL;
+
+return_success:
+    free(file_name);
+    free(color_name);
+    return status;
 }
 
+static int alock_bg_image_deinit(struct aXInfo *xinfo) {
 
-static int alock_bg_image_deinit(struct aXInfo* xinfo) {
     if (!xinfo || !window)
         return 0;
-    {
-        int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
-            XDestroyWindow(xinfo->display, window[scr]);
-            XFreePixmap(xinfo->display, pixmap[scr]);
-        }
-        free(color);
-        free(pixmap);
-        free(window);
+
+    int scr;
+    for (scr = 0; scr < xinfo->nr_screens; scr++) {
+        XDestroyWindow(xinfo->display, window[scr]);
+        XFreePixmap(xinfo->display, pixmap[scr]);
     }
+    free(pixmap);
+    free(window);
+
     return 1;
 }
+
 
 struct aBackground alock_bg_image = {
     "image",
     alock_bg_image_init,
-    alock_bg_image_deinit
+    alock_bg_image_deinit,
 };
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
-
-

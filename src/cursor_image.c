@@ -1,78 +1,65 @@
-/* ---------------------------------------------------------------- *\
+/*
+ * alock - cursor_image.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ * This cursor module provides:
+ *  -cursor image:file=<file>
+ *
+ * TODO: png-files can have transparency-colors, we want to ignore
+ *       them.
+ *
+ */
 
-  file    : cursor_image.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Mi 01 June 2005 10:48:21 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about :
-
-    provide -cursor image:file=<file>
-
-    TODO: png-files can have transparency-colors, we want to ignore
-          them.
-
-\* ---------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------- *\
-  includes
-\* ---------------------------------------------------------------- */
+#include <stdlib.h>
+#include <string.h>
+#include <X11/extensions/Xrender.h>
+#ifdef HAVE_IMLIB2
+#include <Imlib2.h>
+#elif HAVE_XPM
+#include <X11/xpm.h>
+#endif /* HAVE_IMLIB2 | HAVE_XPM */
 
 #include "alock.h"
 
-#include <X11/extensions/Xrender.h>
-#ifdef HAVE_IMLIB2
-#    include <Imlib2.h>
-#elif HAVE_XPM
-#    include <X11/xpm.h>
-#endif /* HAVE_IMLIB2 | HAVE_XPM */
-#include <string.h>
-#include <stdlib.h>
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
 
 static Cursor cursor = 0;
 
-static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
 
-    char* filename = NULL;
+static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
 
-    if (!xinfo || !args)
+    if (!xinfo)
         return 0;
 
-    if (strstr(args, "image:") == args && strlen(&args[6]) > 0) {
-        char* arguments = strdup(&args[6]);
-        char* tmp;
-        char* arg = NULL;
+    char *file_name = NULL;
+    int status = 1;
+
+    if (args && strstr(args, "image:") == args) {
+        char *arguments = strdup(&args[6]);
+        char *arg;
+        char *tmp;
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
-            if (arg) {
-                if (strstr(arg, "file=") == arg && strlen(arg) > 6) {
-                    if (!filename)
-                        filename = strdup(&arg[5]);
-                }
+            if (strstr(arg, "file=") == arg) {
+                free(file_name);
+                file_name = strdup(&arg[5]);
             }
         }
         free(arguments);
     }
 
-
-    if (!filename) {
-        printf("%s", "alock: error, missing argument for [image].\n");
-        return 0;
+    if (!file_name) {
+        fprintf(stderr, "[image]: file name not specified\n");
+        goto return_error;
     }
 
     if (!alock_check_xrender(xinfo)) {
-        printf("%s", "alock: error, no running xrender extension found [image].\n");
-        free(filename);
-        return 0;
+        fprintf(stderr, "[image]: no running xrender extension found\n");
+        goto return_error;
     }
 
     {
@@ -90,7 +77,7 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
             imlib_context_set_visual(DefaultVisual(xinfo->display, DefaultScreen(xinfo->display)));
             imlib_context_set_colormap(xinfo->colormap[0]);
 
-            img = imlib_load_image_without_cache(filename);
+            img = imlib_load_image_without_cache(file_name);
             if (img) {
                 imlib_context_set_image(img);
                 w = imlib_image_get_width();
@@ -129,9 +116,9 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
             imlib_context_free(ctx);
         }
 #elif HAVE_XPM
-        if (!cursor_pm) {
-            XImage* img = NULL;
-            XpmReadFileToImage(xinfo->display, filename, &img, NULL, NULL);
+        {
+            XImage *img = NULL;
+            XpmReadFileToImage(xinfo->display, file_name, &img, NULL, NULL);
             if (img) {
                 GC gc = None;
                 w = img->width;
@@ -149,33 +136,30 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
         }
 #else
 #warning compiling this file without having either imlib2 or xpm is pretty useless since no image can be loaded.
-#endif /* HAVE_XPM|HAVE_IMLIB2 */
+#endif /* HAVE_XPM | HAVE_IMLIB2 */
 
         if (!cursor_pm) {
-            printf("alock: error while loading [%s] in [image].\n", filename);
-            free(filename);
-            return 0;
+            fprintf(stderr, "[image]: unable to load cursor from file\n");
+            goto return_error;
         }
 
         {
             /* TODO: maybe replace this by an older xrenderapi-call, since
              * XRenderFindStandardFormat was introduced in xyz, dunno atm */
-            XRenderPictFormat* format = XRenderFindStandardFormat (xinfo->display, PictStandardARGB32);
+            XRenderPictFormat *format = XRenderFindStandardFormat(xinfo->display, PictStandardARGB32);
             if (format) {
                 Picture cursor_pic = XRenderCreatePicture(xinfo->display, cursor_pm, format, 0, 0);
                 cursor = XRenderCreateCursor(xinfo->display, cursor_pic, w / 2, h / 2);
                 XRenderFreePicture(xinfo->display, cursor_pic);
-            } else {
-                printf("%s", "alock: error while finding a valid XRenderPictFormat in [image].\n");
-                free(filename);
-                return 0;
+            }
+            else {
+                fprintf(stderr, "[image]: error while finding a valid XRenderPictFormat\n");
+                goto return_error;
             }
 
             XFreePixmap(xinfo->display, cursor_pm);
         }
     }
-
-    free(filename);
 
     {
         int scr;
@@ -184,24 +168,32 @@ static int alock_cursor_image_init(const char* args, struct aXInfo* xinfo) {
         }
     }
 
-    return cursor;
+    goto return_success;
+
+return_error:
+    status = 0;
+    if (cursor)
+        XFreeCursor(xinfo->display, cursor);
+    cursor = 0;
+
+return_success:
+    free(file_name);
+    return status;
 }
 
-static int alock_cursor_image_deinit(struct aXInfo* xinfo) {
+static int alock_cursor_image_deinit(struct aXInfo *xinfo) {
+
     if (!xinfo || !cursor)
         return 0;
 
     XFreeCursor(xinfo->display, cursor);
+
     return 1;
 }
+
 
 struct aCursor alock_cursor_image = {
     "image",
     alock_cursor_image_init,
-    alock_cursor_image_deinit
+    alock_cursor_image_deinit,
 };
-
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
-

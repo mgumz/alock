@@ -1,124 +1,91 @@
-/* ---------------------------------------------------------------- *\
-
-  file    : bg_blank.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Di 17 Mai 2005 10:44:20 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about :
-
-    provides -bg blank:color
-
-\* ---------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------- *\
-  includes
-\* ---------------------------------------------------------------- */
-
-#include "alock.h"
+/*
+ * alock - bg_blank.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ * This background module provides:
+ *  -bg blank:color=<color>
+ *
+ */
 
 #include <stdlib.h>
 #include <string.h>
 
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
+#include "alock.h"
 
-static Window* window = NULL;
-static XColor* color = NULL;
 
-static int alock_bg_blank_init(const char* args, struct aXInfo* xinfo) {
+static Window *window = NULL;
 
-    XSetWindowAttributes xswa;
-    long xsmask = 0;
-    char* color_name = strdup("black");
 
-    if (!xinfo || !args)
+static int alock_bg_blank_init(const char *args, struct aXInfo *xinfo) {
+
+    if (!xinfo)
         return 0;
 
-    if (strstr(args, "blank:") == args && strlen(&args[6]) > 0) {
-        char* arguments = strdup(&args[6]);
-        char* tmp;
-        char* arg = NULL;
+    XSetWindowAttributes xswa;
+    XColor color;
+    char *color_name = NULL;
+    int scr;
+
+    if (args && strstr(args, "blank:") == args) {
+        char *arguments = strdup(&args[6]);
+        char *arg;
+        char *tmp;
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
-            if (arg) {
-                if (strstr(arg, "color=") == arg && strlen(arg) > 6 && strlen(&arg[6])) {
-                    free(color_name);
-                    color_name = strdup(&arg[6]);
-                }
+            if (strstr(arg, "color=") == arg) {
+                free(color_name);
+                color_name = strdup(&arg[6]);
             }
         }
         free(arguments);
     }
 
-    {
-        color = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
-        window = (Window*)calloc(xinfo->nr_screens, sizeof(Window));
-    }
+    window = (Window*)malloc(sizeof(Window) * xinfo->nr_screens);
 
-    {
-        int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+    for (scr = 0; scr < xinfo->nr_screens; scr++) {
 
-            alock_alloc_color(xinfo, scr, color_name, "black", &color[scr]);
+        alock_alloc_color(xinfo, scr, color_name, "black", &color);
 
-            xswa.override_redirect = True;
-            xswa.colormap = xinfo->colormap[scr];
-            xswa.background_pixel = color[scr].pixel;
+        xswa.override_redirect = True;
+        xswa.colormap = xinfo->colormap[scr];
+        xswa.background_pixel = color.pixel;
 
-            xsmask |= CWOverrideRedirect;
-            xsmask |= CWBackPixel;
-            xsmask |= CWColormap;
+        window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
+                0, 0, xinfo->width_of_root[scr], xinfo->height_of_root[scr], 0,
+                CopyFromParent, InputOutput, CopyFromParent,
+                CWOverrideRedirect | CWColormap | CWBackPixel,
+                &xswa);
 
-            window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
-                                  0, 0,
-                                  xinfo->width_of_root[scr], xinfo->height_of_root[scr],
-                                  0, /* borderwidth */
-                                  CopyFromParent, /* depth */
-                                  InputOutput, /* class */
-                                  CopyFromParent, /* visual */
-                                  xsmask, &xswa);
+        if (window[scr])
+            xinfo->window[scr] = window[scr];
 
-
-            if (window[scr])
-                xinfo->window[scr] = window[scr];
-
-        }
     }
 
     free(color_name); 
-
     return 1;
 }
 
-static int alock_bg_blank_deinit(struct aXInfo* xinfo) {
-    if (!xinfo)
+static int alock_bg_blank_deinit(struct aXInfo *xinfo) {
+
+    if (!xinfo || !window)
         return 0;
 
-    {
-        int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
-            if (window[scr])
-                XDestroyWindow(xinfo->display, window[scr]);
-        }
-        free(window);
-        free(color);
-    }
+    int scr;
+    for (scr = 0; scr < xinfo->nr_screens; scr++)
+        XDestroyWindow(xinfo->display, window[scr]);
+    free(window);
+
     return 1;
 }
+
 
 struct aBackground alock_bg_blank = {
     "blank",
     alock_bg_blank_init,
-    alock_bg_blank_deinit
+    alock_bg_blank_deinit,
 };
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
-

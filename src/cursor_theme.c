@@ -1,58 +1,42 @@
-/* ---------------------------------------------------------------- *\
-
-  file    : cursor_theme.c
-  author  : m. gumz <akira at fluxbox dot org>
-  copyr   : copyright (c) 2005 - 2007 by m. gumz
-
-  license : see LICENSE
-
-  start   : Sa 30 Apr 2005 12:02:47 CEST
-
-\* ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- *\
-
-  about :
-
-    provide -cursor theme:name,bg=color,fg=color
-
-\* ---------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------- *\
-  includes
-\* ---------------------------------------------------------------- */
-
-#include "alock.h"
+/*
+ * alock - cursor_theme.c
+ * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
+ *
+ * This file is a part of an alock.
+ *
+ * This projected is licensed under the terms of the MIT license.
+ *
+ * This cursor module provides:
+ *  -cursor theme:name=<glyph>,fg=<color>,bg=<color>
+ *
+ */
 
 #include <stdlib.h>
 #include <string.h>
-
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
 
 #ifdef HAVE_THEME
 #include <X11/bitmaps/xlogo16>
 #endif /* HAVE_THEME */
 
+#include "alock.h"
+
 #include "../bitmaps/mini.xbm"
 #include "../bitmaps/mini_mask.xbm"
-
 #include "../bitmaps/xtr.xbm"
 #include "../bitmaps/xtr_mask.xbm"
-
 #include "../bitmaps/alock.xbm"
 #include "../bitmaps/alock_mask.xbm"
 
-/* ---------------------------------------------------------------- *\
-\* ---------------------------------------------------------------- */
 
 struct ThemeCursor {
-    const char* name;
+    const char *name;
     unsigned int width;
     unsigned int height;
     unsigned int x_hot;
     unsigned int y_hot;
-    char* bits;
-    char* mask;
+    char *bits;
+    char *mask;
 };
 
 static struct ThemeCursor cursors[] = {
@@ -68,6 +52,7 @@ static struct ThemeCursor cursors[] = {
     { "xtr",
       xtr_width, xtr_height, xtr_x_hot, xtr_y_hot,
       xtr_bits, xtr_mask_bits },
+
 #ifdef HAVE_THEME
     { "xlogo16",
       xlogo16_width, xlogo16_height, xlogo16_width / 2, xlogo16_height / 2,
@@ -78,61 +63,51 @@ static struct ThemeCursor cursors[] = {
 };
 
 
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
+static Cursor *cursor = NULL;
+static XColor *color_fg = NULL;
+static XColor *color_bg = NULL;
 
-static Cursor* cursor = NULL;
-static XColor* color_fg = NULL;
-static XColor* color_bg = NULL;
-static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
 
-    char* color_bg_name = strdup("steelblue3");
-    char* color_fg_name = strdup("grey25");
-    Pixmap pixmap_cursor;
-    Pixmap pixmap_cursor_mask;
-    const struct ThemeCursor* theme = cursors;
+static int alock_cursor_theme_init(const char *args, struct aXInfo *xinfo) {
 
-    if (!xinfo || !args)
+    if (!xinfo)
         return 0;
 
-    if (strstr(args, "theme:") == args && strlen(&args[6]) > 0) {
-        char* arguments = strdup(&args[6]);
-        char* tmp;
-        char* arg = NULL;
+    char *color_bg_name = NULL;
+    char *color_fg_name = NULL;
+    Pixmap pixmap_cursor;
+    Pixmap pixmap_cursor_mask;
+    const struct ThemeCursor *theme = cursors;
+
+    if (args && strstr(args, "theme:") == args) {
+        char *arguments = strdup(&args[6]);
+        char *arg;
+        char *tmp;
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
-            if (arg) {
-                const struct ThemeCursor* cursor_theme_name;
-
-                if (!strcmp(arg, "list")) {
-                    for (cursor_theme_name = cursors; cursor_theme_name->name; ++cursor_theme_name) {
-                        printf("%s\n", cursor_theme_name->name);
-                    }
-                    free(color_fg_name);
-                    free(color_bg_name);
-                    free(arguments);
-                    exit(0);
-                } else if (strstr(arg, "fg=") == arg && strlen(arg) > 4) {
-                    free(color_fg_name);
-                    color_fg_name = strdup(&arg[3]);
-                } else if (strstr(arg, "bg=") == arg && strlen(arg) > 4) {
-                    free(color_bg_name);
-                    color_bg_name = strdup(&arg[3]);
-                } else if (strstr(arg, "name=") == arg && strlen(arg) > 6) {
-                    for (cursor_theme_name = cursors; cursor_theme_name->name; ++cursor_theme_name) {
-                        if(!strcmp(cursor_theme_name->name, &arg[5])) {
-                            theme = cursor_theme_name;
-                            break;
-                        }
-                    }
-                    if (!cursor_theme_name->name) {
-                        printf("alock: error, couldnt find [%s]\n", arg);
-                        free(color_bg_name);
-                        free(color_fg_name);
-                        free(arguments);
-                        return 0;
+            if (strcmp(arg, "list") == 0) {
+                const struct ThemeCursor *cursor;
+                printf("list of available cursor themes:\n");
+                for (cursor = cursors; cursor->name; cursor++)
+                    printf("%s\n", cursor->name);
+                exit(EXIT_SUCCESS);
+            }
+            if (strstr(arg, "name=") == arg) {
+                const struct ThemeCursor *cursor;
+                for (cursor = cursors; cursor->name; cursor++) {
+                    if (!strcmp(cursor->name, &arg[5])) {
+                        theme = cursor;
+                        break;
                     }
                 }
+            }
+            else if (strstr(arg, "fg=") == arg) {
+                free(color_fg_name);
+                color_fg_name = strdup(&arg[3]);
+            }
+            else if (strstr(arg, "bg=") == arg) {
+                free(color_bg_name);
+                color_bg_name = strdup(&arg[3]);
             }
         }
         free(arguments);
@@ -169,32 +144,27 @@ static int alock_cursor_theme_init(const char* args, struct aXInfo* xinfo) {
 
     free(color_fg_name);
     free(color_bg_name);
-
-
     return 1;
 }
 
-static int alock_cursor_theme_deinit(struct aXInfo* xinfo) {
+static int alock_cursor_theme_deinit(struct aXInfo *xinfo) {
+
     if (!xinfo || !cursor)
         return 0;
-    {
-        int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
-            XFreeCursor(xinfo->display, cursor[scr]);
-        }
-        free(cursor);
-        free(color_bg);
-        free(color_fg);
-    }
+
+    int scr;
+    for (scr = 0; scr < xinfo->nr_screens; scr++)
+        XFreeCursor(xinfo->display, cursor[scr]);
+    free(cursor);
+    free(color_bg);
+    free(color_fg);
+
     return 1;
 }
+
 
 struct aCursor alock_cursor_theme = {
     "theme",
     alock_cursor_theme_init,
-    alock_cursor_theme_deinit
+    alock_cursor_theme_deinit,
 };
-
-/*------------------------------------------------------------------*\
-\*------------------------------------------------------------------*/
-
