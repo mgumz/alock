@@ -316,7 +316,7 @@ int main(int argc, char **argv) {
     const char *auth_args = NULL;
     const char *input_args = NULL;
     const char *cursor_args = NULL;
-    const char *background_args = "blank:color=black";
+    const char *background_args = NULL;
 
     /* parse options */
     if (argc > 1) {
