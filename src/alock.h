@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <X11/Xlib.h>
 
+
 #ifdef DEBUG
 #define debug(M, ...) fprintf(stderr, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
@@ -23,21 +24,16 @@
 
 
 struct aXInfo {
+    Display *display;
+    Atom pid_atom;
 
-    Display*  display;
-
-    Atom      pid_atom;
-
-    int       nr_screens;
-
-    int*      width_of_root;
-    int*      height_of_root;
-
-    Window*   root;
-    Colormap* colormap;
-
-    Window*   window;
-    Cursor*   cursor;
+    int screens;
+    Window *root;
+    Colormap *colormap;
+    Window *window;
+    Cursor *cursor;
+    int *root_width;
+    int *root_height;
 };
 
 struct aAuth {

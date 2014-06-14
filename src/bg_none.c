@@ -28,11 +28,11 @@ static int alock_bg_none_init(const char *args, struct aXInfo *xinfo) {
     XSetWindowAttributes xswa;
     int scr;
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->nr_screens);
+    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
 
     xswa.override_redirect = True;
 
-    for (scr = 0; scr < xinfo->nr_screens; scr++) {
+    for (scr = 0; scr < xinfo->screens; scr++) {
         window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
                 0, 0, 1, 1, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
@@ -51,7 +51,7 @@ static int alock_bg_none_deinit(struct aXInfo *xinfo) {
         return 0;
 
     int scr;
-    for (scr = 0; scr < xinfo->nr_screens; scr++) {
+    for (scr = 0; scr < xinfo->screens; scr++) {
         if (window[scr])
             XDestroyWindow(xinfo->display, window[scr]);
     }

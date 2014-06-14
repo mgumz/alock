@@ -63,17 +63,17 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
     if (!alock_check_xrender(xinfo))
         goto return_error;
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->nr_screens);
+    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
 
     {
         int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+        for (scr = 0; scr < xinfo->screens; scr++) {
 
             /* get a color from color_name */
             alock_alloc_color(xinfo, scr, color_name, "black", &color);
 
-            width = xinfo->width_of_root[scr];
-            height = xinfo->height_of_root[scr];
+            width = xinfo->root_width[scr];
+            height = xinfo->root_height[scr];
 
             { /* xrender stuff */
                 Display *dpy = xinfo->display;
@@ -142,7 +142,7 @@ static int alock_bg_shade_deinit(struct aXInfo *xinfo) {
         return 0;
 
     int scr;
-    for (scr = 0; scr < xinfo->nr_screens; scr++)
+    for (scr = 0; scr < xinfo->screens; scr++)
         XDestroyWindow(xinfo->display, window[scr]);
     free(window);
 

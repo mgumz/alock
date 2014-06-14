@@ -156,14 +156,14 @@ static int alock_cursor_glyph_init(const char *args, struct aXInfo *xinfo) {
     }
 
     {
-        cursor = (Cursor*)calloc(xinfo->nr_screens, sizeof(Cursor));
-        color_fg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
-        color_bg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+        cursor = (Cursor*)calloc(xinfo->screens, sizeof(Cursor));
+        color_fg = (XColor*)calloc(xinfo->screens, sizeof(XColor));
+        color_bg = (XColor*)calloc(xinfo->screens, sizeof(XColor));
     }
 
     {
         int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+        for (scr = 0; scr < xinfo->screens; scr++) {
 
             alock_alloc_color(xinfo, scr, color_bg_name, "black", &color_bg[scr]);
             alock_alloc_color(xinfo, scr, color_fg_name, "white", &color_fg[scr]);
@@ -201,7 +201,7 @@ static int alock_cursor_glyph_deinit(struct aXInfo *xinfo) {
         return 0;
 
     int scr;
-    for (scr = 0; scr < xinfo->nr_screens; scr++)
+    for (scr = 0; scr < xinfo->screens; scr++)
         XFreeCursor(xinfo->display, cursor[scr]);
     free(cursor);
     free(color_bg);

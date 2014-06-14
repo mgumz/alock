@@ -37,7 +37,7 @@ int alock_alloc_color(const struct aXInfo *xinfo,
     static XColor tmp;
 
     if (!xinfo ||
-        !xinfo->colormap || xinfo->nr_screens < scr || scr < 0 ||
+        !xinfo->colormap || xinfo->screens < scr || scr < 0 ||
         !fallback_name || !result)
         return 0;
 
