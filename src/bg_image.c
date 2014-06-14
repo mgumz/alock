@@ -85,15 +85,15 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
     if (!alock_check_xrender(xinfo))
         shade = 0;
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->nr_screens);
-    pixmap = (Pixmap*)malloc(sizeof(Pixmap) * xinfo->nr_screens);
+    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
+    pixmap = (Pixmap*)malloc(sizeof(Pixmap) * xinfo->screens);
 
     {
         int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+        for (scr = 0; scr < xinfo->screens; scr++) {
 
-            const int rwidth = xinfo->width_of_root[scr];
-            const int rheight = xinfo->height_of_root[scr];
+            const int rwidth = xinfo->root_width[scr];
+            const int rheight = xinfo->root_height[scr];
             alock_alloc_color(xinfo, scr, color_name, "black", &color);
 
             { /* get image and set it as the background pixmap for the window */
@@ -237,7 +237,7 @@ static int alock_bg_image_deinit(struct aXInfo *xinfo) {
         return 0;
 
     int scr;
-    for (scr = 0; scr < xinfo->nr_screens; scr++) {
+    for (scr = 0; scr < xinfo->screens; scr++) {
         XDestroyWindow(xinfo->display, window[scr]);
         XFreePixmap(xinfo->display, pixmap[scr]);
     }

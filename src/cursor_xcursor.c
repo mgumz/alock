@@ -52,7 +52,7 @@ static int alock_cursor_xcursor_init(const char *args, struct aXInfo *xinfo) {
         return 0;
     }
 
-    for (scr = 0; scr < xinfo->nr_screens; scr++)
+    for (scr = 0; scr < xinfo->screens; scr++)
         xinfo->cursor[scr] = cursor;
 
     free(file_name);

@@ -78,34 +78,36 @@ static struct aCursor *alock_cursors[] = {
 static void initXInfo(struct aXInfo *xi) {
 
     Display *dpy = XOpenDisplay(NULL);
+    int screens;
 
     if (!dpy) {
         perror("alock: error, can't open connection to X");
         exit(EXIT_FAILURE);
     }
 
-    {
-        xi->display = dpy;
-        xi->pid_atom = XInternAtom(dpy, "_ALOCK_PID", False);
-        xi->nr_screens = ScreenCount(dpy);
-        xi->window = (Window*)calloc((size_t)xi->nr_screens, sizeof(Window));
-        xi->root = (Window*)calloc((size_t)xi->nr_screens, sizeof(Window));
-        xi->colormap = (Colormap*)calloc((size_t)xi->nr_screens, sizeof(Colormap));
-        xi->cursor = (Cursor*)calloc((size_t)xi->nr_screens, sizeof(Cursor));
-        xi->width_of_root = (int*)calloc(xi->nr_screens, sizeof(int));
-        xi->height_of_root = (int*)calloc(xi->nr_screens, sizeof(int));
-    }
+    screens = ScreenCount(dpy);
+    xi->display = dpy;
+    xi->screens = screens;
+    xi->pid_atom = XInternAtom(dpy, "_ALOCK_PID", False);
+    xi->root = (Window*)malloc(sizeof(Window) * screens);
+    xi->colormap = (Colormap*)malloc(sizeof(Colormap) * screens);
+    xi->window = (Window*)malloc(sizeof(Window) * screens);
+    xi->cursor = (Cursor*)malloc( sizeof(Cursor) * screens);
+    xi->root_width = (int*)malloc(sizeof(int) * screens);
+    xi->root_height = (int*)malloc(sizeof(int) * screens);
+
     {
         XWindowAttributes xgwa;
         int scr;
-        for (scr = 0; scr < xi->nr_screens; scr++) {
-            xi->window[scr] = None;
+        for (scr = 0; scr < screens; scr++) {
             xi->root[scr] = RootWindow(dpy, scr);
             xi->colormap[scr] = DefaultColormap(dpy, scr);
+            xi->window[scr] = None;
+            xi->cursor[scr] = None;
 
             XGetWindowAttributes(dpy, xi->root[scr], &xgwa);
-            xi->width_of_root[scr] = xgwa.width;
-            xi->height_of_root[scr] = xgwa.height;
+            xi->root_width[scr] = xgwa.width;
+            xi->root_height[scr] = xgwa.height;
         }
     }
 }
@@ -498,7 +500,7 @@ int main(int argc, char **argv) {
 
     {
         int scr;
-        for (scr = 0; scr < xinfo.nr_screens; scr++) {
+        for (scr = 0; scr < xinfo.screens; scr++) {
 
             XSelectInput(xinfo.display, xinfo.window[scr], KeyPressMask|KeyReleaseMask);
             XMapWindow(xinfo.display, xinfo.window[scr]);

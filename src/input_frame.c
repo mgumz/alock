@@ -78,7 +78,7 @@ static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
     xswa.override_redirect = True;
     xswa.colormap = xinfo->colormap[0];
     frame->window = XCreateWindow(dpy, xinfo->root[0],
-            0, 0, xinfo->width_of_root[0], xinfo->height_of_root[0], 0,
+            0, 0, xinfo->root_width[0], xinfo->root_height[0], 0,
             CopyFromParent, InputOutput, CopyFromParent, CWOverrideRedirect | CWColormap, &xswa);
     frame->gc = XCreateGC(dpy, frame->window, 0, 0);
 
@@ -149,8 +149,8 @@ static void alock_input_frame_setstate(enum aInputState state) {
         gcvals.foreground = frame->color_input.pixel;
     }
 
-    height = frame->xi->height_of_root[0];
-    width = frame->xi->width_of_root[0];
+    height = frame->xi->root_height[0];
+    width = frame->xi->root_width[0];
 
     XChangeGC(dpy, frame->gc, GCForeground, &gcvals);
     XFillRectangle(dpy, window, frame->gc, 0, 0, width, frame->width);

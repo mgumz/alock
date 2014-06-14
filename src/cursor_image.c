@@ -163,7 +163,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
 
     {
         int scr;
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+        for (scr = 0; scr < xinfo->screens; scr++) {
             xinfo->cursor[scr] = cursor;
         }
     }

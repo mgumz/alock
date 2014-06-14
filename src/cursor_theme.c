@@ -116,11 +116,11 @@ static int alock_cursor_theme_init(const char *args, struct aXInfo *xinfo) {
     {
         int scr;
 
-        cursor = (Cursor*)calloc(xinfo->nr_screens, sizeof(Cursor));
-        color_bg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
-        color_fg = (XColor*)calloc(xinfo->nr_screens, sizeof(XColor));
+        cursor = (Cursor*)calloc(xinfo->screens, sizeof(Cursor));
+        color_bg = (XColor*)calloc(xinfo->screens, sizeof(XColor));
+        color_fg = (XColor*)calloc(xinfo->screens, sizeof(XColor));
 
-        for (scr = 0; scr < xinfo->nr_screens; scr++) {
+        for (scr = 0; scr < xinfo->screens; scr++) {
 
             alock_alloc_color(xinfo, scr, color_fg_name, "white", &color_fg[scr]);
             alock_alloc_color(xinfo, scr, color_bg_name, "blank", &color_bg[scr]);
@@ -153,7 +153,7 @@ static int alock_cursor_theme_deinit(struct aXInfo *xinfo) {
         return 0;
 
     int scr;
-    for (scr = 0; scr < xinfo->nr_screens; scr++)
+    for (scr = 0; scr < xinfo->screens; scr++)
         XFreeCursor(xinfo->display, cursor[scr]);
     free(cursor);
     free(color_bg);
