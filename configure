@@ -13,7 +13,7 @@ CHECK_XPM=0
 CHECK_IMLIB2=0
 CHECK_PAM=0
 CHECK_PASSWD=0
-CHECK_HASH=1
+CHECK_HASH=0
 
 prefix=/usr/local
 
@@ -410,7 +410,11 @@ EOF
         --with-passwd|--enable-passwd) CHECK_PASSWD=1;;
         --without-passwd|--disable-passwd) CHECK_PASSWD=0;;
 
+        --with-hash|--enable-hash) CHECK_HASH=1;;
+        --without-hash|--disable-hash) CHECK_HASH=0;;
+
         --with-all|--enable-all) 
+            CHECK_HASH=1
             CHECK_PASSWD=1
             CHECK_PAM=1
             CHECK_IMLIB2=1
