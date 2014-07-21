@@ -132,6 +132,36 @@ EOF
     exit 1
 }
 
+check_xshape() {
+
+    cat << EOF > tmp.c
+#include <X11/Xlib.h>
+#include <X11/extensions/shape.h>
+int main() {
+    int major, minor;
+    XShapeQueryVersion(XOpenDisplay(NULL), &major, &minor);
+    return 0;
+}
+EOF
+    msg_chkfor "shape.h"
+    if ${CC} ${CFLAGS} -c tmp.c -o /dev/null 2>&3
+    then
+        echo "ok."
+        msg_chkfor "libXext"
+        if ${CC} ${CFLAGS} tmp.c -o /dev/null ${LDFLAGS} -lX11 -lXext 2>&3
+        then
+            echo "ok."
+            echo "#_______________________" >&4
+            echo "HAVE_XSHAPE:=1" >&4
+            echo "CFLAGS_XSHAPE:=" >&4
+            echo "LDFLAGS_XSHAPE:=-lXext" >&4
+            echo "" >&4
+            return
+        fi
+    fi
+    echo "no."
+}
+
 check_xcursor() {
 
     cat << EOF > tmp.c
@@ -462,6 +492,7 @@ echo "" >&4
 check_docs
 check_tools
 check_xlib
+check_xshape
 check_xf86misc
 check_xlogo16
 [ "$CHECK_XPM" -eq 1 ] && check_xpm

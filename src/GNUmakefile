@@ -44,7 +44,7 @@ SRC_XCURSOR = 	cursor_xcursor.c
 
 ######################
 
-MODULES = PAM PASSWD HASH XRENDER XCURSOR XF86MISC IMLIB2 XPM
+MODULES = PAM PASSWD HASH XRENDER XSHAPE XCURSOR XF86MISC IMLIB2 XPM
 STAND_ALONES = $(subst auth_,,$(SRC_HASH:.c=))
 
 $(foreach module,$(MODULES),$(eval $(call funcAddModule,$(module))))
