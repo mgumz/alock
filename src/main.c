@@ -9,6 +9,10 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +25,7 @@
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/Xos.h>
-
-#ifdef HAVE_XF86MISC
+#if HAVE_X11_EXTENSIONS_XF86MISC_H
 #include <X11/extensions/xf86misc.h>
 #endif
 
@@ -30,15 +33,15 @@
 
 
 static struct aAuth *alock_authmodules[] = {
-#ifdef HAVE_PAM
+#if ENABLE_PAM
     &alock_auth_pam,
-#endif /* HAVE_PAM */
-#ifdef HAVE_PASSWD
+#endif
+#if ENABLE_PASSWD
     &alock_auth_passwd,
-#endif /* HAVE_PASSWD */
-#ifdef HAVE_HASH
+#endif
+#if ENABLE_HASH
     &alock_auth_hash,
-#endif /* HAVE_HASH */
+#endif
     &alock_auth_none,
     NULL
 };
@@ -51,12 +54,12 @@ static struct aInput *alock_inputs[] = {
 
 static struct aBackground *alock_backgrounds[] = {
     &alock_bg_blank,
-#ifdef HAVE_IMLIB2
+#if ENABLE_IMLIB2
     &alock_bg_image,
-#endif /* HAVE_IMLIB2 */
-#ifdef HAVE_XRENDER
+#endif
+#if ENABLE_XRENDER
     &alock_bg_shade,
-#endif /* HAVE_XRENDER */
+#endif
     &alock_bg_none,
     NULL
 };
@@ -65,12 +68,12 @@ static struct aCursor *alock_cursors[] = {
     &alock_cursor_none,
     &alock_cursor_theme,
     &alock_cursor_glyph,
-#ifdef HAVE_XCURSOR
+#if ENABLE_XCURSOR
     &alock_cursor_xcursor,
-#if (defined(HAVE_XRENDER) && ((defined(HAVE_XPM) || defined(HAVE_IMLIB2))))
+#if (ENABLE_XRENDER && (ENABLE_XPM || ENABLE_IMLIB2))
     &alock_cursor_image,
-#endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
-#endif /* HAVE_XCURSOR */
+#endif
+#endif
     NULL
 };
 
@@ -308,7 +311,7 @@ int main(int argc, char **argv) {
         alock_backgrounds[0],
     };
 
-#if HAVE_XF86MISC
+#if HAVE_X11_EXTENSIONS_XF86MISC_H
     int xf86misc_major = -1;
     int xf86misc_minor = -1;
 #endif
@@ -452,8 +455,8 @@ int main(int argc, char **argv) {
                 }
             }
             else if (strcmp(argv[arg], "-h") == 0) {
-                printf("alock [-h] [-bg type:options] [-cursor type:options] "
-                       "[-auth type:options] [-input type:options]\n");
+                printf("alock [-h] [-auth type:options] [-bg type:options]"
+                       " [-cursor type:options] [-input type:options]\n");
                 exit(EXIT_SUCCESS);
             }
             else {
@@ -521,7 +524,7 @@ int main(int argc, char **argv) {
         }
     }
 
-#if HAVE_XF86MISC
+#if HAVE_X11_EXTENSIONS_XF86MISC_H
     {
         if (XF86MiscQueryVersion(xinfo.display, &xf86misc_major, &xf86misc_minor) == True) {
 
@@ -556,7 +559,7 @@ int main(int argc, char **argv) {
     opts.cursor->deinit(&xinfo);
     opts.background->deinit(&xinfo);
 
-#if HAVE_XF86MISC
+#if HAVE_X11_EXTENSIONS_XF86MISC_H
     if (xf86misc_major >= 0 && xf86misc_minor >= 5) {
         XF86MiscSetGrabKeysState(xinfo.display, True);
         XFlush(xinfo.display);

@@ -12,12 +12,15 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_THEME
+#if HAVE_X11_BITMAPS_XLOGO16
 #include <X11/bitmaps/xlogo16>
-#endif /* HAVE_THEME */
+#endif
 
 #include "alock.h"
 
@@ -53,11 +56,11 @@ static struct ThemeCursor cursors[] = {
       xtr_width, xtr_height, xtr_x_hot, xtr_y_hot,
       xtr_bits, xtr_mask_bits },
 
-#ifdef HAVE_THEME
+#if HAVE_X11_BITMAPS_XLOGO16
     { "xlogo16",
       xlogo16_width, xlogo16_height, xlogo16_width / 2, xlogo16_height / 2,
       xlogo16_bits, xlogo16_bits },
-#endif /* HAVE_THEME */
+#endif
 
     { NULL, 0, 0, 0, 0, NULL, NULL }
 };

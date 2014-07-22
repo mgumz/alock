@@ -9,12 +9,16 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#ifdef HAVE_XRENDER
+#if ENABLE_XRENDER
 #include <X11/extensions/Xrender.h>
-#endif /* HAVE_XRENDER */
+#endif
 
 #include "alock.h"
 
@@ -56,7 +60,7 @@ int alock_native_byte_order() {
  * taken from cursor.c of libXcursor
 \*------------------------------------------------------------------*/
 int alock_check_xrender(const struct aXInfo* xinfo) {
-#ifdef HAVE_XRENDER
+#if ENABLE_XRENDER
     static int have_xrender = 0;
     static int checked_already = 0;
 
@@ -77,7 +81,7 @@ int alock_check_xrender(const struct aXInfo* xinfo) {
 #else
     fprintf(stderr, "alock: i wasnt compiled to support xrender\n");
     return 0;
-#endif /* HAVE_XRENDER */
+#endif /* ENABLE_XRENDER */
 }
 
 int alock_shade_pixmap(const struct aXInfo* xinfo,
@@ -89,7 +93,7 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
         int dst_x, int dst_y,
         unsigned int width,
         unsigned int height) {
-#ifdef HAVE_XRENDER
+#if ENABLE_XRENDER
     Display* dpy = xinfo->display;
     Visual* vis = DefaultVisual(dpy, scr);
 
@@ -148,5 +152,5 @@ int alock_shade_pixmap(const struct aXInfo* xinfo,
     return 1;
 #else
     return 0;
-#endif /* HAVE_XRENDER */
+#endif /* ENABLE_XRENDER */
 }

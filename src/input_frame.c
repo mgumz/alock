@@ -11,12 +11,16 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
-#ifdef HAVE_XSHAPE
+#if HAVE_X11_EXTENSIONS_SHAPE_H
 #include <X11/extensions/shape.h>
 #endif
 
@@ -90,7 +94,7 @@ static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
     alock_alloc_color(xinfo, 0, color_name[1], "yellow", &frame->color_check);
     alock_alloc_color(xinfo, 0, color_name[2], "red", &frame->color_error);
 
-#ifdef HAVE_XSHAPE
+#if HAVE_X11_EXTENSIONS_SHAPE_H
     XRectangle rect = {
         0, 0,
         xinfo->root_width[0] - 2 * frame->width,
@@ -98,7 +102,7 @@ static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
     };
     XShapeCombineRectangles(dpy, frame->window, ShapeBounding,
             frame->width, frame->width, &rect, 1, ShapeSubtract, 0);
-#endif /* HAVE_XSHAPE */
+#endif
 
     goto return_success;
 
