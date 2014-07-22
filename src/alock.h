@@ -16,11 +16,11 @@
 #include <X11/Xlib.h>
 
 
-#ifdef DEBUG
+#if DEBUG
 #define debug(M, ...) fprintf(stderr, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define debug(M, ...)
-#endif /* DEBUG */
+#endif
 
 
 struct aXInfo {
@@ -80,15 +80,15 @@ struct aOpts {
 
 /* authentication modules */
 extern struct aAuth alock_auth_none;
-#ifdef HAVE_HASH
+#if ENABLE_HASH
 extern struct aAuth alock_auth_hash;
-#endif /* HAVE_HASH */
-#ifdef HAVE_PASSWD
+#endif
+#if ENABLE_PASSWD
 extern struct aAuth alock_auth_passwd;
-#endif /* HAVE_PASSWD */
-#ifdef HAVE_PAM
+#endif
+#if ENABLE_PAM
 extern struct aAuth alock_auth_pam;
-#endif /* HAVE_PAM */
+#endif
 
 /* input modules */
 extern struct aInput alock_input_none;
@@ -97,23 +97,23 @@ extern struct aInput alock_input_frame;
 /* background modules */
 extern struct aBackground alock_bg_none;
 extern struct aBackground alock_bg_blank;
-#ifdef HAVE_IMLIB2
+#if ENABLE_IMLIB2
 extern struct aBackground alock_bg_image;
-#endif /* HAVE_IMLIB2 */
-#ifdef HAVE_XRENDER
+#endif
+#if ENABLE_XRENDER
 extern struct aBackground alock_bg_shade;
-#endif /* HAVE_XRENDER */
+#endif
 
 /* cursor modules */
 extern struct aCursor alock_cursor_none;
 extern struct aCursor alock_cursor_glyph;
 extern struct aCursor alock_cursor_theme;
-#ifdef HAVE_XCURSOR
+#if ENABLE_XCURSOR
 extern struct aCursor alock_cursor_xcursor;
-#if (defined(HAVE_XRENDER) && (defined(HAVE_XPM) || (defined(HAVE_IMLIB2))))
+#if (ENABLE_XRENDER && (ENABLE_XPM || ENABLE_IMLIB2))
 extern struct aCursor alock_cursor_image;
-#endif /* HAVE_XRENDER && (HAVE_XPM || HAVE_IMLIB2) */
-#endif /* HAVE_XCURSOR */
+#endif
+#endif
 
 
 unsigned long alock_mtime(void);

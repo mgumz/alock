@@ -1,125 +1,72 @@
 ALOCK
-========
+=====
 
-'alock' locks the X server until the user enters the correct password at the keyboard. If the
-authentication was successful, the X server is unlocked and the user can continue to work. When
-'alock' is started it just waits for the first keypress. This first keypress is to indicate that
-the user now wants to type in the password.
+'alock' is a simple screen lock application, which locks the X server until
+the correct password is provided. If the authentication was successful, the X
+server is unlocked and the user can continue to work. When 'alock' is started
+it just waits for the first keypress. This first keypress is to indicate that
+the user now wants to type in the password. Such a behavior might seem to be
+annoying at the first glance, however this approach is chosen due to security
+reasons.
 
-Note, that 'alock' does not provide fancy animations like 'xlock' and 'xscreensaver' and never
-will. It's just for locking the current X session.
-
-
-SYNOPSIS
---------
-
-	alock [-h] [-bg type:opts] [-cursor type:opts] [-auth type:opts] [-input type:opts]
-
-	-h
-		Print a short help
-
-	-auth type:options
-		Define the type of the authentification, depends strongly on
-		how alock was built:
-		- list - Displays a list of available types
-		- none - No authentication at all
-		- passwd - Tries to authentificate against the users system-password.
-						On systems using 'shadow' alock needs the suid-flag set.
-		- pam - Tries to authentificate against the users system-password
-						using the 'pam-login'-module.
-		- md5 - alock creates a md5-hash from the entered passphrase and compares
-						it with the hash provided
-			* hash=<hash> - use <hash> as reference
-			* file=<filename>  - use content of <filename> as reference
-		- sha1 - alock creates a sha1-hash from the entered passphrase and compares
-						it with the hash provided
-			* hash=<hash> - use <hash> as reference
-			* file=<filename> - use <filename> as reference
-		- sha256 - alock creates a sha256-hash from the entered passphrase and compares
-						it with the hash provided
-			* hash=<hash> - use <hash> as reference
-			* file=<filename> - use <filename> as reference
-		- sha384 - alock creates a sha384-hash from the entered passphrase and compares
-						it with the hash provided
-			* hash=<hash> - use <hash> as reference
-			* file=<filename> - use <filename> as reference
-		- sha512 - alock creates a sha512-hash from the entered passphrase and compares
-						it with the hash provided
-			* hash=<hash> - use <hash> as reference
-			* file=<filename> - use <filename> as reference
-		- wpool - alock creates a whirlpool-hash from the entered passphrase and compares
-						it with the hash provided
-			* hash=<hash> - use <hash> as reference
-			* file=<filename> - use <filename> as reference
-	
-	-input type:options
-		Define the type of the input indicator, which should be used while typing password:
-		- list - Displays a list of available types
-		- none - No input feedback for user
-		- frame - Display frame on the current display
-			* width=<int> - Valid from 1 upwards
-			* color=<color1>|<color2>|<color3> - Use <color> while typing, checking and upon
-							error respectively
-
-	-bg type:options
-		Define the type of alock should handle the background:
-		- list - Displays a list of available types
-		- none - You can see everything like it is
-		- blank - Fill the background with color
-			* color=<color> - Use <color>
-		- shade - Dims content of the screen and recolors it.
-			* shade=<perc> - Valid from 1 to 99
-			* color=<color> - Use <color>
-		- image - Use the image <filename> and puts it as the background
-			* file=<filename>
-			* center
-			* scale
-			* tile
-			* color=<color> - Use <color>
-			* shade=<perc> - Valid from 1 to 99
-
-	-cursor type:options
-		Define the look-a-like of the cursor/mouse pointer:
-		- list - Displays a list of available types
-		- none - No change to the current cursor
-		- theme - Use the given internal cursor
-			* list - Display all possible themes
-			* name=<name>
-			* bg=<color> - Use forground-color
-			* fg=<color> - Use background-color
-		- glyph - Use the given glyph of the "cursor"-font
-			* list - Display all possible glyph-names
-			* name=<name>
-			* bg=<color>
-			* fg=<color>
-		- xcursor - Use the given <filename> in xcursor-format
-			* file=<filename> 
-		- image - Use the given <filename>
-			* file=<filename>
+Note, that 'alock' does not provide any fancy animations like 'xlock' and
+'xscreensaver' and probably never will. It's just for locking the current X
+session.
 
 
-Running program without any arguments is equivalent to:
+Instalation
+-----------
+
+	$ autoreconf --install
+	$ mkdir build && cd build
+	$ ../configure --enable-pam --enable-hash --enable-xrender --enable-imlib2
+	$ make && make install
+
+
+Usage
+-----
+
+	alock [-h] [-auth type:opts] [-bg type:opts] [-cursor type:opts] [-input type:opts]
+
+The locking behavior can be customized with four 'alock' modules:
+authentication module (`-auth`), background module (`-bg`), cursor module
+(`-cursor`) and input module (`-input`). When 'list' value is provided for
+any of them, the list of all available (compiled in) types is shown.
+
+When 'alock' is compiled with all modules, then running it without any
+arguments is equivalent to:
 
 	$ alock -auth "pam" -input "frame:color=green|yellow|red" -bg "blank:color=black" -cursor "none"
 
+List of authentication module types:
 
-AUTHORS
--------
-Originally written by Mathias Gumz (<akira@fluxbox.org>) based upon xtrlock.
+* none - no authentication at all
+* pam - authenticate against the users system-password using the 'pam-login' module
+* passwd - authenticate against the users system-password
+* hash - authenticate using arbitrary hash comparison
 
-MD5 -
-Code taken from OpenBSD, which took it from public domain.
-Original author was Colin Plumb,
+List of background module types:
 
-SHA1 -
-Code based upon public domain code, originally written by
-Steve Reid (<steve@edmweb.com>),
+* none - transparent background
+* blank - fill the background with color
+* shade - dim content of the screen
+* image - use image as a background
 
-SHA2 -
-Code based upon OpenBSD code, originally public domain and
-written by Aaron D. Gifford (<me@aarongifford.com>),
+List of cursor module types:
 
-Whirlpool -
-Based upon public domain, originally written by
-Paulo S. L. M. Barreto (<pbarreto@scopus.com.br>) and
-Vincent Rijmen (<vincent.rijmen@esat.kuleuven.ac.be>).
+* none - no change to the current cursor
+* theme - use internal cursor
+* glyph - use compiled in glyph
+* xcursor - use xcursor file
+* image - use image
+
+List of input module types:
+
+* none - no input feedback for user
+* frame - display frame on the current display
+
+
+Acknowledgment
+--------------
+This program was originally written by Mathias Gumz (<akira@fluxbox.org>)
+based upon xtrlock.

@@ -15,14 +15,18 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <X11/extensions/Xrender.h>
-#ifdef HAVE_IMLIB2
+#if ENABLE_IMLIB2
 #include <Imlib2.h>
-#elif HAVE_XPM
+#elif ENABLE_XPM
 #include <X11/xpm.h>
-#endif /* HAVE_IMLIB2 | HAVE_XPM */
+#endif
 
 #include "alock.h"
 
@@ -67,7 +71,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
         unsigned int h = 0;
         Pixmap cursor_pm = None;
 
-#ifdef HAVE_IMLIB2
+#if ENABLE_IMLIB2
         {
             Imlib_Image img;
             Imlib_Context ctx = imlib_context_new();
@@ -115,7 +119,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
             imlib_context_pop();
             imlib_context_free(ctx);
         }
-#elif HAVE_XPM
+#elif ENABLE_XPM
         {
             XImage *img = NULL;
             XpmReadFileToImage(xinfo->display, file_name, &img, NULL, NULL);
@@ -136,7 +140,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
         }
 #else
 #warning compiling this file without having either imlib2 or xpm is pretty useless since no image can be loaded.
-#endif /* HAVE_XPM | HAVE_IMLIB2 */
+#endif
 
         if (!cursor_pm) {
             fprintf(stderr, "[image]: unable to load cursor from file\n");

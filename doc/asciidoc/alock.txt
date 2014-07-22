@@ -1,0 +1,108 @@
+ALOCK(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+alock - locks the local X display until the correct password is entered
+
+
+SYNOPSIS
+--------
+*alock* [-h] [-auth type:opts] [-bg type:opts] [-cursor type:opts] [-input type:opts]
+
+
+DESCRIPTION
+-----------
+*Alock* is a simple screen lock application, which locks the X server until
+the correct password is provided. If the authentication was successful, the X
+server is unlocked and the user can continue to work. When *alock* is started
+it just waits for the first keypress. This first keypress is to indicate that
+the user now wants to type in the password. Such a behavior might seem to be
+annoying at the first glance, however this approach is chosen due to security
+reasons.
+
+Note, that *alock* does not provide any fancy animations like 'xlock' and
+'xscreensaver' and probably never will. It's just for locking the current X
+session.
+
+
+OPTIONS
+-------
+*-h*::
+    Print a short help
+
+*-auth* 'type:options'::
+    Define the type of the authentication, depends strongly on
+    how alock was built:
+    - list - Displays a list of available types
+    - pam - Tries to authenticate against the users system-password
+            using the 'pam-login'-module.
+    - passwd - Tries to authenticate against the users system-password.
+               On systems using 'shadow' alock needs the suid-flag set.
+		- hash - Authenticates using arbitrary hash comparison.
+        * list - display available hashing algorithms
+        * type=<type> - use <type> hashing algorithm
+        * hash=<hash> - use <hash> as reference
+        * file=<filename> - use content of <filename> as reference
+
+*-bg* 'type:options'::
+    Define the type of how alock should handle the background:
+    - list - Displays a list of available types
+    - none - You can see everything like it is
+    - blank - Fill the background with color
+        * color=<color> - use <color>
+    - shade - Dims content of the screen and recolors it.
+        * color=<color> - use <color>
+        * shade=<percent> - valid from 1 to 99
+    - image - Use the image <filename> and puts it as the background
+        * file=<filename>
+        * center
+        * scale
+        * tile
+        * color=<color> - use <color>
+        * shade=<percent> - valid from 1 to 99
+
+*-cursor* 'type:options'::
+    Define the look-a-like of the cursor/mouse pointer:
+    - list - Displays a list of available types
+    - theme - Use the given internal cursor
+        * list - display all possible themes
+        * name=<name>
+        * bg=<color> - use foreground-color
+        * fg=<color> - use background-color
+    - glyph - Use the given glyph of the "cursor"-font
+        * list - Display all possible glyph-names
+        * name=<name>
+        * bg=<color>
+        * fg=<color>
+    - xcursor - Use the given <filename> in xcursor-format
+        * file=<filename> 
+    - image - Use the given <filename>
+        * file=<filename>
+    - none - No change to the current cursor
+
+*-input* 'type:options'::
+    Define the type of the input indicator, which should be used while typing
+		password:
+    - list - Displays a list of available types
+    - none - No input feedback for user
+    - frame - Display frame on the current display
+        * width=<int> - valid from 1 upwards
+        * color=<color1>|<color2>|<color3> - use <color> while typing, checking
+				and upon error respectively
+
+
+AUTHOR
+------
+Originally written by Mathias Gumz <akira at fluxbox.org>, based upon xtrlock.
+Starting with alock version 2.0, code is maintained by Arkadiusz Bokowy
+<arkadiusz.bokowy at gmail.com>.
+
+
+COPYING
+-------
+Copyright \(C) 2005 - 2009 Mathias Gumz, 2014 Arkadiusz Bokowy. Free use of this
+software is granted under the terms of the MIT. See LICENSE provided in the
+distribution.

@@ -11,6 +11,10 @@
  *
  */
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #define _XOPEN_SOURCE
 
 #include <sys/types.h>
@@ -22,11 +26,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __linux
-#ifdef HAVE_SHADOW
+#if __linux
+#if HAVE_SHADOW_H
 #include <shadow.h>
-#endif /* HAVE_SHADOW */
-#endif /* __linux */
+#endif
+#endif
 
 #include "alock.h"
 
@@ -43,8 +47,8 @@ static int alock_auth_passwd_init(const char *args) {
         return 0;
     }
 
-#ifdef __linux
-#ifdef HAVE_SHADOW
+#if __linux
+#if HAVE_SHADOW_H
     {
         struct spwd *sp = NULL;
 
