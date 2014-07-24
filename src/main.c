@@ -66,7 +66,6 @@ static struct aBackground *alock_backgrounds[] = {
 
 static struct aCursor *alock_cursors[] = {
     &alock_cursor_none,
-    &alock_cursor_theme,
     &alock_cursor_glyph,
 #if ENABLE_XCURSOR
     &alock_cursor_xcursor,

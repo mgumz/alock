@@ -55,7 +55,6 @@ List of background module types:
 List of cursor module types:
 
 * none - no change to the current cursor
-* theme - use internal cursor
 * glyph - use compiled in glyph
 * xcursor - use xcursor file
 * image - use image

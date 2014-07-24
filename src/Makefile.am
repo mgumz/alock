@@ -14,8 +14,7 @@ alock_SOURCES = \
 	bg_none.c \
 	bg_blank.c \
 	cursor_none.c \
-	cursor_glyph.c \
-	cursor_theme.c
+	cursor_glyph.c
 
 alock_CFLAGS = \
 	@X11_CFLAGS@ \
