@@ -27,9 +27,6 @@ PKG_CHECK_MODULES(
 )
 
 
-# check support for the X logo source
-AC_CHECK_HEADERS([X11/bitmaps/xlogo16])
-
 # check support for the Xshape extension
 AC_CHECK_HEADERS([X11/extensions/shape.h])
 AC_CHECK_LIB([Xext], [XShapeQueryVersion])

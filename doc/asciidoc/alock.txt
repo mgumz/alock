@@ -37,6 +37,7 @@ OPTIONS
     Define the type of the authentication, depends strongly on
     how alock was built:
     - list - Displays a list of available types
+    - none - No authentication at all
     - pam - Tries to authenticate against the users system-password
             using the 'pam-login'-module.
     - passwd - Tries to authenticate against the users system-password.
@@ -67,11 +68,7 @@ OPTIONS
 *-cursor* 'type:options'::
     Define the look-a-like of the cursor/mouse pointer:
     - list - Displays a list of available types
-    - theme - Use the given internal cursor
-        * list - display all possible themes
-        * name=<name>
-        * bg=<color> - use foreground-color
-        * fg=<color> - use background-color
+    - none - No change to the current cursor
     - glyph - Use the given glyph of the "cursor"-font
         * list - Display all possible glyph-names
         * name=<name>
@@ -81,7 +78,6 @@ OPTIONS
         * file=<filename> 
     - image - Use the given <filename>
         * file=<filename>
-    - none - No change to the current cursor
 
 *-input* 'type:options'::
     Define the type of the input indicator, which should be used while typing

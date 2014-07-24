@@ -107,7 +107,6 @@ extern struct aBackground alock_bg_shade;
 /* cursor modules */
 extern struct aCursor alock_cursor_none;
 extern struct aCursor alock_cursor_glyph;
-extern struct aCursor alock_cursor_theme;
 #if ENABLE_XCURSOR
 extern struct aCursor alock_cursor_xcursor;
 #if (ENABLE_XRENDER && (ENABLE_XPM || ENABLE_IMLIB2))
