@@ -63,9 +63,3 @@ List of input module types:
 
 * none - no input feedback for user
 * frame - display frame on the current display
-
-
-Acknowledgment
---------------
-This program was originally written by Mathias Gumz (<akira@fluxbox.org>)
-based upon xtrlock.
