@@ -26,8 +26,7 @@ static int alock_bg_blank_init(const char *args, struct aXInfo *xinfo) {
     if (!xinfo)
         return 0;
 
-    XSetWindowAttributes xswa;
-    XColor color;
+    Display *dpy = xinfo->display;
     char *color_name = NULL;
     int scr;
 
@@ -49,13 +48,16 @@ static int alock_bg_blank_init(const char *args, struct aXInfo *xinfo) {
 
     for (scr = 0; scr < xinfo->screens; scr++) {
 
-        alock_alloc_color(xinfo, scr, color_name, "black", &color);
+        XSetWindowAttributes xswa;
+        XColor color;
+
+        alock_alloc_color(dpy, xinfo->colormap[scr], color_name, "black", &color);
 
         xswa.override_redirect = True;
         xswa.colormap = xinfo->colormap[scr];
         xswa.background_pixel = color.pixel;
 
-        window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
+        window[scr] = XCreateWindow(dpy, xinfo->root[scr],
                 0, 0, xinfo->root_width[scr], xinfo->root_height[scr], 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect | CWColormap | CWBackPixel,
@@ -66,7 +68,7 @@ static int alock_bg_blank_init(const char *args, struct aXInfo *xinfo) {
 
     }
 
-    free(color_name); 
+    free(color_name);
     return 1;
 }
 

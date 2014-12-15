@@ -39,6 +39,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
     if (!xinfo)
         return 0;
 
+    Display *dpy = xinfo->display;
     char *file_name = NULL;
     int status = 1;
 
@@ -61,7 +62,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
         goto return_error;
     }
 
-    if (!alock_check_xrender(xinfo)) {
+    if (!alock_check_xrender(dpy)) {
         fprintf(stderr, "[image]: no running xrender extension found\n");
         goto return_error;
     }
@@ -77,8 +78,8 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
             Imlib_Context ctx = imlib_context_new();
 
             imlib_context_push(ctx);
-            imlib_context_set_display(xinfo->display);
-            imlib_context_set_visual(DefaultVisual(xinfo->display, DefaultScreen(xinfo->display)));
+            imlib_context_set_display(dpy);
+            imlib_context_set_visual(DefaultVisual(dpy, DefaultScreen(dpy)));
             imlib_context_set_colormap(xinfo->colormap[0]);
 
             img = imlib_load_image_without_cache(file_name);
@@ -109,10 +110,10 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
 
                     XInitImage(&ximage);
 
-                    cursor_pm = XCreatePixmap(xinfo->display, xinfo->root[0], w, h, 32);
-                    gc = XCreateGC(xinfo->display, cursor_pm, 0, 0);
-                    XPutImage(xinfo->display, cursor_pm, gc, &ximage, 0, 0, 0, 0, w, h);
-                    XFreeGC(xinfo->display, gc);
+                    cursor_pm = XCreatePixmap(dpy, xinfo->root[0], w, h, 32);
+                    gc = XCreateGC(dpy, cursor_pm, 0, 0);
+                    XPutImage(dpy, cursor_pm, gc, &ximage, 0, 0, 0, 0, w, h);
+                    XFreeGC(dpy, gc);
                 }
                 imlib_free_image_and_decache();
             }
@@ -122,19 +123,19 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
 #elif ENABLE_XPM
         {
             XImage *img = NULL;
-            XpmReadFileToImage(xinfo->display, file_name, &img, NULL, NULL);
+            XpmReadFileToImage(dpy, file_name, &img, NULL, NULL);
             if (img) {
                 GC gc = None;
                 w = img->width;
                 h = img->height;
 
-                cursor_pm = XCreatePixmap(xinfo->display,
+                cursor_pm = XCreatePixmap(dpy,
                                           xinfo->root[0],
                                           w, h,
                                           img->depth);
-                gc = XCreateGC(xinfo->display, cursor_pm, 0, NULL);
-                XPutImage(xinfo->display, cursor_pm, gc, img, 0, 0, 0, 0, w, h);
-                XFreeGC(xinfo->display, gc);
+                gc = XCreateGC(dpy, cursor_pm, 0, NULL);
+                XPutImage(dpy, cursor_pm, gc, img, 0, 0, 0, 0, w, h);
+                XFreeGC(dpy, gc);
                 XDestroyImage(img);
             }
         }
@@ -150,18 +151,18 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
         {
             /* TODO: maybe replace this by an older xrenderapi-call, since
              * XRenderFindStandardFormat was introduced in xyz, dunno atm */
-            XRenderPictFormat *format = XRenderFindStandardFormat(xinfo->display, PictStandardARGB32);
+            XRenderPictFormat *format = XRenderFindStandardFormat(dpy, PictStandardARGB32);
             if (format) {
-                Picture cursor_pic = XRenderCreatePicture(xinfo->display, cursor_pm, format, 0, 0);
-                cursor = XRenderCreateCursor(xinfo->display, cursor_pic, w / 2, h / 2);
-                XRenderFreePicture(xinfo->display, cursor_pic);
+                Picture cursor_pic = XRenderCreatePicture(dpy, cursor_pm, format, 0, 0);
+                cursor = XRenderCreateCursor(dpy, cursor_pic, w / 2, h / 2);
+                XRenderFreePicture(dpy, cursor_pic);
             }
             else {
                 fprintf(stderr, "[image]: error while finding a valid XRenderPictFormat\n");
                 goto return_error;
             }
 
-            XFreePixmap(xinfo->display, cursor_pm);
+            XFreePixmap(dpy, cursor_pm);
         }
     }
 
@@ -177,7 +178,7 @@ static int alock_cursor_image_init(const char *args, struct aXInfo *xinfo) {
 return_error:
     status = 0;
     if (cursor)
-        XFreeCursor(xinfo->display, cursor);
+        XFreeCursor(dpy, cursor);
     cursor = 0;
 
 return_success:

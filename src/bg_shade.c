@@ -27,16 +27,10 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
     if (!xinfo)
         return 0;
 
-    XColor color;
+    Display *dpy = xinfo->display;
     char *color_name = NULL;
     unsigned int shade = 80;
     int status = 1;
-
-    Pixmap src_pm = None;
-    Pixmap dst_pm = None;
-
-    int width = 0;
-    int height = 0;
 
     if (args && strstr(args, "shade:") == args) {
         char *arguments = strdup(&args[6]);
@@ -60,23 +54,28 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
         free(arguments);
     }
 
-    if (!alock_check_xrender(xinfo))
+    if (!alock_check_xrender(dpy))
         goto return_error;
 
     window = (Window*)malloc(sizeof(Window) * xinfo->screens);
 
     {
+        XColor color;
+        Pixmap src_pm = None;
+        Pixmap dst_pm = None;
+        int width = 0;
+        int height = 0;
         int scr;
+
         for (scr = 0; scr < xinfo->screens; scr++) {
 
             /* get a color from color_name */
-            alock_alloc_color(xinfo, scr, color_name, "black", &color);
+            alock_alloc_color(dpy, xinfo->colormap[scr], color_name, "black", &color);
 
             width = xinfo->root_width[scr];
             height = xinfo->root_height[scr];
 
             { /* xrender stuff */
-                Display *dpy = xinfo->display;
                 Window root = xinfo->root[scr];
                 int depth = DefaultDepth(dpy, scr);
                 GC gc = DefaultGC(dpy, scr);
@@ -100,7 +99,8 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
                     XFreeGC(dpy, tintgc);
                 }
 
-                alock_shade_pixmap(xinfo, scr, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
+                Visual *vis = DefaultVisual(dpy, scr);
+                alock_shade_pixmap(dpy, vis, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
             }
 
             { /* create final window */
@@ -110,13 +110,13 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
                 xswa.colormap = xinfo->colormap[scr];
                 xswa.background_pixmap = dst_pm;
 
-                window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
+                window[scr] = XCreateWindow(dpy, xinfo->root[scr],
                         0, 0, width, height, 0,
                         CopyFromParent, InputOutput, CopyFromParent,
                         CWOverrideRedirect | CWColormap | CWBackPixmap,
                         &xswa);
-                XFreePixmap(xinfo->display, src_pm);
-                XFreePixmap(xinfo->display, dst_pm);
+                XFreePixmap(dpy, src_pm);
+                XFreePixmap(dpy, dst_pm);
             }
 
             if (window[scr])
