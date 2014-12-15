@@ -115,16 +115,17 @@ extern struct aCursor alock_cursor_image;
 #endif
 
 
+/* helper functions defined in utils.c */
 unsigned long alock_mtime(void);
 int alock_native_byte_order(void);
-int alock_alloc_color(const struct aXInfo *xinfo,
-        int scr,
+int alock_alloc_color(Display *display,
+        Colormap colormap,
         const char *color_name,
         const char *fallback_name,
         XColor *result);
-int alock_check_xrender(const struct aXInfo *xinfo);
-int alock_shade_pixmap(const struct aXInfo *xinfo,
-        int scr,
+int alock_check_xrender(Display *display);
+int alock_shade_pixmap(Display *display,
+        Visual *visual,
         const Pixmap src_pm,
         Pixmap dst_pm,
         unsigned char shade,

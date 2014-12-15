@@ -48,6 +48,7 @@ static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
         return 0;
 
     Display *dpy = xinfo->display;
+    Colormap colormap = xinfo->colormap[0];
     XSetWindowAttributes xswa;
     char *color_name[3] = { NULL };
     int status = 1;
@@ -90,9 +91,9 @@ static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
     frame->gc = XCreateGC(dpy, frame->window, 0, 0);
 
     debug("selected colors: `%s`, `%s`, `%s`", color_name[0], color_name[1], color_name[2]);
-    alock_alloc_color(xinfo, 0, color_name[0], "green", &frame->color_input);
-    alock_alloc_color(xinfo, 0, color_name[1], "yellow", &frame->color_check);
-    alock_alloc_color(xinfo, 0, color_name[2], "red", &frame->color_error);
+    alock_alloc_color(dpy, colormap, color_name[0], "green", &frame->color_input);
+    alock_alloc_color(dpy, colormap, color_name[1], "yellow", &frame->color_check);
+    alock_alloc_color(dpy, colormap, color_name[2], "red", &frame->color_error);
 
 #if HAVE_X11_EXTENSIONS_SHAPE_H
     XRectangle rect = {
