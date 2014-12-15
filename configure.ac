@@ -162,3 +162,13 @@ AM_COND_IF(
 
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile])
 AC_OUTPUT
+
+
+# warn user when the debugging mode is enabled
+AM_COND_IF([ENABLE_DEBUG], [
+	AC_MSG_WARN([              *** debug mode enabled ***])
+	AC_MSG_WARN([In the debug mode for every pressed key a corresponding])
+	AC_MSG_WARN([character is printed to the stderr. This behavior might])
+	AC_MSG_WARN([compromise your password!])
+	AC_MSG_WARN([Do NOT treat this configuration as a release one!])
+])
