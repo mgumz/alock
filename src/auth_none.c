@@ -15,17 +15,14 @@ static int alock_auth_none_init(const char *args) {
     return 1;
 }
 
-static int alock_auth_none_deinit() {
-    return 1;
-}
-
 static int alock_auth_none_auth(const char *pass) {
     return 1;
 }
 
+
 struct aAuth alock_auth_none = {
     "none",
     alock_auth_none_init,
-    alock_auth_none_deinit,
+    module_dummy_deinit,
     alock_auth_none_auth,
 };

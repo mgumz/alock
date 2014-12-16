@@ -90,10 +90,6 @@ extern struct aAuth alock_auth_passwd;
 extern struct aAuth alock_auth_pam;
 #endif
 
-/* input modules */
-extern struct aInput alock_input_none;
-extern struct aInput alock_input_frame;
-
 /* background modules */
 extern struct aBackground alock_bg_none;
 extern struct aBackground alock_bg_blank;
@@ -113,6 +109,15 @@ extern struct aCursor alock_cursor_xcursor;
 extern struct aCursor alock_cursor_image;
 #endif
 #endif
+
+/* input modules */
+extern struct aInput alock_input_none;
+extern struct aInput alock_input_frame;
+
+
+/* dummy functions for module interface */
+int module_dummy_init(const char *args, struct aXInfo *xinfo);
+int module_dummy_deinit(struct aXInfo *xinfo);
 
 
 /* helper functions defined in utils.c */

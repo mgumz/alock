@@ -14,17 +14,8 @@
 #include "alock.h"
 
 
-static int alock_cursor_none_init(const char *args, struct aXInfo *xinfo) {
-    return 1;
-}
-
-static int alock_cursor_none_deinit(struct aXInfo *xinfo) {
-    return 1;
-}
-
-
 struct aCursor alock_cursor_none = {
     "none",
-    alock_cursor_none_init,
-    alock_cursor_none_deinit,
+    module_dummy_init,
+    module_dummy_deinit,
 };
