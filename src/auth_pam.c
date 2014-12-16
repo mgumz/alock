@@ -12,13 +12,13 @@
  *
  */
 
-#include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <errno.h>
 #include <pwd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <security/pam_appl.h>
 
 #include "alock.h"
@@ -74,12 +74,6 @@ static int alock_auth_pam_init(const char *args) {
     return 1;
 }
 
-static int alock_auth_pam_deinit() {
-
-    password = NULL;
-    return 0;
-}
-
 static int alock_auth_pam_auth(const char *pass) {
 
     if (!username)
@@ -103,9 +97,10 @@ static int alock_auth_pam_auth(const char *pass) {
     return retval == PAM_SUCCESS;
 }
 
+
 struct aAuth alock_auth_pam = {
     "pam",
     alock_auth_pam_init,
-    alock_auth_pam_deinit,
+    module_dummy_deinit,
     alock_auth_pam_auth,
 };

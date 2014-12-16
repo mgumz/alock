@@ -77,6 +77,7 @@ int alock_check_xrender(Display *display) {
     }
     return have_xrender;
 #else
+    (void)display;
     fprintf(stderr, "alock: i wasnt compiled to support xrender\n");
     return 0;
 #endif /* ENABLE_XRENDER */
@@ -146,6 +147,23 @@ int alock_shade_pixmap(Display *display,
     }
     return 1;
 #else
+    (void)display;
+    (void)visual;
     return 0;
 #endif /* ENABLE_XRENDER */
+}
+
+/* Dummy function for module interface. */
+int module_dummy_init(const char *args, struct aXInfo *xinfo) {
+    (void)args;
+    (void)xinfo;
+    debug("dummy init: %s", args);
+    return 1;
+}
+
+/* Dummy function for module interface. */
+int module_dummy_deinit(struct aXInfo *xinfo) {
+    (void)xinfo;
+    debug("dummy deinit");
+    return 1;
 }

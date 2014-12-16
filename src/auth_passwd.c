@@ -17,19 +17,17 @@
 
 #define _XOPEN_SOURCE
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <pwd.h>
-#include <grp.h>
-#include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <grp.h>
+#include <limits.h>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#if __linux
-#if HAVE_SHADOW_H
+#if __linux && HAVE_SHADOW_H
 #include <shadow.h>
-#endif
 #endif
 
 #include "alock.h"
@@ -47,8 +45,7 @@ static int alock_auth_passwd_init(const char *args) {
         return 0;
     }
 
-#if __linux
-#if HAVE_SHADOW_H
+#if __linux && HAVE_SHADOW_H
     {
         struct spwd *sp = NULL;
 
@@ -57,7 +54,6 @@ static int alock_auth_passwd_init(const char *args) {
             pwd_entry->pw_passwd = sp->sp_pwdp;
 
     }
-#endif
 #endif
 
     if (strlen(pwd_entry->pw_passwd) < 13) {
@@ -69,36 +65,20 @@ static int alock_auth_passwd_init(const char *args) {
     return 1;
 }
 
-static int alock_auth_passwd_deinit() {
-    return 1;
-}
-
 static int alock_auth_passwd_auth(const char *pass) {
-#if 0
-    char key[3];
-    char *encr;
 
-    if (!pass || !pwd_entry)
-        return 0;
-
-    key[0] = *(pwd_entry->pw_passwd);
-    key[1] = (pwd_entry->pw_passwd)[1];
-    key[2] = 0;
-    encr = crypt(pass, key);
-    return !strcmp(encr, pw->pw_passwd);
-#else
     if (pass == NULL || pwd_entry == NULL)
         return 0;
 
     /* simpler, and should work with crypt() algorithms using longer
        salt strings (like the md5-based one on freebsd).  --marekm */
     return !strcmp(crypt(pass, pwd_entry->pw_passwd), pwd_entry->pw_passwd);
-#endif /* 0 */
 }
+
 
 struct aAuth alock_auth_passwd = {
     "passwd",
     alock_auth_passwd_init,
-    alock_auth_passwd_deinit,
+    module_dummy_deinit,
     alock_auth_passwd_auth,
 };
