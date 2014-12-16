@@ -60,23 +60,21 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
     window = (Window*)malloc(sizeof(Window) * xinfo->screens);
 
     {
-        XColor color;
         Pixmap src_pm = None;
         Pixmap dst_pm = None;
-        int width = 0;
-        int height = 0;
+        XColor color;
         int scr;
 
         for (scr = 0; scr < xinfo->screens; scr++) {
 
-            /* get a color from color_name */
-            alock_alloc_color(dpy, xinfo->colormap[scr], color_name, "black", &color);
+            Window root = xinfo->root[scr];
+            Colormap colormap = xinfo->colormap[scr];
+            int width = xinfo->root_width[scr];
+            int height = xinfo->root_height[scr];
 
-            width = xinfo->root_width[scr];
-            height = xinfo->root_height[scr];
+            alock_alloc_color(dpy, colormap, color_name, "black", &color);
 
             { /* xrender stuff */
-                Window root = xinfo->root[scr];
                 int depth = DefaultDepth(dpy, scr);
                 GC gc = DefaultGC(dpy, scr);
 
@@ -107,10 +105,10 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
                 XSetWindowAttributes xswa;
 
                 xswa.override_redirect = True;
-                xswa.colormap = xinfo->colormap[scr];
+                xswa.colormap = colormap;
                 xswa.background_pixmap = dst_pm;
 
-                window[scr] = XCreateWindow(dpy, xinfo->root[scr],
+                window[scr] = XCreateWindow(dpy, root,
                         0, 0, width, height, 0,
                         CopyFromParent, InputOutput, CopyFromParent,
                         CWOverrideRedirect | CWColormap | CWBackPixmap,

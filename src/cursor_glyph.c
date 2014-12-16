@@ -166,18 +166,18 @@ static int alock_cursor_glyph_init(const char *args, struct aXInfo *xinfo) {
         int scr;
         for (scr = 0; scr < xinfo->screens; scr++) {
 
-            alock_alloc_color(dpy, xinfo->colormap[scr], color_bg_name, "black", &color_bg[scr]);
-            alock_alloc_color(dpy, xinfo->colormap[scr], color_fg_name, "white", &color_fg[scr]);
+            Colormap colormap = xinfo->colormap[scr];
+            alock_alloc_color(dpy, colormap, color_bg_name, "black", &color_bg[scr]);
+            alock_alloc_color(dpy, colormap, color_fg_name, "white", &color_fg[scr]);
 
             /* create cursor from X11/cursorfont.h */
-            if ((cursor[scr] = XCreateFontCursor(dpy, shape))) {
-                XRecolorCursor(dpy, cursor[scr], &color_fg[scr], &color_bg[scr]);
-                xinfo->cursor[scr] = cursor[scr];
-            }
-            else {
+            if (!(cursor[scr] = XCreateFontCursor(dpy, shape))) {
                 fprintf(stderr, "[glyph]: unable to create fontcursor\n");
                 goto return_error;
             }
+
+            XRecolorCursor(dpy, cursor[scr], &color_fg[scr], &color_bg[scr]);
+            xinfo->cursor[scr] = cursor[scr];
         }
 
     }

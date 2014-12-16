@@ -84,7 +84,7 @@ static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
     }
 
     xswa.override_redirect = True;
-    xswa.colormap = xinfo->colormap[0];
+    xswa.colormap = colormap;
     frame->window = XCreateWindow(dpy, xinfo->root[0],
             0, 0, xinfo->root_width[0], xinfo->root_height[0], 0,
             CopyFromParent, InputOutput, CopyFromParent, CWOverrideRedirect | CWColormap, &xswa);
