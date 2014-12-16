@@ -19,10 +19,11 @@
 #include "alock.h"
 
 
-enum {
-    ALOCK_SCALE = 1,
-    ALOCK_CENTER = 2,
-    ALOCK_TILED = 4
+enum aImageOption {
+    AIMAGE_OPTION_NONE = 0,
+    AIMAGE_OPTION_SCALE,
+    AIMAGE_OPTION_CENTER,
+    AIMAGE_OPTION_TILED,
 };
 
 static Window *window = NULL;
@@ -35,7 +36,7 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
         return 0;
 
     Display *dpy = xinfo->display;
-    long options = ALOCK_SCALE;
+    enum aImageOption option = AIMAGE_OPTION_SCALE;
     char *file_name = NULL;
     char *color_name = NULL;
     unsigned int shade = 0;
@@ -52,13 +53,13 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                 file_name = strdup(&arg[5]);
             }
             else if (strcmp(arg, "scale") == 0) {
-                options = ALOCK_SCALE;
+                option = AIMAGE_OPTION_SCALE;
             }
             else if (strcmp(arg, "center") == 0) {
-                options = ALOCK_CENTER;
+                option = AIMAGE_OPTION_CENTER;
             }
             else if (strcmp(arg, "tiled") == 0) {
-                options = ALOCK_TILED;
+                option = AIMAGE_OPTION_TILED;
             }
             else if (strstr(arg, "color=") == arg) {
                 free(color_name);
@@ -94,9 +95,11 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
 
         for (scr = 0; scr < xinfo->screens; scr++) {
 
+            Window root = xinfo->root[scr];
+            Colormap colormap = xinfo->colormap[scr];
             const int rwidth = xinfo->root_width[scr];
             const int rheight = xinfo->root_height[scr];
-            alock_alloc_color(dpy, xinfo->colormap[scr], color_name, "black", &color);
+            alock_alloc_color(dpy, colormap, color_name, "black", &color);
 
             { /* get image and set it as the background pixmap for the window */
                 Imlib_Context context = NULL;
@@ -107,7 +110,7 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                 imlib_context_set_display(dpy);
                 imlib_context_set_visual(DefaultVisual(dpy,
                                          DefaultScreen(dpy)));
-                imlib_context_set_colormap(xinfo->colormap[scr]);
+                imlib_context_set_colormap(colormap);
 
                 image = imlib_load_image_without_cache(file_name);
                 if (image) {
@@ -115,7 +118,7 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                     int w;
                     int h;
 
-                    pixmap[scr] = XCreatePixmap(dpy, xinfo->root[scr],
+                    pixmap[scr] = XCreatePixmap(dpy, root,
                                        rwidth, rheight,
                                        DefaultDepth(dpy, scr));
 
@@ -125,13 +128,13 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                     w = imlib_image_get_width();
                     h = imlib_image_get_height();
 
-                    if (shade || options & ALOCK_CENTER) {
+                    if (shade || option == AIMAGE_OPTION_CENTER) {
 
                         GC gc;
                         XGCValues gcval;
 
                         gcval.foreground = color.pixel;
-                        gc = XCreateGC(dpy, xinfo->root[scr], GCForeground, &gcval);
+                        gc = XCreateGC(dpy, root, GCForeground, &gcval);
                         XFillRectangle(dpy, pixmap[scr], gc, 0, 0, rwidth, rheight);
                         XFreeGC(dpy, gc);
                     }
@@ -140,12 +143,12 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                         GC gc;
                         XGCValues gcval;
 
-                        Pixmap tmp_pixmap = XCreatePixmap(dpy, xinfo->root[scr], w, h,
+                        Pixmap tmp_pixmap = XCreatePixmap(dpy, root, w, h,
                                                           DefaultDepth(dpy, scr));
-                        Pixmap shaded_pixmap = XCreatePixmap(dpy, xinfo->root[scr], w, h,
+                        Pixmap shaded_pixmap = XCreatePixmap(dpy, root, w, h,
                                                           DefaultDepth(dpy, scr));
                         gcval.foreground = color.pixel;
-                        gc = XCreateGC(dpy, xinfo->root[scr], GCForeground, &gcval);
+                        gc = XCreateGC(dpy, root, GCForeground, &gcval);
                         XFillRectangle(dpy, shaded_pixmap, gc, 0, 0, w, h);
 
                         imlib_context_set_drawable(tmp_pixmap);
@@ -166,15 +169,15 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                         imlib_context_set_image(image);
                     }
 
-                    if (options & ALOCK_CENTER) {
+                    if (option == AIMAGE_OPTION_CENTER) {
                         imlib_render_image_on_drawable((rwidth - w)/2, (rheight - h)/2);
                     }
-                    else if (options & ALOCK_TILED) {
+                    else if (option == AIMAGE_OPTION_TILED) {
                         Pixmap tile;
                         GC gc;
                         XGCValues gcval;
 
-                        tile = XCreatePixmap(dpy, xinfo->root[scr],
+                        tile = XCreatePixmap(dpy, root,
                                              w, h, DefaultDepth(dpy, scr));
 
                         imlib_render_image_on_drawable(0, 0);
@@ -186,7 +189,7 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
 
                         XFreeGC(dpy, gc);
                         XFreePixmap(dpy, tile);
-                    } else {/* fallback is ALOCK_SCALE */
+                    } else { /* fallback is AIMAGE_OPTION_SCALE */
                         imlib_render_image_on_drawable_at_size(0, 0, rwidth, rheight);
                     }
                     imlib_free_image_and_decache();
@@ -202,10 +205,10 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
             }
 
             xswa.override_redirect = True;
-            xswa.colormap = xinfo->colormap[scr];
+            xswa.colormap = colormap;
             xswa.background_pixmap = pixmap[scr];
 
-            window[scr] = XCreateWindow(dpy, xinfo->root[scr],
+            window[scr] = XCreateWindow(dpy, root,
                     0, 0, rwidth, rheight, 0,
                     CopyFromParent, InputOutput, CopyFromParent,
                     CWOverrideRedirect | CWColormap | CWBackPixmap,
