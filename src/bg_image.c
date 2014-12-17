@@ -26,80 +26,86 @@ enum aImageOption {
     AIMAGE_OPTION_TILED,
 };
 
-static Window *window = NULL;
-static Pixmap *pixmap = NULL;
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    Pixmap *pixmaps;
+    Window *windows;
+    char *colorname;
+    char *filename;
+    unsigned int shade;
+    enum aImageOption option;
+} data = { 0 };
 
 
-static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
+static void module_loadargs(const char *args) {
 
-    if (!xinfo)
-        return 0;
+    if (!args || strstr(args, "image:") != args)
+        return;
 
-    Display *dpy = xinfo->display;
-    enum aImageOption option = AIMAGE_OPTION_SCALE;
-    char *file_name = NULL;
-    char *color_name = NULL;
-    unsigned int shade = 0;
-    int status = 1;
+    char *arguments = strdup(&args[6]);
+    char *arg;
+    char *tmp;
 
-    if (args && strstr(args, "image:") == args) {
-        char *arguments = strdup(&args[6]);
-        char *arg;
-        char *tmp;
-        for (tmp = arguments; tmp; ) {
-            arg = strsep(&tmp, ",");
-            if (strstr(arg, "file=") == arg) {
-                free(file_name);
-                file_name = strdup(&arg[5]);
-            }
-            else if (strcmp(arg, "scale") == 0) {
-                option = AIMAGE_OPTION_SCALE;
-            }
-            else if (strcmp(arg, "center") == 0) {
-                option = AIMAGE_OPTION_CENTER;
-            }
-            else if (strcmp(arg, "tiled") == 0) {
-                option = AIMAGE_OPTION_TILED;
-            }
-            else if (strstr(arg, "color=") == arg) {
-                free(color_name);
-                color_name = strdup(&arg[6]);
-            }
-            else if (strstr(arg, "shade=") == arg) {
-                shade = strtol(&arg[6], NULL, 0);
-                if (shade > 99) {
-                    fprintf(stderr, "[image]: shade not in range [0, 99]\n");
-                    free(arguments);
-                    goto return_error;
-                }
-            }
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strstr(arg, "file=") == arg) {
+            free(data.filename);
+            data.filename = strdup(&arg[5]);
         }
-        free(arguments);
+        else if (strcmp(arg, "scale") == 0) {
+            data.option = AIMAGE_OPTION_SCALE;
+        }
+        else if (strcmp(arg, "center") == 0) {
+            data.option = AIMAGE_OPTION_CENTER;
+        }
+        else if (strcmp(arg, "tiled") == 0) {
+            data.option = AIMAGE_OPTION_TILED;
+        }
+        else if (strstr(arg, "color=") == arg) {
+            free(data.colorname);
+            data.colorname = strdup(&arg[6]);
+        }
+        else if (strstr(arg, "shade=") == arg) {
+            data.shade = strtol(&arg[6], NULL, 0);
+            if (data.shade > 99)
+                fprintf(stderr, "[shade]: shade not in range [0, 99]\n");
+        }
     }
 
-    if (!file_name) {
+    free(arguments);
+}
+
+
+static int module_init(struct aDisplayInfo *dinfo) {
+
+    if (!dinfo)
+        return -1;
+
+    if (!data.filename) {
         fprintf(stderr, "[image]: file name not specified\n");
-        goto return_error;
+        return -1;
     }
+
+    Display *dpy = dinfo->display;
 
     if (!alock_check_xrender(dpy))
-        shade = 0;
+        data.shade = 0;
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
-    pixmap = (Pixmap*)malloc(sizeof(Pixmap) * xinfo->screens);
+    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
+    data.pixmaps = (Pixmap *)malloc(sizeof(Pixmap) * dinfo->screen_nb);
 
     {
         XSetWindowAttributes xswa;
         XColor color;
         int scr;
 
-        for (scr = 0; scr < xinfo->screens; scr++) {
+        for (scr = 0; scr < dinfo->screen_nb; scr++) {
 
-            Window root = xinfo->root[scr];
-            Colormap colormap = xinfo->colormap[scr];
-            const int rwidth = xinfo->root_width[scr];
-            const int rheight = xinfo->root_height[scr];
-            alock_alloc_color(dpy, colormap, color_name, "black", &color);
+            Window root = dinfo->screens[scr].root;
+            Colormap colormap = dinfo->screens[scr].colormap;
+            const int rwidth = dinfo->screens[scr].width;
+            const int rheight = dinfo->screens[scr].height;
+            alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
 
             { /* get image and set it as the background pixmap for the window */
                 Imlib_Context context = NULL;
@@ -112,34 +118,33 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                                          DefaultScreen(dpy)));
                 imlib_context_set_colormap(colormap);
 
-                image = imlib_load_image_without_cache(file_name);
+                image = imlib_load_image_without_cache(data.filename);
                 if (image) {
 
                     int w;
                     int h;
 
-                    pixmap[scr] = XCreatePixmap(dpy, root,
+                    data.pixmaps[scr] = XCreatePixmap(dpy, root,
                                        rwidth, rheight,
                                        DefaultDepth(dpy, scr));
 
-                    imlib_context_set_drawable(pixmap[scr]);
+                    imlib_context_set_drawable(data.pixmaps[scr]);
                     imlib_context_set_image(image);
 
                     w = imlib_image_get_width();
                     h = imlib_image_get_height();
 
-                    if (shade || option == AIMAGE_OPTION_CENTER) {
-
+                    if (data.shade || data.option == AIMAGE_OPTION_CENTER) {
                         GC gc;
                         XGCValues gcval;
 
                         gcval.foreground = color.pixel;
                         gc = XCreateGC(dpy, root, GCForeground, &gcval);
-                        XFillRectangle(dpy, pixmap[scr], gc, 0, 0, rwidth, rheight);
+                        XFillRectangle(dpy, data.pixmaps[scr], gc, 0, 0, rwidth, rheight);
                         XFreeGC(dpy, gc);
                     }
 
-                    if (shade) {
+                    if (data.shade) {
                         GC gc;
                         XGCValues gcval;
 
@@ -155,7 +160,7 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                         imlib_render_image_on_drawable(0, 0);
 
                         Visual *vis = DefaultVisual(dpy, scr);
-                        alock_shade_pixmap(dpy, vis, tmp_pixmap, shaded_pixmap, shade, 0, 0, 0, 0, w, h);
+                        alock_shade_pixmap(dpy, vis, tmp_pixmap, shaded_pixmap, data.shade, 0, 0, 0, 0, w, h);
 
                         imlib_free_image_and_decache();
                         imlib_context_set_drawable(shaded_pixmap);
@@ -165,14 +170,14 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                         XFreePixmap(dpy, shaded_pixmap);
                         XFreePixmap(dpy, tmp_pixmap);
 
-                        imlib_context_set_drawable(pixmap[scr]);
+                        imlib_context_set_drawable(data.pixmaps[scr]);
                         imlib_context_set_image(image);
                     }
 
-                    if (option == AIMAGE_OPTION_CENTER) {
+                    if (data.option == AIMAGE_OPTION_CENTER) {
                         imlib_render_image_on_drawable((rwidth - w)/2, (rheight - h)/2);
                     }
-                    else if (option == AIMAGE_OPTION_TILED) {
+                    else if (data.option == AIMAGE_OPTION_TILED) {
                         Pixmap tile;
                         GC gc;
                         XGCValues gcval;
@@ -185,7 +190,7 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                         gcval.fill_style = FillTiled;
                         gcval.tile = tile;
                         gc = XCreateGC(dpy, tile, GCFillStyle|GCTile, &gcval);
-                        XFillRectangle(dpy, pixmap[scr], gc, 0, 0, rwidth, rheight);
+                        XFillRectangle(dpy, data.pixmaps[scr], gc, 0, 0, rwidth, rheight);
 
                         XFreeGC(dpy, gc);
                         XFreePixmap(dpy, tile);
@@ -197,7 +202,11 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
                 }
                 else {
                     fprintf(stderr, "[image]: unable to load image from file\n");
-                    goto return_error;
+                    free(data.windows);
+                    free(data.pixmaps);
+                    data.windows = NULL;
+                    data.pixmaps = NULL;
+                    return -1;
                 }
 
                 imlib_context_pop();
@@ -206,56 +215,55 @@ static int alock_bg_image_init(const char *args, struct aXInfo *xinfo) {
 
             xswa.override_redirect = True;
             xswa.colormap = colormap;
-            xswa.background_pixmap = pixmap[scr];
+            xswa.background_pixmap = data.pixmaps[scr];
 
-            window[scr] = XCreateWindow(dpy, root,
+            data.windows[scr] = XCreateWindow(dpy, root,
                     0, 0, rwidth, rheight, 0,
                     CopyFromParent, InputOutput, CopyFromParent,
                     CWOverrideRedirect | CWColormap | CWBackPixmap,
                     &xswa);
 
-            XMapWindow(dpy, window[scr]);
-
-            if (window[scr])
-                xinfo->window[scr] = window[scr];
+            XMapWindow(dpy, data.windows[scr]);
 
         }
     }
 
-    goto return_success;
-
-return_error:
-    status = 0;
-    free(window);
-    free(pixmap);
-    window = NULL;
-    pixmap = NULL;
-
-return_success:
-    free(file_name);
-    free(color_name);
-    return status;
+    return 0;
 }
 
-static int alock_bg_image_deinit(struct aXInfo *xinfo) {
+static void module_free() {
 
-    if (!xinfo || !window)
-        return 0;
-
-    int scr;
-    for (scr = 0; scr < xinfo->screens; scr++) {
-        XDestroyWindow(xinfo->display, window[scr]);
-        XFreePixmap(xinfo->display, pixmap[scr]);
+    if (data.windows) {
+        int scr;
+        for (scr = 0; scr < data.dinfo->screen_nb; scr++) {
+            XDestroyWindow(data.dinfo->display, data.windows[scr]);
+            XFreePixmap(data.dinfo->display, data.pixmaps[scr]);
+        }
+        free(data.windows);
+        free(data.pixmaps);
+        data.windows = NULL;
+        data.pixmaps = NULL;
     }
-    free(pixmap);
-    free(window);
 
-    return 1;
+    free(data.colorname);
+    data.colorname = NULL;
+    free(data.filename);
+    data.filename = NULL;
+
+}
+
+static Window module_getwindow(int screen) {
+    if (!data.windows)
+        return None;
+    return data.windows[screen];
 }
 
 
-struct aBackground alock_bg_image = {
-    "image",
-    alock_bg_image_init,
-    alock_bg_image_deinit,
+struct aModuleBackground alock_bg_image = {
+    { "image",
+        module_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getwindow,
 };

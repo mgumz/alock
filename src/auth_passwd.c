@@ -36,13 +36,13 @@
 static struct passwd *pwd_entry = NULL;
 
 
-static int alock_auth_passwd_init(const char *args) {
+static int module_init(struct aDisplayInfo *dinfo) {
 
     errno = 0;
     pwd_entry = getpwuid(getuid());
     if (!pwd_entry) {
         perror("[passwd]: password entry for uid not found");
-        return 0;
+        return -1;
     }
 
 #if __linux && HAVE_SHADOW_H
@@ -59,26 +59,28 @@ static int alock_auth_passwd_init(const char *args) {
     if (strlen(pwd_entry->pw_passwd) < 13) {
         perror("[passwd]: password entry has no pwd");
         pwd_entry = NULL;
-        return 0;
+        return -1;
     }
 
-    return 1;
+    return 0;
 }
 
-static int alock_auth_passwd_auth(const char *pass) {
+static int module_authenticate(const char *pass) {
 
     if (pass == NULL || pwd_entry == NULL)
-        return 0;
+        return -1;
 
     /* simpler, and should work with crypt() algorithms using longer
        salt strings (like the md5-based one on freebsd).  --marekm */
-    return !strcmp(crypt(pass, pwd_entry->pw_passwd), pwd_entry->pw_passwd);
+    return strcmp(crypt(pass, pwd_entry->pw_passwd), pwd_entry->pw_passwd);
 }
 
 
-struct aAuth alock_auth_passwd = {
-    "passwd",
-    alock_auth_passwd_init,
-    module_dummy_deinit,
-    alock_auth_passwd_auth,
+struct aModuleAuth alock_auth_passwd = {
+    { "passwd",
+        module_dummy_loadargs,
+        module_init,
+        module_dummy_free,
+    },
+    module_authenticate,
 };

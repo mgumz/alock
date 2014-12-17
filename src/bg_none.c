@@ -17,52 +17,55 @@
 #include "alock.h"
 
 
-static Window *window = NULL;
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    Window *windows;
+} data = { 0 };
 
 
-static int alock_bg_none_init(const char *args, struct aXInfo *xinfo) {
+static int module_init(struct aDisplayInfo *dinfo) {
 
-    if (!xinfo)
-        return 0;
+    if (!dinfo)
+        return -1;
+
+    data.dinfo = dinfo;
+    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
 
     XSetWindowAttributes xswa;
     int scr;
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
-
     xswa.override_redirect = True;
-
-    for (scr = 0; scr < xinfo->screens; scr++) {
-        window[scr] = XCreateWindow(xinfo->display, xinfo->root[scr],
+    for (scr = 0; scr < dinfo->screen_nb; scr++)
+        data.windows[scr] = XCreateWindow(dinfo->display, dinfo->screens[scr].root,
                 0, 0, 1, 1, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect, &xswa);
 
-        if (window[scr])
-            xinfo->window[scr] = window[scr];
-    }
-
-    return 1;
+    return 0;
 }
 
-static int alock_bg_none_deinit(struct aXInfo *xinfo) {
-
-    if (!xinfo || !window)
-        return 0;
-
-    int scr;
-    for (scr = 0; scr < xinfo->screens; scr++) {
-        if (window[scr])
-            XDestroyWindow(xinfo->display, window[scr]);
+static void module_free() {
+    if (data.windows) {
+        int scr;
+        for (scr = 0; scr < data.dinfo->screen_nb; scr++)
+            XDestroyWindow(data.dinfo->display, data.windows[scr]);
+        free(data.windows);
+        data.windows = NULL;
     }
-    free(window);
+}
 
-    return 1;
+static Window module_getwindow(int screen) {
+    if (!data.windows)
+        return None;
+    return data.windows[screen];
 }
 
 
-struct aBackground alock_bg_none = {
-    "none",
-    alock_bg_none_init,
-    alock_bg_none_deinit,
+struct aModuleBackground alock_bg_none = {
+    { "none",
+        module_dummy_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getwindow,
 };

@@ -19,58 +19,71 @@
 #include "alock.h"
 
 
-static Cursor cursor = 0;
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    char *filename;
+    Cursor cursor;
+} data = { 0 };
 
 
-static int alock_cursor_xcursor_init(const char *args, struct aXInfo *xinfo) {
+static void module_loadargs(const char *args) {
 
-    if (!xinfo)
-        return 0;
+    if (!args || strstr(args, "xcursor:") != args)
+        return;
 
-    char *file_name = NULL;
-    int scr;
+    char *arguments = strdup(&args[8]);
+    char *arg;
+    char *tmp;
 
-    if (args && strstr(args, "xcursor:") == args) {
-        char *arguments = strdup(&args[8]);
-        char *arg;
-        char *tmp;
-        for (tmp = arguments; tmp; ) {
-            arg = strsep(&tmp, ",");
-            if (strstr(arg, "file=") == arg) {
-                free(file_name);
-                file_name = strdup(&arg[5]);
-            }
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strstr(arg, "file=") == arg) {
+            free(data.filename);
+            data.filename = strdup(&arg[5]);
         }
-        free(arguments);
     }
 
-    if (file_name)
-        cursor = XcursorFilenameLoadCursor(xinfo->display, file_name);
+    free(arguments);
+}
 
-    if (cursor == 0) {
+
+static int module_init(struct aDisplayInfo *dinfo) {
+
+    if (!dinfo)
+        return -1;
+
+    data.dinfo = dinfo;
+
+    if (data.filename)
+        data.cursor = XcursorFilenameLoadCursor(dinfo->display, data.filename);
+
+    if (data.cursor == 0) {
         fprintf(stderr, "[xcursor]: unable to load cursor file\n");
-        return 0;
+        return -1;
     }
 
-    for (scr = 0; scr < xinfo->screens; scr++)
-        xinfo->cursor[scr] = cursor;
-
-    free(file_name);
-    return 1;
+    return 0;
 }
 
-static int alock_cursor_xcursor_deinit(struct aXInfo *xinfo) {
+static void module_free() {
 
-    if (!xinfo || !cursor)
-        return 0;
+    if (data.cursor)
+        XFreeCursor(data.dinfo->display, data.cursor);
 
-    XFreeCursor(xinfo->display, cursor);
-
-    return 1;
+    free(data.filename);
+    data.filename = NULL;
 }
 
-struct aCursor alock_cursor_xcursor = {
-    "xcursor",
-    alock_cursor_xcursor_init,
-    alock_cursor_xcursor_deinit,
+static Cursor module_getcursor(void) {
+    return data.cursor;
+}
+
+
+struct aModuleCursor alock_cursor_xcursor = {
+    { "xcursor",
+        module_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getcursor,
 };

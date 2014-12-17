@@ -18,77 +18,94 @@
 #include "alock.h"
 
 
-static Window *window = NULL;
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    Window *windows;
+    char *colorname;
+} data = { 0 };
 
 
-static int alock_bg_blank_init(const char *args, struct aXInfo *xinfo) {
+static void module_loadargs(const char *args) {
 
-    if (!xinfo)
-        return 0;
+    if (!args || strstr(args, "blank:") != args)
+        return;
 
-    Display *dpy = xinfo->display;
-    char *color_name = NULL;
-    int scr;
+    char *arguments = strdup(&args[6]);
+    char *arg;
+    char *tmp;
 
-    if (args && strstr(args, "blank:") == args) {
-        char *arguments = strdup(&args[6]);
-        char *arg;
-        char *tmp;
-        for (tmp = arguments; tmp; ) {
-            arg = strsep(&tmp, ",");
-            if (strstr(arg, "color=") == arg) {
-                free(color_name);
-                color_name = strdup(&arg[6]);
-            }
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strstr(arg, "color=") == arg) {
+            free(data.colorname);
+            data.colorname = strdup(&arg[6]);
         }
-        free(arguments);
     }
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
+    free(arguments);
+}
 
-    for (scr = 0; scr < xinfo->screens; scr++) {
+static int module_init(struct aDisplayInfo *dinfo) {
 
-        Colormap colormap = xinfo->colormap[scr];
+    if (!dinfo)
+        return -1;
+
+    Display *dpy = dinfo->display;
+    int scr;
+
+    data.dinfo = dinfo;
+    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
+
+    for (scr = 0; scr < dinfo->screen_nb; scr++) {
+
+        Colormap colormap = dinfo->screens[scr].colormap;
         XSetWindowAttributes xswa;
         XColor color;
 
-        alock_alloc_color(dpy, colormap, color_name, "black", &color);
+        alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
 
         xswa.override_redirect = True;
         xswa.colormap = colormap;
         xswa.background_pixel = color.pixel;
 
-        window[scr] = XCreateWindow(dpy, xinfo->root[scr],
-                0, 0, xinfo->root_width[scr], xinfo->root_height[scr], 0,
+        data.windows[scr] = XCreateWindow(dpy, dinfo->screens[scr].root,
+                0, 0, dinfo->screens[scr].width, dinfo->screens[scr].height, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect | CWColormap | CWBackPixel,
                 &xswa);
 
-        if (window[scr])
-            xinfo->window[scr] = window[scr];
-
     }
 
-    free(color_name);
-    return 1;
+    return 0;
 }
 
-static int alock_bg_blank_deinit(struct aXInfo *xinfo) {
+static void module_free() {
 
-    if (!xinfo || !window)
-        return 0;
+    if (data.windows) {
+        int scr;
+        for (scr = 0; scr < data.dinfo->screen_nb; scr++)
+            XDestroyWindow(data.dinfo->display, data.windows[scr]);
+        free(data.windows);
+        data.windows = NULL;
+    }
 
-    int scr;
-    for (scr = 0; scr < xinfo->screens; scr++)
-        XDestroyWindow(xinfo->display, window[scr]);
-    free(window);
+    free(data.colorname);
+    data.colorname = NULL;
 
-    return 1;
+}
+
+static Window module_getwindow(int screen) {
+    if (!data.windows)
+        return None;
+    return data.windows[screen];
 }
 
 
-struct aBackground alock_bg_blank = {
-    "blank",
-    alock_bg_blank_init,
-    alock_bg_blank_deinit,
+struct aModuleBackground alock_bg_blank = {
+    { "blank",
+        module_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getwindow,
 };
