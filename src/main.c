@@ -13,12 +13,13 @@
 #include "../config.h"
 #endif
 
-#include <unistd.h>
+#include <ctype.h>
+#include <getopt.h>
+#include <locale.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
-#include <locale.h>
-#include <ctype.h>
+#include <unistd.h>
 #include <wchar.h>
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
@@ -302,6 +303,17 @@ static int unregisterInstance(struct aXInfo *xinfo) {
 
 int main(int argc, char **argv) {
 
+    int opt;
+    struct option longopts[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"modules", no_argument, NULL, 'm'},
+        {"auth", required_argument, NULL, 'a'},
+        {"bg", required_argument, NULL, 'b'},
+        {"cursor", required_argument, NULL, 'c'},
+        {"input", required_argument, NULL, 'i'},
+        {0, 0, 0, 0},
+    };
+
     struct aXInfo xinfo;
     struct aOpts opts = {
         alock_authmodules[0],
@@ -315,155 +327,122 @@ int main(int argc, char **argv) {
     int xf86misc_minor = -1;
 #endif
 
-    int arg;
-    const char *optarg;
     const char *auth_args = NULL;
     const char *input_args = NULL;
     const char *cursor_args = NULL;
     const char *background_args = NULL;
 
     /* parse options */
-    if (argc > 1) {
-        for (arg = 1; arg < argc; arg++) {
-            if (!strcmp(argv[arg], "-bg")) {
-                optarg = argv[++arg];
-                if (optarg != NULL) {
+    while ((opt = getopt_long_only(argc, argv, "hma:b:c:i:", longopts, NULL)) != -1)
+        switch (opt) {
+        case 'h':
+            printf("%s [-help] [-modules] [-auth type:options] [-bg type:options]"
+                    " [-cursor type:options] [-input type:options]\n", argv[0]);
+            return EXIT_SUCCESS;
 
-                    struct aBackground **i;
-                    if (strcmp(optarg, "list") == 0) {
-                        printf("list of available background modules:\n");
-                        for (i = alock_backgrounds; *i; ++i) {
-                            printf("%s\n", (*i)->name);
-                        }
-                        exit(EXIT_SUCCESS);
+        case 'm':
+            { /* list available modules */
+
+                struct aAuth **ia;
+                struct aBackground **ib;
+                struct aCursor **ic;
+                struct aInput **ii;
+
+                printf("authentication modules:\n");
+                for (ia = alock_authmodules; *ia; ++ia)
+                    printf("  %s\n", (*ia)->name);
+
+                printf("background modules:\n");
+                for (ib = alock_backgrounds; *ib; ++ib)
+                    printf("  %s\n", (*ib)->name);
+
+                printf("cursor modules:\n");
+                for (ic = alock_cursors; *ic; ++ic)
+                    printf("  %s\n", (*ic)->name);
+
+                printf("input modules:\n");
+                for (ii = alock_inputs; *ii; ++ii)
+                    printf("  %s\n", (*ii)->name);
+
+            }
+            return EXIT_SUCCESS;
+
+        case 'a':
+            { /* authentication module */
+
+                struct aAuth **i;
+                for (i = alock_authmodules; *i; ++i)
+                    if (strstr(optarg, (*i)->name) == optarg) {
+                        auth_args = optarg;
+                        opts.auth = *i;
+                        break;
                     }
 
-                    for (i = alock_backgrounds; *i; ++i) {
-                        if (strstr(optarg, (*i)->name) == optarg) {
-                            background_args = optarg;
-                            opts.background = *i;
-                            break;
-                        }
-                    }
-
-                    if (*i == NULL) {
-                        fprintf(stderr, "alock: background module not found\n");
-                        exit(EXIT_FAILURE);
-                    }
-
-                }
-                else {
-                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "bg");
-                    exit(EXIT_FAILURE);
+                if (*i == NULL) {
+                    fprintf(stderr, "alock: authentication module `%s` not found\n", optarg);
+                    return EXIT_FAILURE;
                 }
             }
-            else if (!strcmp(argv[arg], "-auth")) {
-                optarg = argv[++arg];
-                if (optarg != NULL) {
+            break;
 
-                    struct aAuth **i;
-                    if (strcmp(optarg, "list") == 0) {
-                        printf("list of available authentication modules:\n");
-                        for (i = alock_authmodules; *i; ++i) {
-                            printf("%s\n", (*i)->name);
-                        }
-                        exit(EXIT_SUCCESS);
+        case 'b':
+            { /* background module */
+
+                struct aBackground **i;
+                for (i = alock_backgrounds; *i; ++i)
+                    if (strstr(optarg, (*i)->name) == optarg) {
+                        background_args = optarg;
+                        opts.background = *i;
+                        break;
                     }
 
-                    for (i = alock_authmodules; *i; ++i) {
-                        if (strstr(optarg, (*i)->name) == optarg) {
-                            auth_args = optarg;
-                            opts.auth = *i;
-                            break;
-                        }
-                    }
-
-                    if (*i == NULL) {
-                        fprintf(stderr, "alock: authentication module not found\n");
-                        exit(EXIT_FAILURE);
-                    }
-
-                }
-                else {
-                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "auth");
-                    exit(EXIT_FAILURE);
+                if (*i == NULL) {
+                    fprintf(stderr, "alock: background module `%s` not found\n", optarg);
+                    return EXIT_FAILURE;
                 }
             }
-            else if (!strcmp(argv[arg], "-cursor")) {
-                optarg = argv[++arg];
-                if (optarg != NULL) {
+            break;
 
-                    struct aCursor **i;
-                    if (strcmp(argv[arg], "list") == 0) {
-                        printf("list of available cursor modules:\n");
-                        for (i = alock_cursors; *i; ++i) {
-                            printf("%s\n", (*i)->name);
-                        }
-                        exit(EXIT_SUCCESS);
+        case 'c':
+            { /* cursor module */
+
+                struct aCursor **i;
+                for (i = alock_cursors; *i; ++i)
+                    if (strstr(optarg, (*i)->name) == optarg) {
+                        cursor_args = optarg;
+                        opts.cursor = *i;
+                        break;
                     }
 
-                    for (i = alock_cursors; *i; ++i) {
-                        if (strstr(optarg, (*i)->name) == optarg) {
-                            cursor_args = optarg;
-                            opts.cursor = *i;
-                            break;
-                        }
-                    }
-
-                    if (*i == NULL) {
-                        fprintf(stderr, "alock: cursor module not found\n");
-                        exit(EXIT_FAILURE);
-                    }
-
-                }
-                else {
-                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "cursor");
-                    exit(EXIT_FAILURE);
+                if (*i == NULL) {
+                    fprintf(stderr, "alock: cursor module `%s` not found\n", optarg);
+                    return EXIT_FAILURE;
                 }
             }
-            else if (!strcmp(argv[arg], "-input")) {
-                optarg = argv[++arg];
-                if (optarg != NULL) {
+            break;
 
-                    struct aInput **i;
-                    if (strcmp(argv[arg], "list") == 0) {
-                        printf("list of available input modules:\n");
-                        for (i = alock_inputs; *i; ++i) {
-                            printf("%s\n", (*i)->name);
-                        }
-                        exit(EXIT_SUCCESS);
+        case 'i':
+            { /* input module */
+
+                struct aInput **i;
+                for (i = alock_inputs; *i; ++i)
+                    if (strstr(optarg, (*i)->name) == optarg) {
+                        input_args = optarg;
+                        opts.input = *i;
+                        break;
                     }
 
-                    for (i = alock_inputs; *i; ++i) {
-                        if (strstr(optarg, (*i)->name) == optarg) {
-                            input_args = optarg;
-                            opts.input = *i;
-                            break;
-                        }
-                    }
-
-                    if (*i == NULL) {
-                        fprintf(stderr, "alock: input module not found\n");
-                        exit(EXIT_FAILURE);
-                    }
-
-                }
-                else {
-                    fprintf(stderr, "alock: option requires an argument -- '%s'\n", "input");
-                    exit(EXIT_FAILURE);
+                if (*i == NULL) {
+                    fprintf(stderr, "alock: input module `%s` not found\n", optarg);
+                    return EXIT_FAILURE;
                 }
             }
-            else if (strcmp(argv[arg], "-h") == 0) {
-                printf("alock [-h] [-auth type:options] [-bg type:options]"
-                       " [-cursor type:options] [-input type:options]\n");
-                exit(EXIT_SUCCESS);
-            }
-            else {
-                fprintf(stderr, "alock: invalid option '%s'\n", argv[arg]);
-                exit(EXIT_FAILURE);
-            }
+            break;
+
+        default:
+            fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
+            return EXIT_FAILURE;
         }
-    }
 
     /* required for correct input handling */
     setlocale(LC_ALL, "");
