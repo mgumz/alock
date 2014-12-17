@@ -7,7 +7,7 @@
  * This projected is licensed under the terms of the MIT license.
  *
  * This input module provides:
- *  -input frame:color=<input_color>|<check_color>|<error_color>,width=<int>
+ *  -input frame:input=<color>,check=<color>,error=<color>,width=<int>
  *
  */
 
@@ -15,9 +15,9 @@
 #include "../config.h"
 #endif
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #if HAVE_X11_EXTENSIONS_SHAPE_H
@@ -27,154 +27,159 @@
 #include "alock.h"
 
 
-struct aFrame {
-    struct aXInfo *xi;
-    Window window;
-    GC gc;
-
-    XColor color_input;
-    XColor color_check;
-    XColor color_error;
-    int width;
+struct colorPixel {
+    char *name;
+    unsigned long pixel;
 };
 
-static struct aFrame *frame = NULL;
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    Window window;
+    struct colorPixel color_input;
+    struct colorPixel color_check;
+    struct colorPixel color_error;
+    int width;
+} data = { NULL, None, { 0 }, { 0 }, { 0 }, 10 };
 
 
-static int alock_input_frame_init(const char *args, struct aXInfo *xinfo) {
-    debug("init: %s", args);
+static void module_loadargs(const char *args) {
 
-    if (!xinfo)
-        return 0;
+    if (!args || strstr(args, "frame:") != args)
+        return;
 
-    Display *dpy = xinfo->display;
-    Colormap colormap = xinfo->colormap[0];
-    XSetWindowAttributes xswa;
-    char *color_name[3] = { NULL };
-    int status = 1;
+    char *arguments = strdup(&args[6]);
+    char *arg;
+    char *tmp;
 
-    frame = (struct aFrame*)malloc(sizeof(struct aFrame));
-    frame->xi = xinfo;
-    frame->width = 10;
-
-    if (args && strstr(args, "frame:") == args) {
-        char *arguments = strdup(&args[6]);
-        char *arg;
-        char *tmp;
-        for (tmp = arguments; tmp; ) {
-            arg = strsep(&tmp, ",");
-            if (strstr(arg, "color=") == arg) {
-                char *tmp2;
-                int i;
-                for (tmp2 = &arg[6], i = 0; tmp2 && i < 3; i++) {
-                    free(color_name[i]);
-                    color_name[i] = strdup(strsep(&tmp2, "|"));
-                }
-            }
-            else if (strstr(arg, "width=") == arg) {
-                frame->width = strtol(&arg[6], NULL, 0);
-                if (frame->width < 1) {
-                    fprintf(stderr, "[frame]: invalid width value\n");
-                    free(arguments);
-                    goto return_error;
-                }
-            }
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strstr(arg, "width=") == arg) {
+            data.width = strtol(&arg[6], NULL, 0);
         }
-        free(arguments);
+        else if (strstr(arg, "input=") == arg) {
+            free(data.color_input.name);
+            data.color_input.name = strdup(&arg[6]);
+        }
+        else if (strstr(arg, "check=") == arg) {
+            free(data.color_check.name);
+            data.color_check.name = strdup(&arg[6]);
+        }
+        else if (strstr(arg, "error=") == arg) {
+            free(data.color_error.name);
+            data.color_error.name = strdup(&arg[6]);
+        }
     }
+
+    free(arguments);
+}
+
+static int module_init(struct aDisplayInfo *dinfo) {
+
+    Display *dpy = dinfo->display;
+    Colormap colormap = dinfo->screens[0].colormap;
+    XSetWindowAttributes xswa;
+    XColor color;
+
+    data.dinfo = dinfo;
 
     xswa.override_redirect = True;
     xswa.colormap = colormap;
-    frame->window = XCreateWindow(dpy, xinfo->root[0],
-            0, 0, xinfo->root_width[0], xinfo->root_height[0], 0,
+    data.window = XCreateWindow(dpy, dinfo->screens[0].root,
+            0, 0, dinfo->screens[0].width, dinfo->screens[0].height, 0,
             CopyFromParent, InputOutput, CopyFromParent, CWOverrideRedirect | CWColormap, &xswa);
-    frame->gc = XCreateGC(dpy, frame->window, 0, 0);
 
-    debug("selected colors: `%s`, `%s`, `%s`", color_name[0], color_name[1], color_name[2]);
-    alock_alloc_color(dpy, colormap, color_name[0], "green", &frame->color_input);
-    alock_alloc_color(dpy, colormap, color_name[1], "yellow", &frame->color_check);
-    alock_alloc_color(dpy, colormap, color_name[2], "red", &frame->color_error);
+    debug("selected colors: `%s`, `%s`, `%s`", data.color_input.name,
+            data.color_check.name, data.color_error.name);
+    alock_alloc_color(dpy, colormap, data.color_input.name, "green", &color);
+    data.color_input.pixel = color.pixel;
+    alock_alloc_color(dpy, colormap, data.color_check.name, "yellow", &color);
+    data.color_check.pixel = color.pixel;
+    alock_alloc_color(dpy, colormap, data.color_error.name, "red", &color);
+    data.color_error.pixel = color.pixel;
 
 #if HAVE_X11_EXTENSIONS_SHAPE_H
     XRectangle rect = {
         0, 0,
-        xinfo->root_width[0] - 2 * frame->width,
-        xinfo->root_height[0] - 2 * frame->width,
+        dinfo->screens[0].width - 2 * data.width,
+        dinfo->screens[0].height - 2 * data.width,
     };
-    XShapeCombineRectangles(dpy, frame->window, ShapeBounding,
-            frame->width, frame->width, &rect, 1, ShapeSubtract, 0);
+    XShapeCombineRectangles(dpy, data.window, ShapeBounding,
+            data.width, data.width, &rect, 1, ShapeSubtract, 0);
 #endif
 
-    goto return_success;
-
-return_error:
-    free(frame);
-    status = 0;
-    frame = NULL;
-
-return_success:
-    free(color_name[0]);
-    free(color_name[1]);
-    free(color_name[2]);
-    return status;
+    return 0;
 }
 
-static int alock_input_frame_deinit(struct aXInfo *xinfo) {
-    debug("deinit");
+static void module_free(void) {
 
-    if (!xinfo || !frame)
-        return 0;
+    XDestroyWindow(data.dinfo->display, data.window);
 
-    Display *dpy = xinfo->display;
+    free(data.color_input.name);
+    data.color_input.name = NULL;
+    free(data.color_check.name);
+    data.color_check.name = NULL;
+    free(data.color_error.name);
+    data.color_error.name = NULL;
 
-    XFreeGC(dpy, frame->gc);
-    XDestroyWindow(dpy, frame->window);
-    free(frame);
-
-    return 1;
 }
 
-static void alock_input_frame_setstate(enum aInputState state) {
+static Window module_getwindow(int screen) {
+    return data.window;
+}
+
+static KeySym module_keypress(KeySym key) {
+
+    /* suppress navigation of input current position */
+    if (key == XK_Begin || key == XK_Home || key == XK_End ||
+            key == XK_Left || key == XK_Right)
+        return NoSymbol;
+
+    /* treat delete key as backspace */
+    if (key == XK_Delete)
+        return XK_BackSpace;
+
+    return key;
+}
+
+static void module_setstate(enum aInputState state) {
     debug("setstate: %d", state);
 
-    if (!frame)
-        return;
-
-    Display *dpy = frame->xi->display;
-    Window window = frame->window;
+    Display *dpy = data.dinfo->display;
     XGCValues gcvals;
     int height, width;
 
     if (state == AINPUT_STATE_NONE) {
         /* hide input frame indicator */
-        XUnmapWindow(dpy, window);
+        XUnmapWindow(dpy, data.window);
         return;
     }
     if (state == AINPUT_STATE_INIT) {
         /* show input frame indicator */
-        XMapWindow(dpy, window);
-        XRaiseWindow(dpy, window);
+        XMapWindow(dpy, data.window);
+        XRaiseWindow(dpy, data.window);
     }
 
     switch (state) {
     case AINPUT_STATE_CHECK:
-        gcvals.foreground = frame->color_check.pixel;
+        gcvals.foreground = data.color_check.pixel;
         break;
     case AINPUT_STATE_ERROR:
-        gcvals.foreground = frame->color_error.pixel;
+        gcvals.foreground = data.color_error.pixel;
         break;
     default:
-        gcvals.foreground = frame->color_input.pixel;
+        gcvals.foreground = data.color_input.pixel;
     }
 
-    height = frame->xi->root_height[0];
-    width = frame->xi->root_width[0];
+    height = data.dinfo->screens[0].height;
+    width = data.dinfo->screens[0].width;
 
-    XChangeGC(dpy, frame->gc, GCForeground, &gcvals);
-    XFillRectangle(dpy, window, frame->gc, 0, 0, width, frame->width);
-    XFillRectangle(dpy, window, frame->gc, 0, 0, frame->width, height);
-    XFillRectangle(dpy, window, frame->gc, 0, height - frame->width, width, frame->width);
-    XFillRectangle(dpy, window, frame->gc, width - frame->width, 0, frame->width, height);
+    GC gc = XCreateGC(dpy, data.window, 0, 0);
+    XChangeGC(dpy, gc, GCForeground, &gcvals);
+    XFillRectangle(dpy, data.window, gc, 0, 0, width, data.width);
+    XFillRectangle(dpy, data.window, gc, 0, 0, data.width, height);
+    XFillRectangle(dpy, data.window, gc, 0, height - data.width, width, data.width);
+    XFillRectangle(dpy, data.window, gc, width - data.width, 0, data.width, height);
+    XFreeGC(dpy, gc);
     XFlush(dpy);
 
     /* internal input penalty for error */
@@ -185,25 +190,14 @@ static void alock_input_frame_setstate(enum aInputState state) {
     }
 }
 
-static KeySym alock_input_frame_keypress(KeySym ks) {
 
-    /* suppress navigation of input current position */
-    if (ks == XK_Begin || ks == XK_Home || ks == XK_End ||
-            ks == XK_Left || ks == XK_Right)
-        return NoSymbol;
-
-    /* treat delete key as backspace */
-    if (ks == XK_Delete)
-        return XK_BackSpace;
-
-    return ks;
-}
-
-
-struct aInput alock_input_frame = {
-    "frame",
-    alock_input_frame_init,
-    alock_input_frame_deinit,
-    alock_input_frame_setstate,
-    alock_input_frame_keypress,
+struct aModuleInput alock_input_frame = {
+    {  "frame",
+        module_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getwindow,
+    module_keypress,
+    module_setstate,
 };

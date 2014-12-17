@@ -154,16 +154,19 @@ int alock_shade_pixmap(Display *display,
 }
 
 /* Dummy function for module interface. */
-int module_dummy_init(const char *args, struct aXInfo *xinfo) {
+void module_dummy_loadargs(const char *args) {
     (void)args;
-    (void)xinfo;
-    debug("dummy init: %s", args);
-    return 1;
+    debug("dummy loadargs: %s", args);
 }
 
 /* Dummy function for module interface. */
-int module_dummy_deinit(struct aXInfo *xinfo) {
-    (void)xinfo;
-    debug("dummy deinit");
-    return 1;
+int module_dummy_init(struct aDisplayInfo *dinfo) {
+    (void)dinfo;
+    debug("dummy init");
+    return 0;
+}
+
+/* Dummy function for module interface. */
+void module_dummy_free(void) {
+    debug("dummy free");
 }

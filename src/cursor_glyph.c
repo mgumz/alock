@@ -25,7 +25,6 @@ struct CursorFontName {
 };
 
 static const struct CursorFontName cursor_names[] = {
-    { "num_glyphs", XC_num_glyphs },
     { "X_cursor", XC_X_cursor },
     { "arrow", XC_arrow },
     { "based_arrow_down", XC_based_arrow_down },
@@ -106,12 +105,17 @@ static const struct CursorFontName cursor_names[] = {
     { NULL, 0 }
 };
 
-static Cursor *cursor = NULL;
-static XColor *color_fg = NULL;
-static XColor *color_bg = NULL;
+/* default glyph: XC_X_cursor */
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    char *colorname_bg;
+    char *colorname_fg;
+    unsigned int shape;
+    Cursor cursor;
+} data = { 0 };
 
 
-static void alock_cursor_glyph_list(void) {
+static void module_cmd_list(void) {
 
     printf("list of available cursor glyphs:\n");
 
@@ -121,106 +125,89 @@ static void alock_cursor_glyph_list(void) {
 
 }
 
-static int alock_cursor_glyph_init(const char *args, struct aXInfo *xinfo) {
+static void module_loadargs(const char *args) {
 
-    if (!xinfo)
-        return 0;
+    if (!args || strstr(args, "glyph:") != args)
+        return;
 
-    Display *dpy = xinfo->display;
-    char *color_bg_name = NULL;
-    char *color_fg_name = NULL;
-    unsigned int shape = 0; /* XC_X_cursor */
-    int status = 1;
+    char *arguments = strdup(&args[6]);
+    char *arg;
+    char *tmp;
 
-    if (args && strstr(args, "glyph:") == args) {
-        char *arguments = strdup(&args[6]);
-        char *arg;
-        char *tmp;
-        for (tmp = arguments; tmp; ) {
-            arg = strsep(&tmp, ",");
-            if (strcmp(arg, "list") == 0) {
-                alock_cursor_glyph_list();
-                exit(EXIT_SUCCESS);
-            }
-            if (strstr(arg, "name=") == arg) {
-                const struct CursorFontName *cursor;
-                for (cursor = cursor_names; cursor->name; cursor++) {
-                    if (!strcmp(cursor->name, &arg[5])) {
-                        shape = cursor->shape;
-                        break;
-                    }
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strcmp(arg, "list") == 0) {
+            module_cmd_list();
+            exit(EXIT_SUCCESS);
+        }
+        if (strstr(arg, "name=") == arg) {
+            const struct CursorFontName *cursor;
+            for (cursor = cursor_names; cursor->name; cursor++) {
+                if (!strcmp(cursor->name, &arg[5])) {
+                    data.shape = cursor->shape;
+                    break;
                 }
             }
-            else if (strstr(arg, "fg=") == arg) {
-                free(color_fg_name);
-                color_fg_name = strdup(&arg[3]);
-            }
-            else if (strstr(arg, "bg=") == arg) {
-                free(color_bg_name);
-                color_bg_name = strdup(&arg[3]);
-            }
         }
-        free(arguments);
-    }
-
-    {
-        cursor = (Cursor*)calloc(xinfo->screens, sizeof(Cursor));
-        color_fg = (XColor*)calloc(xinfo->screens, sizeof(XColor));
-        color_bg = (XColor*)calloc(xinfo->screens, sizeof(XColor));
-    }
-
-    {
-        int scr;
-        for (scr = 0; scr < xinfo->screens; scr++) {
-
-            Colormap colormap = xinfo->colormap[scr];
-            alock_alloc_color(dpy, colormap, color_bg_name, "black", &color_bg[scr]);
-            alock_alloc_color(dpy, colormap, color_fg_name, "white", &color_fg[scr]);
-
-            /* create cursor from X11/cursorfont.h */
-            if (!(cursor[scr] = XCreateFontCursor(dpy, shape))) {
-                fprintf(stderr, "[glyph]: unable to create fontcursor\n");
-                goto return_error;
-            }
-
-            XRecolorCursor(dpy, cursor[scr], &color_fg[scr], &color_bg[scr]);
-            xinfo->cursor[scr] = cursor[scr];
+        else if (strstr(arg, "fg=") == arg) {
+            free(data.colorname_fg);
+            data.colorname_fg = strdup(&arg[3]);
         }
-
+        else if (strstr(arg, "bg=") == arg) {
+            free(data.colorname_bg);
+            data.colorname_bg = strdup(&arg[3]);
+        }
     }
 
-    goto return_success;
-
-return_error:
-    status = 0;
-    free(cursor);
-    free(color_bg);
-    free(color_fg);
-
-return_success:
-    free(color_fg_name);
-    free(color_bg_name);
-    return status;
+    free(arguments);
 }
 
-static int alock_cursor_glyph_deinit(struct aXInfo *xinfo) {
+static int module_init(struct aDisplayInfo *dinfo) {
 
-    if (!xinfo || !cursor)
-        return 0;
+    if (!dinfo)
+        return -1;
 
-    int scr;
-    for (scr = 0; scr < xinfo->screens; scr++)
-        XFreeCursor(xinfo->display, cursor[scr]);
-    free(cursor);
-    free(color_bg);
-    free(color_fg);
+    Display *dpy = dinfo->display;
+    Colormap colormap = dinfo->screens[0].colormap;
+    XColor color_bg;
+    XColor color_fg;
 
-    return 1;
+    data.dinfo = dinfo;
+    alock_alloc_color(dpy, colormap, data.colorname_bg, "black", &color_bg);
+    alock_alloc_color(dpy, colormap, data.colorname_fg, "white", &color_fg);
+
+    /* create cursor from X11/cursorfont.h */
+    if (!(data.cursor = XCreateFontCursor(dpy, data.shape))) {
+        fprintf(stderr, "[glyph]: unable to create fontcursor\n");
+        return -1;
+    }
+
+    XRecolorCursor(dpy, data.cursor, &color_fg, &color_bg);
+    return 0;
+}
+
+static void module_free() {
+
+    if (data.cursor)
+        XFreeCursor(data.dinfo->display, data.cursor);
+
+    free(data.colorname_bg);
+    data.colorname_bg = NULL;
+    free(data.colorname_fg);
+    data.colorname_fg = NULL;
+
+}
+
+static Cursor module_getcursor(void) {
+    return data.cursor;
 }
 
 
-struct aCursor alock_cursor_glyph = {
-    "glyph",
-    alock_cursor_glyph_init,
-    alock_cursor_glyph_deinit,
+struct aModuleCursor alock_cursor_glyph = {
+    { "glyph",
+        module_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getcursor,
 };

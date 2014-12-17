@@ -23,26 +23,22 @@
 #endif
 
 
-struct aXInfo {
+/* stores snapshot of screen intrinsic properties */
+struct aScreenInfo {
+    Colormap colormap;
+    Window root;
+    int width;
+    int height;
+};
+
+/* stores snapshot of display intrinsic properties */
+struct aDisplayInfo {
     Display *display;
-    Atom pid_atom;
-
-    int screens;
-    Window *root;
-    Colormap *colormap;
-    Window *window;
-    Cursor *cursor;
-    int *root_width;
-    int *root_height;
+    struct aScreenInfo *screens;
+    int screen_nb;
 };
 
-struct aAuth {
-    const char *name;
-    int (*init)(const char *args);
-    int (*deinit)();
-    int (*auth)(const char *pass);
-};
-
+/* possible states of the input module */
 enum aInputState {
     AINPUT_STATE_NONE,
     AINPUT_STATE_INIT,
@@ -50,74 +46,87 @@ enum aInputState {
     AINPUT_STATE_VALID,
     AINPUT_STATE_ERROR,
 };
-struct aInput {
+
+/* module base interface */
+struct aModule {
     const char *name;
-    int (*init)(const char *args, struct aXInfo *xinfo);
-    int (*deinit)(struct aXInfo *xinfo);
+    void (*loadargs)(const char *args);
+    int (*init)(struct aDisplayInfo *dinfo);
+    void (*free)();
+};
+
+struct aModuleAuth {
+    struct aModule m;
+    int (*authenticate)(const char *pass);
+};
+
+struct aModuleBackground {
+    struct aModule m;
+    Window (*getwindow)(int screen);
+};
+
+struct aModuleCursor {
+    struct aModule m;
+    Cursor (*getcursor)(void);
+};
+
+struct aModuleInput {
+    struct aModule m;
+    Window (*getwindow)(int screen);
+    KeySym (*keypress)(KeySym key);
     void (*setstate)(enum aInputState state);
-    KeySym (*keypress)(KeySym ks);
 };
 
-struct aCursor {
-    const char *name;
-    int (*init)(const char *args, struct aXInfo *xinfo);
-    int (*deinit)(struct aXInfo *xinfo);
-};
-
-struct aBackground {
-    const char *name;
-    int (*init)(const char *args, struct aXInfo *xinfo);
-    int (*deinit)(struct aXInfo *xinfo);
-};
-
-struct aOpts {
-    struct aAuth *auth;
-    struct aInput *input;
-    struct aCursor *cursor;
-    struct aBackground *background;
+/* module container structure */
+struct aModules {
+    struct aModuleAuth *auth;
+    struct aModuleBackground *background;
+    struct aModuleCursor *cursor;
+    struct aModuleInput *input;
 };
 
 
 /* authentication modules */
-extern struct aAuth alock_auth_none;
+extern struct aModuleAuth alock_auth_none;
 #if ENABLE_HASH
-extern struct aAuth alock_auth_hash;
+extern struct aModuleAuth alock_auth_hash;
 #endif
 #if ENABLE_PASSWD
-extern struct aAuth alock_auth_passwd;
+extern struct aModuleAuth alock_auth_passwd;
 #endif
 #if ENABLE_PAM
-extern struct aAuth alock_auth_pam;
+extern struct aModuleAuth alock_auth_pam;
 #endif
 
 /* background modules */
-extern struct aBackground alock_bg_none;
-extern struct aBackground alock_bg_blank;
+extern struct aModuleBackground alock_bg_none;
+extern struct aModuleBackground alock_bg_blank;
 #if ENABLE_IMLIB2
-extern struct aBackground alock_bg_image;
+extern struct aModuleBackground alock_bg_image;
 #endif
 #if ENABLE_XRENDER
-extern struct aBackground alock_bg_shade;
+extern struct aModuleBackground alock_bg_shade;
 #endif
 
 /* cursor modules */
-extern struct aCursor alock_cursor_none;
-extern struct aCursor alock_cursor_glyph;
+extern struct aModuleCursor alock_cursor_none;
+extern struct aModuleCursor alock_cursor_glyph;
 #if ENABLE_XCURSOR
-extern struct aCursor alock_cursor_xcursor;
+extern struct aModuleCursor alock_cursor_xcursor;
 #if (ENABLE_XRENDER && (ENABLE_XPM || ENABLE_IMLIB2))
-extern struct aCursor alock_cursor_image;
+extern struct aModuleCursor alock_cursor_image;
 #endif
 #endif
 
 /* input modules */
-extern struct aInput alock_input_none;
-extern struct aInput alock_input_frame;
+extern struct aModuleInput alock_input_none;
+extern struct aModuleInput alock_input_frame;
 
 
 /* dummy functions for module interface */
-int module_dummy_init(const char *args, struct aXInfo *xinfo);
-int module_dummy_deinit(struct aXInfo *xinfo);
+void module_dummy_loadargs(const char *args);
+int module_dummy_init(struct aDisplayInfo *dinfo);
+void module_dummy_free(void);
 
 
 /* helper functions defined in utils.c */

@@ -19,45 +19,51 @@
 #include "alock.h"
 
 
-static Window *window = NULL;
+static struct moduleData {
+    struct aDisplayInfo *dinfo;
+    Window *windows;
+    char *colorname;
+    unsigned int shade;
+} data = { NULL, NULL, NULL, 80 };
 
 
-static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
+static void module_loadargs(const char *args) {
 
-    if (!xinfo)
-        return 0;
+    if (!args || strstr(args, "shade:") != args)
+        return;
 
-    Display *dpy = xinfo->display;
-    char *color_name = NULL;
-    unsigned int shade = 80;
-    int status = 1;
+    char *arguments = strdup(&args[6]);
+    char *arg;
+    char *tmp;
 
-    if (args && strstr(args, "shade:") == args) {
-        char *arguments = strdup(&args[6]);
-        char *arg;
-        char *tmp;
-        for (tmp = arguments; tmp; ) {
-            arg = strsep(&tmp, ",");
-            if (strstr(arg, "color=") == arg) {
-                free(color_name);
-                color_name = strdup(&arg[6]);
-            }
-            else if (strstr(arg, "shade=") == arg) {
-                shade = strtol(&arg[6], NULL, 0);
-                if (shade > 99) {
-                    fprintf(stderr, "[shade]: shade not in range [0, 99]\n");
-                    free(arguments);
-                    goto return_error;
-                }
-            }
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strstr(arg, "color=") == arg) {
+            free(data.colorname);
+            data.colorname = strdup(&arg[6]);
         }
-        free(arguments);
+        else if (strstr(arg, "shade=") == arg) {
+            data.shade = strtol(&arg[6], NULL, 0);
+            if (data.shade > 99)
+                fprintf(stderr, "[shade]: shade not in range [0, 99]\n");
+        }
     }
 
-    if (!alock_check_xrender(dpy))
-        goto return_error;
+    free(arguments);
+}
 
-    window = (Window*)malloc(sizeof(Window) * xinfo->screens);
+static int module_init(struct aDisplayInfo *dinfo) {
+
+    if (!dinfo)
+        return -1;
+
+    Display *dpy = dinfo->display;
+
+    if (!alock_check_xrender(dpy))
+        return -1;
+
+    data.dinfo = dinfo;
+    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
 
     {
         Pixmap src_pm = None;
@@ -65,14 +71,14 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
         XColor color;
         int scr;
 
-        for (scr = 0; scr < xinfo->screens; scr++) {
+        for (scr = 0; scr < dinfo->screen_nb; scr++) {
 
-            Window root = xinfo->root[scr];
-            Colormap colormap = xinfo->colormap[scr];
-            int width = xinfo->root_width[scr];
-            int height = xinfo->root_height[scr];
+            Window root = dinfo->screens[scr].root;
+            Colormap colormap = dinfo->screens[scr].colormap;
+            int width = dinfo->screens[scr].width;
+            int height = dinfo->screens[scr].height;
 
-            alock_alloc_color(dpy, colormap, color_name, "black", &color);
+            alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
 
             { /* xrender stuff */
                 int depth = DefaultDepth(dpy, scr);
@@ -98,7 +104,7 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
                 }
 
                 Visual *vis = DefaultVisual(dpy, scr);
-                alock_shade_pixmap(dpy, vis, src_pm, dst_pm, shade, 0, 0, 0, 0, width, height);
+                alock_shade_pixmap(dpy, vis, src_pm, dst_pm, data.shade, 0, 0, 0, 0, width, height);
             }
 
             { /* create final window */
@@ -108,7 +114,7 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
                 xswa.colormap = colormap;
                 xswa.background_pixmap = dst_pm;
 
-                window[scr] = XCreateWindow(dpy, root,
+                data.windows[scr] = XCreateWindow(dpy, root,
                         0, 0, width, height, 0,
                         CopyFromParent, InputOutput, CopyFromParent,
                         CWOverrideRedirect | CWColormap | CWBackPixmap,
@@ -117,39 +123,39 @@ static int alock_bg_shade_init(const char *args, struct aXInfo *xinfo) {
                 XFreePixmap(dpy, dst_pm);
             }
 
-            if (window[scr])
-                xinfo->window[scr] = window[scr];
         }
     }
 
-    goto return_success;
-
-return_error:
-    status = 0;
-    free(window);
-    window = NULL;
-
-return_success:
-    free(color_name);
-    return status;
+    return 0;
 }
 
-static int alock_bg_shade_deinit(struct aXInfo *xinfo) {
+static void module_free() {
 
-    if (!xinfo || !window)
-        return 0;
+    if (data.windows) {
+        int scr;
+        for (scr = 0; scr < data.dinfo->screen_nb; scr++)
+            XDestroyWindow(data.dinfo->display, data.windows[scr]);
+        free(data.windows);
+        data.windows = NULL;
+    }
 
-    int scr;
-    for (scr = 0; scr < xinfo->screens; scr++)
-        XDestroyWindow(xinfo->display, window[scr]);
-    free(window);
+    free(data.colorname);
+    data.colorname = NULL;
 
-    return 1;
+}
+
+static Window module_getwindow(int screen) {
+    if (!data.windows)
+        return None;
+    return data.windows[screen];
 }
 
 
-struct aBackground alock_bg_shade = {
-    "shade",
-    alock_bg_shade_init,
-    alock_bg_shade_deinit,
+struct aModuleBackground alock_bg_shade = {
+    { "shade",
+        module_loadargs,
+        module_init,
+        module_free,
+    },
+    module_getwindow,
 };

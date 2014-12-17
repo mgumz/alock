@@ -1,6 +1,7 @@
 /*
  * alock - auth_none.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -11,18 +12,17 @@
 #include "alock.h"
 
 
-static int alock_auth_none_init(const char *args) {
-    return 1;
-}
-
-static int alock_auth_none_auth(const char *pass) {
-    return 1;
+static int module_authenticate(const char *pass) {
+    (void)pass;
+    return 0;
 }
 
 
-struct aAuth alock_auth_none = {
-    "none",
-    alock_auth_none_init,
-    module_dummy_deinit,
-    alock_auth_none_auth,
+struct aModuleAuth alock_auth_none = {
+    { "none",
+        module_dummy_loadargs,
+        module_dummy_init,
+        module_dummy_free,
+    },
+    module_authenticate,
 };

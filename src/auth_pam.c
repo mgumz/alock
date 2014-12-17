@@ -60,24 +60,25 @@ static int alock_auth_pam_conv(int num_msg,
     return PAM_SUCCESS;
 }
 
-static int alock_auth_pam_init(const char *args) {
+static int module_init(struct aDisplayInfo *dinfo) {
+    (void)dinfo;
 
     struct passwd *pwd;
 
     errno = 0;
     if (!(pwd = getpwuid(getuid()))) {
         perror("[pam]: password entry for uid not found");
-        return 0;
+        return -1;
     }
 
     username = pwd->pw_name;
-    return 1;
+    return 0;
 }
 
-static int alock_auth_pam_auth(const char *pass) {
+static int module_authenticate(const char *pass) {
 
     if (!username)
-        return 0;
+        return -1;
 
     pam_handle_t *pam_handle = NULL;
     struct pam_conv conv = {
@@ -94,13 +95,15 @@ static int alock_auth_pam_auth(const char *pass) {
         retval = pam_authenticate(pam_handle, 0);
 
     pam_end(pam_handle, retval);
-    return retval == PAM_SUCCESS;
+    return !(retval == PAM_SUCCESS);
 }
 
 
-struct aAuth alock_auth_pam = {
-    "pam",
-    alock_auth_pam_init,
-    module_dummy_deinit,
-    alock_auth_pam_auth,
+struct aModuleAuth alock_auth_pam = {
+    { "pam",
+        module_dummy_loadargs,
+        module_init,
+        module_dummy_free,
+    },
+    module_authenticate,
 };

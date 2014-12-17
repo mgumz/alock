@@ -1,6 +1,7 @@
 /*
  * alock - cursor_none.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -14,8 +15,16 @@
 #include "alock.h"
 
 
-struct aCursor alock_cursor_none = {
-    "none",
-    module_dummy_init,
-    module_dummy_deinit,
+static Cursor module_getcursor(void) {
+    return None;
+}
+
+
+struct aModuleCursor alock_cursor_none = {
+    { "none",
+        module_dummy_loadargs,
+        module_dummy_init,
+        module_dummy_free,
+    },
+    module_getcursor,
 };
