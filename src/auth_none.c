@@ -7,6 +7,9 @@
  *
  * This projected is licensed under the terms of the MIT license.
  *
+ * This authentication module provides:
+ *  -auth none
+ *
  */
 
 #include "alock.h"
@@ -21,6 +24,7 @@ static int module_authenticate(const char *pass) {
 struct aModuleAuth alock_auth_none = {
     { "none",
         module_dummy_loadargs,
+        module_dummy_loadxrdb,
         module_dummy_init,
         module_dummy_free,
     },

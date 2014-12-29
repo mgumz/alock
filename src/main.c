@@ -512,6 +512,16 @@ int main(int argc, char **argv) {
 
         int rv = 0;
 
+        XrmInitialize();
+        XrmDatabase xrdb = XrmGetStringDatabase(XResourceManagerString(dinfo.display));
+
+        modules.auth->m.loadxrdb(xrdb);
+        modules.background->m.loadxrdb(xrdb);
+        modules.cursor->m.loadxrdb(xrdb);
+        modules.input->m.loadxrdb(xrdb);
+
+        XrmDestroyDatabase(xrdb);
+
         modules.auth->m.loadargs(args_auth);
         modules.background->m.loadargs(args_background);
         modules.cursor->m.loadargs(args_cursor);

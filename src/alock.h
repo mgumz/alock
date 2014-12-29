@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <X11/Xlib.h>
+#include <X11/Xresource.h>
 
 
 #if DEBUG
@@ -51,6 +52,7 @@ enum aInputState {
 struct aModule {
     const char *name;
     void (*loadargs)(const char *args);
+    void (*loadxrdb)(XrmDatabase database);
     int (*init)(struct aDisplayInfo *dinfo);
     void (*free)();
 };
@@ -125,6 +127,7 @@ extern struct aModuleInput alock_input_frame;
 
 /* dummy functions for module interface */
 void module_dummy_loadargs(const char *args);
+void module_dummy_loadxrdb(XrmDatabase database);
 int module_dummy_init(struct aDisplayInfo *dinfo);
 void module_dummy_free(void);
 

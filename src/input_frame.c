@@ -9,6 +9,12 @@
  * This input module provides:
  *  -input frame:input=<color>,check=<color>,error=<color>,width=<int>
  *
+ * Used resources:
+ *  ALock.Input.Frame.Color.Input
+ *  ALock.Input.Frame.Color.Check
+ *  ALock.Input.Frame.Color.Error
+ *  ALock.Input.Frame.Width
+ *
  */
 
 #if HAVE_CONFIG_H
@@ -71,6 +77,27 @@ static void module_loadargs(const char *args) {
     }
 
     free(arguments);
+}
+
+static void module_loadxrdb(XrmDatabase xrdb) {
+
+    XrmValue value;
+    char *type;
+
+    if (XrmGetResource(xrdb, "alock.input.frame.width",
+                "ALock.Input.Frame.Width", &type, &value))
+        data.width = strtol(value.addr, NULL, 0);
+
+    if (XrmGetResource(xrdb, "alock.input.frame.color.input",
+                "ALock.Input.Frame.Color.Input", &type, &value))
+        data.color_input.name = strdup(value.addr);
+    if (XrmGetResource(xrdb, "alock.input.frame.color.check",
+                "ALock.Input.Frame.Color.Check", &type, &value))
+        data.color_check.name = strdup(value.addr);
+    if (XrmGetResource(xrdb, "alock.input.frame.color.error",
+                "ALock.Input.Frame.Color.Error", &type, &value))
+        data.color_error.name = strdup(value.addr);
+
 }
 
 static int module_init(struct aDisplayInfo *dinfo) {
@@ -194,6 +221,7 @@ static void module_setstate(enum aInputState state) {
 struct aModuleInput alock_input_frame = {
     {  "frame",
         module_loadargs,
+        module_loadxrdb,
         module_init,
         module_free,
     },

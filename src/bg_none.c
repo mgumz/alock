@@ -64,6 +64,7 @@ static Window module_getwindow(int screen) {
 struct aModuleBackground alock_bg_none = {
     { "none",
         module_dummy_loadargs,
+        module_dummy_loadxrdb,
         module_init,
         module_free,
     },

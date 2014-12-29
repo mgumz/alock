@@ -10,6 +10,10 @@
  * This background module provides:
  *  -bg shade:color=<color>,shade=<int>
  *
+ * Used resources:
+ *  ALock.Background.Shade.Color
+ *  ALock.Background.Shade.Shade
+ *
  */
 
 #include <stdlib.h>
@@ -50,6 +54,21 @@ static void module_loadargs(const char *args) {
     }
 
     free(arguments);
+}
+
+static void module_loadxrdb(XrmDatabase xrdb) {
+
+    XrmValue value;
+    char *type;
+
+    if (XrmGetResource(xrdb, "alock.background.shade.color",
+                "ALock.Background.Shade.Color", &type, &value))
+        data.colorname = strdup(value.addr);
+
+    if (XrmGetResource(xrdb, "alock.background.shade.shade",
+                "ALock.Background.Shade.Shade", &type, &value))
+        data.shade = strtol(value.addr, NULL, 0);
+
 }
 
 static int module_init(struct aDisplayInfo *dinfo) {
@@ -154,6 +173,7 @@ static Window module_getwindow(int screen) {
 struct aModuleBackground alock_bg_shade = {
     { "shade",
         module_loadargs,
+        module_loadxrdb,
         module_init,
         module_free,
     },

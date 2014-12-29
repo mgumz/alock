@@ -8,7 +8,12 @@
  * This projected is licensed under the terms of the MIT license.
  *
  * This background module provides:
- *  -bg image:file=<file>,shade=<int>,scale,center,tiled
+ *  -bg image:file=<file>,color=<color>,shade=<int>,scale,center,tiled
+ *
+ * Used resources:
+ *  ALock.Background.Image.Color
+ *  ALock.Background.Image.Shade
+ *  ALock.Background.Image.Option
  *
  */
 
@@ -75,6 +80,30 @@ static void module_loadargs(const char *args) {
     free(arguments);
 }
 
+static void module_loadxrdb(XrmDatabase xrdb) {
+
+    XrmValue value;
+    char *type;
+
+    if (XrmGetResource(xrdb, "alock.background.image.option",
+                "ALock.Background.Image.Option", &type, &value)) {
+        if (strcmp(value.addr, "scale") == 0)
+            data.option = AIMAGE_OPTION_SCALE;
+        else if (strcmp(value.addr, "center") == 0)
+            data.option = AIMAGE_OPTION_CENTER;
+        else if (strcmp(value.addr, "tiled") == 0)
+            data.option = AIMAGE_OPTION_TILED;
+    }
+
+    if (XrmGetResource(xrdb, "alock.background.image.color",
+                "ALock.Background.Image.Color", &type, &value))
+        data.colorname = strdup(value.addr);
+
+    if (XrmGetResource(xrdb, "alock.background.image.shade",
+                "ALock.Background.Image.Shade", &type, &value))
+        data.shade = strtol(value.addr, NULL, 0);
+
+}
 
 static int module_init(struct aDisplayInfo *dinfo) {
 
@@ -262,6 +291,7 @@ static Window module_getwindow(int screen) {
 struct aModuleBackground alock_bg_image = {
     { "image",
         module_loadargs,
+        module_loadxrdb,
         module_init,
         module_free,
     },

@@ -160,6 +160,12 @@ void module_dummy_loadargs(const char *args) {
 }
 
 /* Dummy function for module interface. */
+void module_dummy_loadxrdb(XrmDatabase database) {
+    (void)database;
+    debug("dummy loadxrdb");
+}
+
+/* Dummy function for module interface. */
 int module_dummy_init(struct aDisplayInfo *dinfo) {
     (void)dinfo;
     debug("dummy init");

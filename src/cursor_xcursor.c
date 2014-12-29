@@ -82,6 +82,7 @@ static Cursor module_getcursor(void) {
 struct aModuleCursor alock_cursor_xcursor = {
     { "xcursor",
         module_loadargs,
+        module_dummy_loadxrdb,
         module_init,
         module_free,
     },
