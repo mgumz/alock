@@ -523,9 +523,12 @@ int main(int argc, char **argv) {
             rv |= 1;
         }
 
+#if ENABLE_PASSWD
         /* We can be installed setuid root to support shadow passwords,
          * and we don't need root privileges any longer.  --marekm */
-        setuid(getuid());
+        if (setuid(getuid()) != 0)
+            perror("alock: root privilege drop failed");
+#endif
 
         if (modules.background->m.init(&dinfo)) {
             fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
