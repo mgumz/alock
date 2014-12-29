@@ -77,6 +77,17 @@ static char *mem2hex(char *str, const unsigned char *mem, int len) {
 }
 #endif
 
+static void alock_auth_hash_list(void) {
+
+    printf("list of available hashing algorithms:\n");
+
+    unsigned int i;
+    for (i = 0; i < sizeof(algorithms) / sizeof(int); i++)
+        if (gcry_md_test_algo(algorithms[i]) == 0)
+            printf("  %s\n", gcry_md_algo_name(algorithms[i]));
+
+}
+
 static int alock_auth_hash_init(const char *args) {
 
     char *user_hash = NULL;
@@ -90,12 +101,7 @@ static int alock_auth_hash_init(const char *args) {
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
             if (strcmp(arg, "list") == 0) {
-                unsigned int i;
-                printf("list of available hashing algorithms:\n");
-                for (i = 0; i < sizeof(algorithms) / sizeof(int); i++) {
-                    if (gcry_md_test_algo(algorithms[i]) == 0)
-                        printf("%s\n", gcry_md_algo_name(algorithms[i]));
-                }
+                alock_auth_hash_list();
                 exit(EXIT_SUCCESS);
             }
             if (strstr(arg, "type=") == arg) {
