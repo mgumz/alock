@@ -111,6 +111,16 @@ static XColor *color_fg = NULL;
 static XColor *color_bg = NULL;
 
 
+static void alock_cursor_glyph_list(void) {
+
+    printf("list of available cursor glyphs:\n");
+
+    const struct CursorFontName *cursor;
+    for (cursor = cursor_names; cursor->name; cursor++)
+        printf("  %s\n", cursor->name);
+
+}
+
 static int alock_cursor_glyph_init(const char *args, struct aXInfo *xinfo) {
 
     if (!xinfo)
@@ -129,10 +139,7 @@ static int alock_cursor_glyph_init(const char *args, struct aXInfo *xinfo) {
         for (tmp = arguments; tmp; ) {
             arg = strsep(&tmp, ",");
             if (strcmp(arg, "list") == 0) {
-                const struct CursorFontName *cursor;
-                printf("list of available cursor glyphs:\n");
-                for (cursor = cursor_names; cursor->name; cursor++)
-                    printf("%s\n", cursor->name);
+                alock_cursor_glyph_list();
                 exit(EXIT_SUCCESS);
             }
             if (strstr(arg, "name=") == arg) {
