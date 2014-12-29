@@ -10,6 +10,11 @@
  * This cursor module provides:
  *  -cursor glyph:name=<glyph>,fg=<color>,bg=<color>
  *
+ * Used resources:
+ *  ALock.Cursor.Glyph.Name
+ *  ALock.Cursor.Glyph.Background
+ *  ALock.Cursor.Glyph.Foreground
+ *
  */
 
 #include <stdlib.h>
@@ -115,6 +120,20 @@ static struct moduleData {
 } data = { 0 };
 
 
+static int module_set_cursor_by_name(const char *name) {
+
+    const struct CursorFontName *cursor;
+
+    for (cursor = cursor_names; cursor->name; cursor++) {
+        if (!strcmp(cursor->name, name)) {
+            data.shape = cursor->shape;
+            return data.shape;
+        }
+    }
+
+    return -1;
+}
+
 static void module_cmd_list(void) {
 
     printf("list of available cursor glyphs:\n");
@@ -141,13 +160,7 @@ static void module_loadargs(const char *args) {
             exit(EXIT_SUCCESS);
         }
         if (strstr(arg, "name=") == arg) {
-            const struct CursorFontName *cursor;
-            for (cursor = cursor_names; cursor->name; cursor++) {
-                if (!strcmp(cursor->name, &arg[5])) {
-                    data.shape = cursor->shape;
-                    break;
-                }
-            }
+            module_set_cursor_by_name(&arg[5]);
         }
         else if (strstr(arg, "fg=") == arg) {
             free(data.colorname_fg);
@@ -160,6 +173,25 @@ static void module_loadargs(const char *args) {
     }
 
     free(arguments);
+}
+
+static void module_loadxrdb(XrmDatabase xrdb) {
+
+    XrmValue value;
+    char *type;
+
+    if (XrmGetResource(xrdb, "alock.cursor.glyph.name",
+                "ALock.Cursor.Glyph.Name", &type, &value))
+        module_set_cursor_by_name(value.addr);
+
+    if (XrmGetResource(xrdb, "alock.cursor.glyph.foreground",
+                "ALock.Cursor.Glyph.Foreground", &type, &value))
+        data.colorname_fg = strdup(value.addr);
+
+    if (XrmGetResource(xrdb, "alock.cursor.glyph.background",
+                "ALock.Cursor.Glyph.Background", &type, &value))
+        data.colorname_bg = strdup(value.addr);
+
 }
 
 static int module_init(struct aDisplayInfo *dinfo) {
@@ -206,6 +238,7 @@ static Cursor module_getcursor(void) {
 struct aModuleCursor alock_cursor_glyph = {
     { "glyph",
         module_loadargs,
+        module_loadxrdb,
         module_init,
         module_free,
     },

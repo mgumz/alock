@@ -10,6 +10,9 @@
  * This background module provides:
  *  -bg blank:color=<color>
  *
+ * Used resources:
+ *  ALock.Background.Blank.Color
+ *
  */
 
 #include <stdlib.h>
@@ -43,6 +46,17 @@ static void module_loadargs(const char *args) {
     }
 
     free(arguments);
+}
+
+static void module_loadxrdb(XrmDatabase xrdb) {
+
+    XrmValue value;
+    char *type;
+
+    if (XrmGetResource(xrdb, "alock.background.blank.color",
+                "ALock.Background.Blank.Color", &type, &value))
+        data.colorname = strdup(value.addr);
+
 }
 
 static int module_init(struct aDisplayInfo *dinfo) {
@@ -104,6 +118,7 @@ static Window module_getwindow(int screen) {
 struct aModuleBackground alock_bg_blank = {
     { "blank",
         module_loadargs,
+        module_loadxrdb,
         module_init,
         module_free,
     },

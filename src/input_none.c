@@ -6,6 +6,9 @@
  *
  * This projected is licensed under the terms of the MIT license.
  *
+ * This input module provides:
+ *  -input none
+ *
  */
 
 #include "alock.h"
@@ -30,6 +33,7 @@ static KeySym module_keypress(KeySym key) {
 struct aModuleInput alock_input_none = {
     {  "none",
         module_dummy_loadargs,
+        module_dummy_loadxrdb,
         module_dummy_init,
         module_dummy_free,
     },

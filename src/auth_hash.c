@@ -209,6 +209,7 @@ static int module_authenticate(const char *pass) {
 struct aModuleAuth alock_auth_hash = {
     { "hash",
         module_dummy_loadargs,
+        module_dummy_loadxrdb,
         module_init,
         module_dummy_free,
     },

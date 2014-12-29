@@ -23,6 +23,7 @@ static Cursor module_getcursor(void) {
 struct aModuleCursor alock_cursor_none = {
     { "none",
         module_dummy_loadargs,
+        module_dummy_loadxrdb,
         module_dummy_init,
         module_dummy_free,
     },
