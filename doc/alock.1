@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: alock
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 07/24/2014
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 01/06/2015
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "ALOCK" "1" "07/24/2014" "\ \&" "\ \&"
+.TH "ALOCK" "1" "01/06/2015" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 alock \- locks the local X display until the correct password is entered
 .SH "SYNOPSIS"
 .sp
-\fBalock\fR [\-h] [\-auth type:opts] [\-bg type:opts] [\-cursor type:opts] [\-input type:opts]
+\fBalock\fR [\-help] [\-modules] [\-auth type:opts] [\-bg type:opts] [\-cursor type:opts] [\-input type:opts]
 .SH "DESCRIPTION"
 .sp
 \fBAlock\fR is a simple screen lock application, which locks the X server until the correct password is provided\&. If the authentication was successful, the X server is unlocked and the user can continue to work\&. When \fBalock\fR is started it just waits for the first keypress\&. This first keypress is to indicate that the user now wants to type in the password\&. Such a behavior might seem to be annoying at the first glance, however this approach is chosen due to security reasons\&.
@@ -39,25 +39,19 @@ alock \- locks the local X display until the correct password is entered
 Note, that \fBalock\fR does not provide any fancy animations like \fIxlock\fR and \fIxscreensaver\fR and probably never will\&. It\(cqs just for locking the current X session\&.
 .SH "OPTIONS"
 .PP
-\fB\-h\fR
+\fB\-h\fR, \fB\-help\fR
 .RS 4
 Print a short help
 .RE
 .PP
-\fB\-auth\fR \fItype:options\fR
+\fB\-m\fR, \fB\-modules\fR
+.RS 4
+List available (compiled in) module types
+.RE
+.PP
+\fB\-a\fR, \fB\-auth\fR \fItype:options\fR
 .RS 4
 Define the type of the authentication, depends strongly on how alock was built:
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-list \- Displays a list of available types
-.RE
 .sp
 .RS 4
 .ie n \{\
@@ -151,20 +145,9 @@ file=<filename> \- use content of <filename> as reference
 .RE
 .RE
 .PP
-\fB\-bg\fR \fItype:options\fR
+\fB\-b\fR, \fB\-bg\fR \fItype:options\fR
 .RS 4
 Define the type of how alock should handle the background:
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-list \- Displays a list of available types
-.RE
 .sp
 .RS 4
 .ie n \{\
@@ -283,7 +266,7 @@ scale
 .sp -1
 .IP \(bu 2.3
 .\}
-tile
+tiled
 .RE
 .sp
 .RS 4
@@ -310,20 +293,9 @@ shade=<percent> \- valid from 1 to 99
 .RE
 .RE
 .PP
-\fB\-cursor\fR \fItype:options\fR
+\fB\-c\fR, \fB\-cursor\fR \fItype:options\fR
 .RS 4
 Define the look\-a\-like of the cursor/mouse pointer:
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-list \- Displays a list of available types
-.RE
 .sp
 .RS 4
 .ie n \{\
@@ -436,20 +408,9 @@ file=<filename>
 .RE
 .RE
 .PP
-\fB\-input\fR \fItype:options\fR
+\fB\-i\fR, \fB\-input\fR \fItype:options\fR
 .RS 4
 Define the type of the input indicator, which should be used while typing password:
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-list \- Displays a list of available types
-.RE
 .sp
 .RS 4
 .ie n \{\
@@ -480,7 +441,7 @@ frame \- Display frame on the current display
 .sp -1
 .IP \(bu 2.3
 .\}
-width=<int> \- valid from 1 upwards
+width=<width> \- the frame width, valid from 1 upwards
 .RE
 .sp
 .RS 4
@@ -491,9 +452,116 @@ width=<int> \- valid from 1 upwards
 .sp -1
 .IP \(bu 2.3
 .\}
-color=<color1>|<color2>|<color3> \- use <color> while typing, checking and upon error respectively
+input=<color> \- use <color> while typing
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+check=<color> \- use <color> while checking password
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+error=<color> \- use <color> upon authentication error
 .RE
 .RE
+.RE
+.SH "RESOURCES"
+.PP
+\fBALock\&.Background\&.Blank\&.Color\fR
+.RS 4
+Same as
+\fB\-b blank:color\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Background\&.Image\&.Color\fR
+.RS 4
+Same as
+\fB\-b image:color\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Background\&.Image\&.Shade\fR
+.RS 4
+Same as
+\fB\-b image:shade\fR\&. Numerical\&.
+.RE
+.PP
+\fBALock\&.Background\&.Image\&.Option\fR
+.RS 4
+Same as
+\fB\-b image:center\fR,
+\fB\-b image:scale\fR
+or
+\fB\-b image:tiled\fR\&. Available option values:
+\fBcenter\fR,
+\fBscale\fR,
+\fBtiled\fR
+.RE
+.PP
+\fBALock\&.Background\&.Shade\&.Color\fR
+.RS 4
+Same as
+\fB\-b shade:color\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Background\&.Shade\&.Shade\fR
+.RS 4
+Same as
+\fB\-b shade:shade\fR\&. Numerical\&.
+.RE
+.PP
+\fBALock\&.Cursor\&.Glyph\&.Name\fR
+.RS 4
+Same as
+\fB\-c glyph:name\fR\&. Compiled\-in glyph name\&.
+.RE
+.PP
+\fBALock\&.Cursor\&.Glyph\&.Background\fR
+.RS 4
+Same as
+\fB\-b glyph:bg\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Cursor\&.Glyph\&.Foreground\fR
+.RS 4
+Same as
+\fB\-b glyph:fg\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Input\&.Frame\&.Color\&.Input\fR
+.RS 4
+Same as
+\fB\-i frame:input\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Input\&.Frame\&.Color\&.Check\fR
+.RS 4
+Same as
+\fB\-i frame:check\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Input\&.Frame\&.Color\&.Error\fR
+.RS 4
+Same as
+\fB\-i frame:error\fR\&. X color resource name\&.
+.RE
+.PP
+\fBALock\&.Input\&.Frame\&.Width\fR
+.RS 4
+Same as
+\fB\-i frame:width\fR\&. Numerical\&.
 .RE
 .SH "AUTHOR"
 .sp
