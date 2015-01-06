@@ -10,7 +10,7 @@ alock - locks the local X display until the correct password is entered
 
 SYNOPSIS
 --------
-*alock* [-h] [-auth type:opts] [-bg type:opts] [-cursor type:opts] [-input type:opts]
+*alock* [-help] [-modules] [-auth type:opts] [-bg type:opts] [-cursor type:opts] [-input type:opts]
 
 
 DESCRIPTION
@@ -30,13 +30,15 @@ session.
 
 OPTIONS
 -------
-*-h*::
+*-h*, *-help*::
     Print a short help
 
-*-auth* 'type:options'::
+*-m*, *-modules*::
+    List available (compiled in) module types
+
+*-a*, *-auth* 'type:options'::
     Define the type of the authentication, depends strongly on
     how alock was built:
-    - list - Displays a list of available types
     - none - No authentication at all
     - pam - Tries to authenticate against the users system-password
             using the 'pam-login'-module.
@@ -48,9 +50,8 @@ OPTIONS
         * hash=<hash> - use <hash> as reference
         * file=<filename> - use content of <filename> as reference
 
-*-bg* 'type:options'::
+*-b*, *-bg* 'type:options'::
     Define the type of how alock should handle the background:
-    - list - Displays a list of available types
     - none - You can see everything like it is
     - blank - Fill the background with color
         * color=<color> - use <color>
@@ -61,13 +62,12 @@ OPTIONS
         * file=<filename>
         * center
         * scale
-        * tile
+        * tiled
         * color=<color> - use <color>
         * shade=<percent> - valid from 1 to 99
 
-*-cursor* 'type:options'::
+*-c*, *-cursor* 'type:options'::
     Define the look-a-like of the cursor/mouse pointer:
-    - list - Displays a list of available types
     - none - No change to the current cursor
     - glyph - Use the given glyph of the "cursor"-font
         * list - Display all possible glyph-names
@@ -79,15 +79,58 @@ OPTIONS
     - image - Use the given <filename>
         * file=<filename>
 
-*-input* 'type:options'::
+*-i*, *-input* 'type:options'::
     Define the type of the input indicator, which should be used while typing
 		password:
-    - list - Displays a list of available types
     - none - No input feedback for user
     - frame - Display frame on the current display
-        * width=<int> - valid from 1 upwards
-        * color=<color1>|<color2>|<color3> - use <color> while typing, checking
-				and upon error respectively
+        * width=<width> - the frame width, valid from 1 upwards
+        * input=<color> - use <color> while typing
+        * check=<color> - use <color> while checking password
+        * error=<color> - use <color> upon authentication error
+
+
+RESOURCES
+---------
+*ALock.Background.Blank.Color*::
+    Same as *-b blank:color*. X color resource name.
+
+*ALock.Background.Image.Color*::
+    Same as *-b image:color*. X color resource name.
+
+*ALock.Background.Image.Shade*::
+    Same as *-b image:shade*. Numerical.
+
+*ALock.Background.Image.Option*::
+    Same as *-b image:center*, *-b image:scale* or *-b image:tiled*. Available
+    option values: *center*, *scale*, *tiled*
+
+*ALock.Background.Shade.Color*::
+    Same as *-b shade:color*. X color resource name.
+
+*ALock.Background.Shade.Shade*::
+    Same as *-b shade:shade*. Numerical.
+
+*ALock.Cursor.Glyph.Name*::
+    Same as *-c glyph:name*. Compiled-in glyph name.
+
+*ALock.Cursor.Glyph.Background*::
+    Same as *-b glyph:bg*. X color resource name.
+
+*ALock.Cursor.Glyph.Foreground*::
+    Same as *-b glyph:fg*. X color resource name.
+
+*ALock.Input.Frame.Color.Input*::
+    Same as *-i frame:input*. X color resource name.
+
+*ALock.Input.Frame.Color.Check*::
+    Same as *-i frame:check*. X color resource name.
+
+*ALock.Input.Frame.Color.Error*::
+    Same as *-i frame:error*. X color resource name.
+
+*ALock.Input.Frame.Width*::
+    Same as *-i frame:width*. Numerical.
 
 
 AUTHOR
