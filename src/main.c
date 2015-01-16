@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <wchar.h>
+#include <sys/mman.h>
 #include <X11/Xatom.h>
 #include <X11/Xos.h>
 #include <X11/Xproto.h>
@@ -210,7 +211,9 @@ static void eventLoop(struct aDisplayInfo *dinfo, struct aModules *modules) {
     unsigned int clen;
     unsigned int pass_pos = 0, pass_len = 0;
     unsigned long keypress_time = 0;
-    char rbuf[sizeof(pass)];
+
+    /* if possible do not page this address to the swap area */
+    mlock(pass, sizeof(pass));
 
     debug("entering event main loop");
     for (;;) {
@@ -300,17 +303,28 @@ static void eventLoop(struct aDisplayInfo *dinfo, struct aModules *modules) {
             /* input confirmation and authentication test */
             case XK_Linefeed:
             case XK_Return:
-                modules->input->setstate(AINPUT_STATE_CHECK);
-                wcstombs(rbuf, pass, sizeof(rbuf));
-                if (modules->auth->authenticate(rbuf) == 0) {
-                    modules->input->setstate(AINPUT_STATE_VALID);
-                    return;
+                {
+                    char rbuf[sizeof(pass)];
+                    int rv;
+
+                    modules->input->setstate(AINPUT_STATE_CHECK);
+
+                    wcstombs(rbuf, pass, sizeof(rbuf));
+                    rv = modules->auth->authenticate(rbuf);
+
+                    memset(rbuf, 0, sizeof(rbuf));
+                    memset(pass, 0, sizeof(pass));
+                    pass_pos = pass_len = 0;
+
+                    if (rv == 0) { /* successful authentication */
+                        modules->input->setstate(AINPUT_STATE_VALID);
+                        return;
+                    }
+
+                    modules->input->setstate(AINPUT_STATE_ERROR);
+                    modules->input->setstate(AINPUT_STATE_INIT);
+                    keypress_time = alock_mtime();
                 }
-                modules->input->setstate(AINPUT_STATE_ERROR);
-                modules->input->setstate(AINPUT_STATE_INIT);
-                keypress_time = alock_mtime();
-                pass_pos = pass_len = 0;
-                pass[0] = '\0';
                 break;
 
             /* input new character at the current input position */
