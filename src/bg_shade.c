@@ -8,11 +8,12 @@
  * This projected is licensed under the terms of the MIT license.
  *
  * This background module provides:
- *  -bg shade:color=<color>,shade=<int>
+ *  -bg shade:color=<color>,shade=<int>,mono
  *
  * Used resources:
  *  ALock.Background.Shade.Color
  *  ALock.Background.Shade.Shade
+ *  ALock.Background.Shade.Mono
  *
  */
 
@@ -28,7 +29,8 @@ static struct moduleData {
     Window *windows;
     char *colorname;
     unsigned int shade;
-} data = { NULL, NULL, NULL, 80 };
+    char monochrome;
+} data = { NULL, NULL, NULL, 80, 0 };
 
 
 static void module_loadargs(const char *args) {
@@ -51,6 +53,9 @@ static void module_loadargs(const char *args) {
             if (data.shade > 99)
                 fprintf(stderr, "[shade]: shade not in range [0, 99]\n");
         }
+        else if (strcmp(arg, "mono") == 0) {
+            data.monochrome = 1;
+        }
     }
 
     free(arguments);
@@ -68,6 +73,10 @@ static void module_loadxrdb(XrmDatabase xrdb) {
     if (XrmGetResource(xrdb, "alock.background.shade.shade",
                 "ALock.Background.Shade.Shade", &type, &value))
         data.shade = strtol(value.addr, NULL, 0);
+
+    if (XrmGetResource(xrdb, "alock.background.shade.mono",
+                "ALock.Background.Shade.Mono", &type, &value))
+        data.monochrome = strcmp(value.addr, "true") == 0;
 
 }
 
@@ -105,6 +114,8 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
                 { /* grab whats on the screen */
                     XImage *image = XGetImage(dpy, root, 0, 0, width, height, AllPlanes, ZPixmap);
+                    if (data.monochrome) /* optional monochrome conversion */
+                        alock_grayscale_image(image, 0, 0, width, height);
                     src_pm = XCreatePixmap(dpy, root, width, height, depth);
                     XPutImage(dpy, src_pm, gc, image, 0, 0, 0, 0, width, height);
                     XDestroyImage(image);

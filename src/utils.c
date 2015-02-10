@@ -16,6 +16,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <X11/Xutil.h>
 #if ENABLE_XRENDER
 #include <X11/extensions/Xrender.h>
 #endif
@@ -93,36 +94,35 @@ int alock_shade_pixmap(Display *display,
         unsigned int width,
         unsigned int height) {
 #if ENABLE_XRENDER
-    Picture alpha_pic = None;
-    XRenderPictFormat *format = None;
+    Picture alpha_pic;
+    XRenderPictFormat *format;
 
     {
         XRenderPictFormat alpha_format;
-        unsigned long mask = PictFormatType|PictFormatDepth|PictFormatAlpha|PictFormatAlphaMask;
         alpha_format.type = PictTypeDirect;
         alpha_format.depth = 8;
         alpha_format.direct.alpha = 0;
         alpha_format.direct.alphaMask = 0xff;
 
-        format = XRenderFindFormat(display, mask, &alpha_format, 0);
+        format = XRenderFindFormat(display,
+              PictFormatType | PictFormatDepth | PictFormatAlpha | PictFormatAlphaMask,
+              &alpha_format, 0);
     }
 
     if (!format) {
-        fprintf(stderr, "alock: couldnt find valid format for alpha\n");
+        fprintf(stderr, "alock: couldn't find valid format for alpha\n");
         XFreePixmap(display, dst_pm);
         XFreePixmap(display, src_pm);
         return 0;
     }
 
     { /* fill the alpha-picture */
-        Pixmap alpha_pm = None;
-
+        Pixmap alpha_pm;
         XRenderColor alpha_color;
         XRenderPictureAttributes alpha_attr;
 
-        alpha_color.alpha = 0xffff * (shade)/100;
-
-        alpha_attr.repeat = True;
+        alpha_color.alpha = 0xffff * shade / 100;
+        alpha_attr.repeat = RepeatNormal;
 
         alpha_pm = XCreatePixmap(display, src_pm, 1, 1, 8);
         alpha_pic = XRenderCreatePicture(display, alpha_pm, format, CPRepeat, &alpha_attr);
@@ -151,6 +151,35 @@ int alock_shade_pixmap(Display *display,
     (void)visual;
     return 0;
 #endif /* ENABLE_XRENDER */
+}
+
+/* Convert given color image to the grayscale intensity one. Note, that this
+ * function performs in-place conversion. */
+int alock_grayscale_image(XImage *image,
+        int x, int y,
+        unsigned int width,
+        unsigned int height) {
+
+    union {
+        struct {
+            unsigned char red;
+            unsigned char green;
+            unsigned char blue;
+            unsigned char alpha;
+        } v;
+        unsigned long value;
+    } pixel;
+    int _x, _y;
+
+    for (_x = x; _x < width; _x++)
+        for (_y = y; _y < height; _y++) {
+            pixel.value = XGetPixel(image, _x, _y);
+            pixel.v.red = pixel.v.green = pixel.v.blue = (
+                    pixel.v.red + pixel.v.green + pixel.v.blue) / 3;
+            XPutPixel(image, _x, _y, pixel.value);
+        }
+
+    return 1;
 }
 
 /* Dummy function for module interface. */

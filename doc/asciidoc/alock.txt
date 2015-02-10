@@ -58,6 +58,7 @@ OPTIONS
     - shade - Dims content of the screen and recolors it.
         * color=<color> - use <color>
         * shade=<percent> - valid from 1 to 99
+        * mono - convert to monochrome
     - image - Use the image <filename> and puts it as the background
         * file=<filename>
         * center
@@ -110,6 +111,9 @@ RESOURCES
 
 *ALock.Background.Shade.Shade*::
     Same as *-b shade:shade*. Numerical.
+
+*ALock.Background.Shade.Mono*::
+    Same as *-b shade:mono*. Boolean.
 
 *ALock.Cursor.Glyph.Name*::
     Same as *-c glyph:name*. Compiled-in glyph name.

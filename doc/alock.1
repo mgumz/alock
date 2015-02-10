@@ -213,6 +213,17 @@ color=<color> \- use <color>
 .\}
 shade=<percent> \- valid from 1 to 99
 .RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+mono \- convert to monochrome
+.RE
 .RE
 .sp
 .RS 4
@@ -520,6 +531,12 @@ Same as
 .RS 4
 Same as
 \fB\-b shade:shade\fR\&. Numerical\&.
+.RE
+.PP
+\fBALock\&.Background\&.Shade\&.Mono\fR
+.RS 4
+Same as
+\fB\-b shade:mono\fR\&. Boolean\&.
 .RE
 .PP
 \fBALock\&.Cursor\&.Glyph\&.Name\fR
