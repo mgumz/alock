@@ -150,5 +150,9 @@ int alock_shade_pixmap(Display *display,
         int dst_x, int dst_y,
         unsigned int width,
         unsigned int height);
+int alock_grayscale_image(XImage *image,
+        int x, int y,
+        unsigned int width,
+        unsigned int height);
 
 #endif /* __ALOCK_H */
