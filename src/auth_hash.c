@@ -1,6 +1,6 @@
 /*
  * alock - auth_hash.c
- * Copyright (c) 2014 Arkadiusz Bokowy
+ * Copyright (c) 2014 - 2015 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -142,8 +142,8 @@ return_error:
 }
 
 static int module_init(struct aDisplayInfo *dinfo) {
+    (void)dinfo;
 
-    int status = 1;
     int len;
 
     if (data.selected_algorithm == 0) {
@@ -211,7 +211,7 @@ struct aModuleAuth alock_auth_hash = {
         module_loadargs,
         module_dummy_loadxrdb,
         module_init,
-        module_dummy_free,
+        module_free,
     },
     module_authenticate,
 };

@@ -1,7 +1,7 @@
 /*
  * alock - utils.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2015 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -206,7 +206,6 @@ int alock_blur_pixmap(Display *display,
         XRenderPictFormat *format;
         Picture src_pic;
         Picture dst_pic;
-        Picture tmp_pic;
 
         /* TODO: find a better way to make 2D Gaussian blur */
 
@@ -257,8 +256,8 @@ int alock_grayscale_image(XImage *image,
     } pixel;
     int _x, _y;
 
-    for (_x = x; _x < width; _x++)
-        for (_y = y; _y < height; _y++) {
+    for (_x = x; _x < (signed)width; _x++)
+        for (_y = y; _y < (signed)height; _y++) {
             pixel.value = XGetPixel(image, _x, _y);
             pixel.v.red = pixel.v.green = pixel.v.blue = (
                     pixel.v.red + pixel.v.green + pixel.v.blue) / 3;

@@ -1,6 +1,6 @@
 /*
  * alock - input_frame.c
- * Copyright (c) 2014 Arkadiusz Bokowy
+ * Copyright (c) 2014 - 2015 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -151,6 +151,7 @@ static void module_free(void) {
 }
 
 static Window module_getwindow(int screen) {
+    (void)screen;
     return data.window;
 }
 

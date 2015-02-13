@@ -1,6 +1,7 @@
 /*
  * alock - auth_passwd.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
+ *               2014 - 2015 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -37,6 +38,7 @@ static struct passwd *pwd_entry = NULL;
 
 
 static int module_init(struct aDisplayInfo *dinfo) {
+    (void)dinfo;
 
     errno = 0;
     pwd_entry = getpwuid(getuid());
