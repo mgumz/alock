@@ -1,7 +1,7 @@
 /*
  * alock - auth_pam.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2015 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -32,6 +32,7 @@ static int alock_auth_pam_conv(int num_msg,
         const struct pam_message **msgs,
         struct pam_response **response,
         void *appdata_ptr) {
+    (void)appdata_ptr;
 
     if (num_msg <= 0)
         return PAM_CONV_ERR;
