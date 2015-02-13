@@ -2,12 +2,12 @@
 .\"     Title: alock
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 01/06/2015
+.\"      Date: 02/13/2015
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "ALOCK" "1" "01/06/2015" "\ \&" "\ \&"
+.TH "ALOCK" "1" "02/13/2015" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -212,6 +212,17 @@ color=<color> \- use <color>
 .IP \(bu 2.3
 .\}
 shade=<percent> \- valid from 1 to 99
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+blur=<percent> \- valid from 1 to 99
 .RE
 .sp
 .RS 4
@@ -531,6 +542,12 @@ Same as
 .RS 4
 Same as
 \fB\-b shade:shade\fR\&. Numerical\&.
+.RE
+.PP
+\fBALock\&.Background\&.Shade\&.Blur\fR
+.RS 4
+Same as
+\fB\-b shade:blur\fR\&. Numerical\&.
 .RE
 .PP
 \fBALock\&.Background\&.Shade\&.Mono\fR

@@ -8,11 +8,12 @@
  * This projected is licensed under the terms of the MIT license.
  *
  * This background module provides:
- *  -bg shade:color=<color>,shade=<int>,mono
+ *  -bg shade:color=<color>,shade=<int>,blur=<int>,mono
  *
  * Used resources:
  *  ALock.Background.Shade.Color
  *  ALock.Background.Shade.Shade
+ *  ALock.Background.Shade.Blur
  *  ALock.Background.Shade.Mono
  *
  */
@@ -29,8 +30,9 @@ static struct moduleData {
     Window *windows;
     char *colorname;
     unsigned int shade;
+    unsigned int blur;
     char monochrome;
-} data = { NULL, NULL, NULL, 80, 0 };
+} data = { NULL, NULL, NULL, 80, 0, 0 };
 
 
 static void module_loadargs(const char *args) {
@@ -50,8 +52,9 @@ static void module_loadargs(const char *args) {
         }
         else if (strstr(arg, "shade=") == arg) {
             data.shade = strtol(&arg[6], NULL, 0);
-            if (data.shade > 99)
-                fprintf(stderr, "[shade]: shade not in range [0, 99]\n");
+        }
+        else if (strstr(arg, "blur=") == arg) {
+            data.blur = strtol(&arg[5], NULL, 0);
         }
         else if (strcmp(arg, "mono") == 0) {
             data.monochrome = 1;
@@ -74,6 +77,10 @@ static void module_loadxrdb(XrmDatabase xrdb) {
                 "ALock.Background.Shade.Shade", &type, &value))
         data.shade = strtol(value.addr, NULL, 0);
 
+    if (XrmGetResource(xrdb, "alock.background.shade.blur",
+                "ALock.Background.Shade.Blur", &type, &value))
+        data.blur = strtol(value.addr, NULL, 0);
+
     if (XrmGetResource(xrdb, "alock.background.shade.mono",
                 "ALock.Background.Shade.Mono", &type, &value))
         data.monochrome = strcmp(value.addr, "true") == 0;
@@ -89,6 +96,12 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
     if (!alock_check_xrender(dpy))
         return -1;
+
+    /* show warning message when value is out of reasonable range */
+    if (data.shade > 100)
+        fprintf(stderr, "[shade]: shade not in range [0, 100]\n");
+    if (data.blur > 100)
+        fprintf(stderr, "[shade]: blur not in range [0, 100]\n");
 
     data.dinfo = dinfo;
     data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
@@ -135,6 +148,8 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
                 Visual *vis = DefaultVisual(dpy, scr);
                 alock_shade_pixmap(dpy, vis, src_pm, dst_pm, data.shade, 0, 0, 0, 0, width, height);
+                XCopyArea(dpy, dst_pm, src_pm, gc, 0, 0, width, height, 0, 0);
+                alock_blur_pixmap(dpy, vis, src_pm, dst_pm, data.blur, 0, 0, 0, 0, width, height);
             }
 
             { /* create final window */
