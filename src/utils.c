@@ -13,8 +13,10 @@
 #include "../config.h"
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include <time.h>
 #include <X11/Xutil.h>
 #if ENABLE_XRENDER
@@ -84,6 +86,8 @@ int alock_check_xrender(Display *display) {
 #endif /* ENABLE_XRENDER */
 }
 
+/* Shade given source pixmap by the amount specified by the shade parameter,
+ * which should be in range [0, 100]. */
 int alock_shade_pixmap(Display *display,
         Visual *visual,
         const Pixmap src_pm,
@@ -94,7 +98,7 @@ int alock_shade_pixmap(Display *display,
         unsigned int width,
         unsigned int height) {
 #if ENABLE_XRENDER
-    Picture alpha_pic;
+    Picture alpha_pic = None;
     XRenderPictFormat *format;
 
     {
@@ -117,17 +121,21 @@ int alock_shade_pixmap(Display *display,
     }
 
     { /* fill the alpha-picture */
-        Pixmap alpha_pm;
-        XRenderColor alpha_color;
-        XRenderPictureAttributes alpha_attr;
+        Pixmap pm;
+        XRenderColor color;
+        XRenderPictureAttributes pa;
 
-        alpha_color.alpha = 0xffff * shade / 100;
-        alpha_attr.repeat = RepeatNormal;
+        if (shade > 100)
+            shade = 100;
 
-        alpha_pm = XCreatePixmap(display, src_pm, 1, 1, 8);
-        alpha_pic = XRenderCreatePicture(display, alpha_pm, format, CPRepeat, &alpha_attr);
-        XRenderFillRectangle(display, PictOpSrc, alpha_pic, &alpha_color, 0, 0, 1, 1);
-        XFreePixmap(display, alpha_pm);
+        pa.repeat = True;
+        color.alpha = 0xffff * shade / 100;
+
+        pm = XCreatePixmap(display, src_pm, 1, 1, 8);
+        alpha_pic = XRenderCreatePicture(display, pm, format, CPRepeat, &pa);
+        XRenderFillRectangle(display, PictOpSrc, alpha_pic, &color, 0, 0, 1, 1);
+
+        XFreePixmap(display, pm);
     }
 
     { /* blend all together */
@@ -135,7 +143,6 @@ int alock_shade_pixmap(Display *display,
         Picture dst_pic;
 
         format = XRenderFindVisualFormat(display, visual);
-
         src_pic = XRenderCreatePicture(display, src_pm, format, 0, 0);
         dst_pic = XRenderCreatePicture(display, dst_pm, format, 0, 0);
 
@@ -145,6 +152,85 @@ int alock_shade_pixmap(Display *display,
         XRenderFreePicture(display, src_pic);
         XRenderFreePicture(display, dst_pic);
     }
+
+    XRenderFreePicture(display, alpha_pic);
+    return 1;
+#else
+    (void)display;
+    (void)visual;
+    return 0;
+#endif /* ENABLE_XRENDER */
+}
+
+/* Blur given source pixmap using a Gaussian convolution filter. Whole
+ * operation is performed by the X server and when possible hardware
+ * accelerated. For the best results the blur parameter should be in the
+ * range [0, 100]. */
+int alock_blur_pixmap(Display *display,
+        Visual *visual,
+        const Pixmap src_pm,
+        Pixmap dst_pm,
+        unsigned char blur,
+        int src_x, int src_y,
+        int dst_x, int dst_y,
+        unsigned int width,
+        unsigned int height) {
+#if ENABLE_XRENDER
+    if (!blur)
+        /* TODO: copy source pixmap to the destination one */
+        return 1;
+
+    int size = (blur / 20) * 2 + 5;
+    XFixed *params = malloc(sizeof(XFixed) * (size + 2));
+
+    { /* calculate sampled Gaussian kernel */
+        double *kernel = malloc(sizeof(double) * size);
+        double sigma = size / 3.0;
+        double denom = 2 * sigma * sigma;
+        double scale = sqrt(M_PI * denom);
+        double vsum = 0.0;
+        int i;
+
+        for (i = 0; i < size; i++) {
+            int n = i - size / 2;
+            kernel[i] = exp(-(n * n) / denom) / scale;
+            vsum += kernel[i];
+        }
+        for (i = 0; i < size; i++)
+            params[i + 2] = XDoubleToFixed(kernel[i] / vsum);
+
+        free(kernel);
+    }
+
+    { /* 2D blur using convolution filter */
+        XRenderPictFormat *format;
+        Picture src_pic;
+        Picture dst_pic;
+        Picture tmp_pic;
+
+        /* TODO: find a better way to make 2D Gaussian blur */
+
+        format = XRenderFindVisualFormat(display, visual);
+        src_pic = XRenderCreatePicture(display, src_pm, format, 0, NULL);
+        dst_pic = XRenderCreatePicture(display, dst_pm, format, 0, NULL);
+
+        params[0] = XDoubleToFixed(size);
+        params[1] = XDoubleToFixed(1);
+        XRenderSetPictureFilter(display, src_pic, FilterConvolution, params, size + 2);
+        XRenderComposite(display, PictOpSrc, src_pic, None, dst_pic,
+                src_x, src_y, 0, 0, dst_x, dst_y, width, height);
+
+        params[0] = XDoubleToFixed(1);
+        params[1] = XDoubleToFixed(size);
+        XRenderSetPictureFilter(display, dst_pic, FilterConvolution, params, size + 2);
+        XRenderComposite(display, PictOpOver, dst_pic, None, dst_pic,
+                src_x, src_y, 0, 0, dst_x, dst_y, width, height);
+
+        XRenderFreePicture(display, src_pic);
+        XRenderFreePicture(display, dst_pic);
+    }
+
+    free(params);
     return 1;
 #else
     (void)display;
