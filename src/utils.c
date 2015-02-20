@@ -180,23 +180,30 @@ int alock_blur_pixmap(Display *display,
         /* TODO: copy source pixmap to the destination one */
         return 1;
 
-    int size = (blur / 20) * 2 + 5;
-    XFixed *params = malloc(sizeof(XFixed) * (size + 2));
+    // NOTE: It seems that reasonable sigma value is between 0.5 and 4. This
+    //       will translate into the blur up to 12 x 12 pixels wide - radius
+    //       is like 3x times the sigma.
+    double sigma = (double)blur / 30 + 0.5;
+    int radius = sigma * sqrt(2 * -log(1.0 / 255));
+    int size = radius * 2 + 1;
+
+    XFixed *params = malloc(sizeof(XFixed) * (2 + size * size));
 
     { /* calculate sampled Gaussian kernel */
-        double *kernel = malloc(sizeof(double) * size);
-        double sigma = size / 3.0;
-        double denom = 2 * sigma * sigma;
-        double scale = sqrt(M_PI * denom);
-        double vsum = 0.0;
-        int i;
+        double *kernel = malloc(sizeof(double) * size * size);
+        double scale1 = - 1.0 / (2 * sigma * sigma);
+        double scale2 = - scale1 / M_PI;
+        double vsum = 0;
+        int i, x, y;
 
-        for (i = 0; i < size; i++) {
-            int n = i - size / 2;
-            kernel[i] = exp(-(n * n) / denom) / scale;
-            vsum += kernel[i];
-        }
-        for (i = 0; i < size; i++)
+        for (i = 0, x = -radius; x <= radius; x++)
+            for (y = -radius; y <= radius; y++, i++) {
+                kernel[i] = scale2 * exp(scale1 * (x * x + y * y));
+                vsum += kernel[i];
+            }
+
+        params[0] = params[1] = XDoubleToFixed(size);
+        for (i = 0; i < size * size; i++)
             params[i + 2] = XDoubleToFixed(kernel[i] / vsum);
 
         free(kernel);
@@ -207,23 +214,14 @@ int alock_blur_pixmap(Display *display,
         Picture src_pic;
         Picture dst_pic;
 
-        /* TODO: find a better way to make 2D Gaussian blur */
-
         format = XRenderFindVisualFormat(display, visual);
         src_pic = XRenderCreatePicture(display, src_pm, format, 0, NULL);
         dst_pic = XRenderCreatePicture(display, dst_pm, format, 0, NULL);
 
-        params[0] = XDoubleToFixed(size);
-        params[1] = XDoubleToFixed(1);
-        XRenderSetPictureFilter(display, src_pic, FilterConvolution, params, size + 2);
+        XRenderSetPictureFilter(display, src_pic, FilterConvolution,
+                                params, 2 + size * size);
         XRenderComposite(display, PictOpSrc, src_pic, None, dst_pic,
-                src_x, src_y, 0, 0, dst_x, dst_y, width, height);
-
-        params[0] = XDoubleToFixed(1);
-        params[1] = XDoubleToFixed(size);
-        XRenderSetPictureFilter(display, dst_pic, FilterConvolution, params, size + 2);
-        XRenderComposite(display, PictOpOver, dst_pic, None, dst_pic,
-                src_x, src_y, 0, 0, dst_x, dst_y, width, height);
+                         src_x, src_y, 0, 0, dst_x, dst_y, width, height);
 
         XRenderFreePicture(display, src_pic);
         XRenderFreePicture(display, dst_pic);
