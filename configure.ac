@@ -111,6 +111,10 @@ AM_COND_IF(
 		[XRENDER], [xrender],
 		[AC_DEFINE([ENABLE_XRENDER], [1], [Define to 1 if Xrender is enabled])],
 		[AC_MSG_ERROR([module Xrender not found])],
+	)
+	AC_CHECK_LIB(
+		[m], [exp],
+		[], [AC_MSG_ERROR([math library not found])],
 	)],
 )
 

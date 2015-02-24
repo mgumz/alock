@@ -1,8 +1,6 @@
 # alock - Makefile.am
 # Copyright (c) 2014 Arkadiusz Bokowy
 
-AM_CFLAGS = -Wall -Wextra
-
 bin_PROGRAMS = alock
 
 alock_SOURCES = \
@@ -23,7 +21,7 @@ alock_CFLAGS = \
 	@XRENDER_CFLAGS@ \
 	@IMLIB2_CFLAGS@
 
-alock_LDFLAGS = \
+alock_LDADD = \
 	@X11_LIBS@ \
 	@XCURSOR_LIBS@ \
 	@XPM_LIBS@ \
@@ -45,7 +43,9 @@ alock_SOURCES += bg_shade.c
 endif
 if ENABLE_IMLIB2
 alock_SOURCES += bg_image.c
+if ENABLE_XRENDER
 alock_SOURCES += cursor_image.c
+endif
 else
 if ENABLE_XPM
 alock_SOURCES += cursor_image.c
