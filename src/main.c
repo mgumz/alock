@@ -1,7 +1,7 @@
 /*
  * alock - alock.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2015 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -522,6 +522,11 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+#if WITH_DUNST
+    /* pause notification daemon */
+    system("pkill -x -SIGUSR1 dunst");
+#endif
+
     { /* try to initialize selected modules */
 
         int rv = 0;
@@ -623,6 +628,11 @@ return_success:
     unregisterInstance(&dinfo);
     freeDisplayInfo(&dinfo);
     XCloseDisplay(dinfo.display);
+
+#if WITH_DUNST
+    /* resume notification daemon */
+    system("pkill -x -SIGUSR2 dunst");
+#endif
 
     return retval;
 }

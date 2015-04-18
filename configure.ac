@@ -164,6 +164,18 @@ AM_COND_IF(
 )
 
 
+# disable dunst notification-daemon while screen is locked
+AC_ARG_WITH(
+	[dunst],
+	[AS_HELP_STRING([--with-dunst], [notification-daemon integration])],
+)
+AM_CONDITIONAL([WITH_DUNST], [test "x$with_dunst" = "xyes"])
+AM_COND_IF(
+	[WITH_DUNST],
+	[AC_DEFINE([WITH_DUNST], [1], [Define to 1 if dunst integration is enabled])],
+)
+
+
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile])
 AC_OUTPUT
 
