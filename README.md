@@ -14,8 +14,8 @@ Note, that 'alock' does not provide any fancy animations like 'xlock' and
 session.
 
 
-Instalation
------------
+Installation
+------------
 
 	$ autoreconf --install
 	$ mkdir build && cd build
