@@ -85,6 +85,9 @@ struct aModules {
     struct aModuleBackground *background;
     struct aModuleCursor *cursor;
     struct aModuleInput *input;
+#if WITH_XBLIGHT
+    float backlight;
+#endif
 };
 
 

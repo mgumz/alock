@@ -176,6 +176,18 @@ AM_COND_IF(
 )
 
 
+# dim display using xbacklight while screen is locked
+AC_ARG_WITH(
+	[xbacklight],
+	[AS_HELP_STRING([--with-xbacklight], [xbacklight integration])],
+)
+AM_CONDITIONAL([WITH_XBLIGHT], [test "x$with_xbacklight" = "xyes"])
+AM_COND_IF(
+	[WITH_XBLIGHT],
+	[AC_DEFINE([WITH_XBLIGHT], [1], [Define to 1 if xbacklight integration is enabled])],
+)
+
+
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile])
 AC_OUTPUT
 

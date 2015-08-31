@@ -19,9 +19,23 @@ Installation
 
 	$ autoreconf --install
 	$ mkdir build && cd build
-	$ ../configure --enable-pam --enable-hash --enable-xrender --enable-imlib2
+	$ ../configure --enable-pam --enable-hash --enable-xrender --enable-imlib2 \
+	    --with-dunst --with-xbacklight
 	$ make && make install
 
+Integration with external applications (experimental features):
+
+* --with-dunst - This option enables the integration with the
+	[dunst](https://github.com/knopwob/dunst) (lightweight notification-daemon).
+	When the screen is locked, the notifications are paused in order to prevent
+	the leak of confidential data.
+
+* --with-xbacklight - Enable display backlight dimming via the
+	[xbacklight](http://cgit.freedesktop.org/xorg/app/xbacklight/). When the
+	screen is locked, the backlight brightness is set to 0. The original
+	(previous) value is restored whenever the screen is going to be unlocked
+	(passphrase input). This feature has to be explicitly enabled via the
+	`ALock.backlight: true` X Resource.
 
 Usage
 -----
@@ -49,6 +63,7 @@ follows:
 	ALock*cursor*name:        plus
 	ALock*input.frame*input:  white
 	ALock*input.frame*check:  blue
+	ALock*backlight:          true
 
 
 Available modules
