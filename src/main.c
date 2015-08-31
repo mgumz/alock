@@ -157,6 +157,50 @@ static void unregisterInstance(struct aDisplayInfo *dinfo) {
     }
 }
 
+#if WITH_XBLIGHT
+/* Get the current backlight brightness value. If such a parameter can not be
+ * obtained - display output is not compatible, xbacklight is not available,
+ * etc. - this function returns -1. */
+static float getBacklightBrightness(void) {
+
+    FILE *f;
+    char str[16];
+    float value;
+
+    if ((f = popen("xbacklight", "r")) == NULL)
+        return -1;
+
+    if (fgets(str, sizeof(str), f) != NULL)
+        value = strtof(str, NULL);
+
+    pclose(f);
+    return value;
+}
+#endif /* WITH_XBLIGHT */
+
+#if WITH_XBLIGHT
+/* Set current backlight brightness to the given value. */
+static void setBacklightBrightness(float value) {
+
+    char str[16];
+    pid_t pid;
+
+    /* We're going to use the approach based on the explicit fork and exec
+     * instead of the standard library system() call, because we need the
+     * control to be returned to our own process immediately - we're not
+     * interested in the return value of the child process very much. */
+
+    if ((pid = fork()) == 0) {
+        sprintf(str, "%f", value);
+        execlp("xbacklight", "xbacklight", "-set", str, NULL);
+        return;
+    }
+
+    int status;
+    waitpid(pid, &status, WNOHANG);
+}
+#endif /* WITH_XBLIGHT */
+
 /* Lock current display and grab pointer and keyboard. On successful
  * lock this function returns 0, otherwise -1. */
 static int lockDisplay(struct aDisplayInfo *dinfo, struct aModules *modules) {
@@ -234,8 +278,21 @@ static void eventLoop(struct aDisplayInfo *dinfo, struct aModules *modules) {
             }
         }
         else {
+
+#if WITH_XBLIGHT
+            /* dim out display backlight */
+            if (modules->backlight != -1)
+                setBacklightBrightness(0);
+#endif /* WITH_XBLIGHT */
+
             /* block until any key press event arrives */
             XMaskEvent(dpy, KeyPressMask | StructureNotifyMask, &ev);
+
+#if WITH_XBLIGHT
+            /* restore original backlight brightness value */
+            if (modules->backlight != -1)
+                setBacklightBrightness(modules->backlight);
+#endif /* WITH_XBLIGHT */
         }
 
         switch (ev.type) {
@@ -385,6 +442,10 @@ int main(int argc, char **argv) {
     modules.background = alock_modules_background[0];
     modules.cursor = alock_modules_cursor[0];
     modules.input = alock_modules_input[0];
+
+#if WITH_XBLIGHT
+    modules.backlight = -1;
+#endif
 
     /* parse options */
     while ((opt = getopt_long_only(argc, argv, "hma:b:c:i:", longopts, NULL)) != -1)
@@ -538,6 +599,15 @@ int main(int argc, char **argv) {
         modules.background->m.loadxrdb(xrdb);
         modules.cursor->m.loadxrdb(xrdb);
         modules.input->m.loadxrdb(xrdb);
+
+#if WITH_XBLIGHT
+        XrmValue value;
+        char *type;
+
+        if (XrmGetResource(xrdb, "alock.backlight", "ALock.Backlight",
+                    &type, &value) && strcmp(value.addr, "true") == 0)
+            modules.backlight = getBacklightBrightness();
+#endif /* WITH_XBLIGHT */
 
         XrmDestroyDatabase(xrdb);
 
