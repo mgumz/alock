@@ -165,44 +165,6 @@ EOF
     exit 1
 }
 
-check_xf86misc() {
-
-    cat << EOF > tmp.c
-#include <X11/Xlib.h>
-#include <X11/extensions/xf86misc.h>
-int main() {
-    XF86MiscSetGrabKeysState(NULL, True);
-    return 0;
-}
-EOF
-    msg_chkfor "extensions/xf86misc.h"
-    if ${CC} ${CFLAGS} -c tmp.c -o /dev/null 2>&3
-    then
-        echo "ok."
-        msg_chkfor "xf86misc"
-        if ${CC} ${CFLAGS} tmp.c -o /dev/null ${LDFLAGS} -lX11 -lXxf86misc 2>&3
-        then
-            echo "ok."
-            echo "#_______________________" >&4
-            echo "WITH_XF86MISC:=1" >&4
-            echo "LIBS += -lXxf86misc" >&4
-            echo "" >&4
-            return
-        fi
-    fi
-    echo "no."
-    echo " "
-    echo "!!! WARNING !!!"
-    echo "   if the xserver is configured to allow"
-    echo "   'AllowDeactivateGrabs' or 'AllowClosedownGrabs'"
-    echo "   people can bypass alock !!! consider"
-    echo "   to install the xf86misc extension!"
-    echo "!!! WARNING !!!"
-    echo " "
-}
-
-
-
 
 check_xlib() {
 
@@ -433,7 +395,6 @@ echo "" >&4
 check_docs
 check_tools
 check_xlib
-check_xf86misc
 check_xlogo16
 [ "$CHECK_XPM" -eq 1 ] && check_xpm
 [ "$CHECK_XRENDER" -eq 1 ] && check_xrender

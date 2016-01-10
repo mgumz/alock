@@ -138,7 +138,12 @@ static int alock_auth_pam_init(const char* args) {
 
     /* we can be installed setuid root to support shadow passwords,
        and we don't need root privileges any longer.  --marekm */
-    setuid(getuid());
+    int retval;
+    retval = setuid(getuid());
+    /* if setuid's return value isn't checked, it's a security issue */
+    if (retval != 0) {
+        return 0;
+    }
 
     return 1;
 }
