@@ -45,7 +45,7 @@
 \* ---------------------------------------------------------------- */
 
 static struct passwd* pwd_entry = NULL;
-
+char * crypt (const char *key, const char *salt);
 static int alock_auth_passwd_init(const char* args) {
 
     errno = 0;
@@ -70,7 +70,11 @@ static int alock_auth_passwd_init(const char* args) {
 
     /* we can be installed setuid root to support shadow passwords,
        and we don't need root privileges any longer.  --marekm */
-    setuid(getuid());
+    int retval;
+    retval = setuid(getuid());
+    if (retval != 0) {
+        return 0;
+    }
 
     if (strlen(pwd_entry->pw_passwd) < 13) {
         perror("password entry has no pwd\n");
