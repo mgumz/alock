@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef __ALOCK_H
-#define __ALOCK_H
+#ifndef ALOCK_ALOCK_H_
+#define ALOCK_ALOCK_H_
 
 #include <stdio.h>
 #include <X11/Xlib.h>
@@ -167,4 +167,4 @@ int alock_grayscale_image(XImage *image,
         unsigned int width,
         unsigned int height);
 
-#endif /* __ALOCK_H */
+#endif  /* ALOCK_ALOCK_H_ */
