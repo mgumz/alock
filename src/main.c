@@ -655,10 +655,10 @@ int main(int argc, char **argv) {
     int xf86misc_major = -1;
     int xf86misc_minor = -1;
 
-    if (XF86MiscQueryVersion(dinfo->display, &xf86misc_major, &xf86misc_minor) == True) {
+    if (XF86MiscQueryVersion(dinfo.display, &xf86misc_major, &xf86misc_minor) == True) {
 
         if (xf86misc_major >= 0 && xf86misc_minor >= 5 &&
-                XF86MiscSetGrabKeysState(dinfo->display, False) == MiscExtGrabStateLocked) {
+                XF86MiscSetGrabKeysState(dinfo.display, False) == MiscExtGrabStateLocked) {
 
             fprintf(stderr, "error: unable to disable Xorg hotkeys to remove grabs\n");
             goto return_failure;
@@ -686,8 +686,8 @@ return_success:
 
 #if HAVE_X11_EXTENSIONS_XF86MISC_H
     if (xf86misc_major >= 0 && xf86misc_minor >= 5) {
-        XF86MiscSetGrabKeysState(dinfo->display, True);
-        XFlush(dinfo->display);
+        XF86MiscSetGrabKeysState(dinfo.display, True);
+        XFlush(dinfo.display);
     }
 #endif
 
