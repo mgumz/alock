@@ -1,7 +1,7 @@
 /*
  * alock - alock.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2015 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -62,6 +62,7 @@ static struct aModuleBackground *alock_modules_background[] = {
 
 static struct aModuleCursor *alock_modules_cursor[] = {
     &alock_cursor_none,
+    &alock_cursor_blank,
     &alock_cursor_glyph,
 #if ENABLE_XCURSOR
     &alock_cursor_xcursor,

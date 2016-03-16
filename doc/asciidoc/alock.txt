@@ -71,6 +71,7 @@ OPTIONS
 *-c*, *-cursor* 'type:options'::
     Define the look-a-like of the cursor/mouse pointer:
     - none - No change to the current cursor
+    - blank - Hide cursor pointer
     - glyph - Use the given glyph of the "cursor"-font
         * list - Display all possible glyph-names
         * name=<name>
