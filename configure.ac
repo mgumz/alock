@@ -1,7 +1,7 @@
 # alock - configure.ac
-# Copyright (c) 2014 Arkadiusz Bokowy
+# Copyright (c) 2014-2016 Arkadiusz Bokowy
 
-AC_INIT([alock], [0.2.0], [arkadiusz.bokowy@gmail.com])
+AC_INIT([alock], [0.2.2], [arkadiusz.bokowy@gmail.com])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 
@@ -21,10 +21,7 @@ AM_COND_IF(
 )
 
 
-PKG_CHECK_MODULES(
-	[X11], [x11],
-	[], [AC_MSG_ERROR([module X11 not found])],
-)
+PKG_CHECK_MODULES([X11], [x11])
 
 
 # check support for the Xshape extension
@@ -107,15 +104,16 @@ AC_ARG_ENABLE(
 AM_CONDITIONAL([ENABLE_XRENDER], [test "x$enable_xrender" = "xyes"])
 AM_COND_IF(
 	[ENABLE_XRENDER],
-	[PKG_CHECK_MODULES(
-		[XRENDER], [xrender],
-		[AC_DEFINE([ENABLE_XRENDER], [1], [Define to 1 if Xrender is enabled])],
-		[AC_MSG_ERROR([module Xrender not found])],
-	)
-	AC_CHECK_LIB(
-		[m], [exp],
-		[], [AC_MSG_ERROR([math library not found])],
-	)],
+	[
+		PKG_CHECK_MODULES(
+			[XRENDER], [xrender],
+			[AC_DEFINE([ENABLE_XRENDER], [1], [Define to 1 if Xrender is enabled])],
+		)
+		AC_CHECK_LIB(
+			[m], [exp],
+			[], [AC_MSG_ERROR([math library not found])],
+		)
+	],
 )
 
 # support for the Xcursor library
@@ -129,7 +127,6 @@ AM_COND_IF(
 	[PKG_CHECK_MODULES(
 		[XCURSOR], [xcursor],
 		[AC_DEFINE([ENABLE_XCURSOR], [1], [Define to 1 if Xcursor is enabled])],
-		[AC_MSG_ERROR([module Xcursor not found])],
 	)],
 )
 
@@ -144,7 +141,6 @@ AM_COND_IF(
 	[PKG_CHECK_MODULES(
 		[XPM], [xpm],
 		[AC_DEFINE([ENABLE_XPM], [1], [Define to 1 if Xpm is enabled])],
-		[AC_MSG_ERROR([module Xpm not found])],
 	)],
 )
 
@@ -159,7 +155,6 @@ AM_COND_IF(
 	[PKG_CHECK_MODULES(
 		[IMLIB2], [imlib2],
 		[AC_DEFINE([ENABLE_IMLIB2], [1], [Define to 1 if Imlib2 is enabled])],
-		[AC_MSG_ERROR([module Imlib2 not found])],
 	)],
 )
 
