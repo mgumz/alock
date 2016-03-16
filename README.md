@@ -1,8 +1,8 @@
 ALOCK
 =====
 
-'Alock' is a simple screen lock application, which locks the X server until
-the correct password is provided. If the authentication was successful, the X
+Alock is a simple screen lock application, which locks the X server until the
+correct password is provided. If the authentication was successful, the X
 server is unlocked and the user can continue to work. When 'alock' is started
 it just waits for the first keypress. This first keypress is to indicate that
 the user now wants to type in the password. Such a behavior might seem to be
@@ -29,13 +29,13 @@ Integration with external applications (experimental features):
 	[dunst](https://github.com/knopwob/dunst) (lightweight notification-daemon).
 	When the screen is locked, the notifications are paused in order to prevent
 	the leak of confidential data.
-
 * --with-xbacklight - Enable display backlight dimming via the
 	[xbacklight](http://cgit.freedesktop.org/xorg/app/xbacklight/). When the
 	screen is locked, the backlight brightness is set to 0. The original
 	(previous) value is restored whenever the screen is going to be unlocked
 	(passphrase input). This feature has to be explicitly enabled via the
 	`ALock.backlight: true` X Resource.
+
 
 Usage
 -----
@@ -86,6 +86,7 @@ List of background modules:
 List of cursor modules:
 
 * none - no change to the current cursor
+* blank - hide cursor pointer
 * glyph - use compiled in glyph
 * xcursor - use xcursor file
 * image - use image

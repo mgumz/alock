@@ -1,7 +1,7 @@
 /*
  * alock - alock.h
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -115,6 +115,7 @@ extern struct aModuleBackground alock_bg_shade;
 
 /* cursor modules */
 extern struct aModuleCursor alock_cursor_none;
+extern struct aModuleCursor alock_cursor_blank;
 extern struct aModuleCursor alock_cursor_glyph;
 #if ENABLE_XCURSOR
 extern struct aModuleCursor alock_cursor_xcursor;
