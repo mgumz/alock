@@ -137,8 +137,8 @@ return_error:
     free(arguments);
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
-    (void)dinfo;
+static int module_init(Display *display) {
+    (void)display;
 
     int len;
 

@@ -1,7 +1,7 @@
 /*
  * alock - cursor_image.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -28,7 +28,7 @@
 
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     char *filename;
     Cursor cursor;
 } data = { 0 };
@@ -55,17 +55,12 @@ static void module_loadargs(const char *args) {
 }
 
 
-static int module_init(struct aDisplayInfo *dinfo) {
-
-    if (!dinfo)
-        return -1;
+static int module_init(Display *dpy) {
 
     if (!data.filename) {
         fprintf(stderr, "[image]: file name not specified\n");
         return -1;
     }
-
-    Display *dpy = dinfo->display;
 
     if (!alock_check_xrender(dpy)) {
         fprintf(stderr, "[image]: no running xrender extension found\n");
@@ -73,6 +68,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
     }
 
     {
+        Screen *screen = DefaultScreenOfDisplay(dpy);
         unsigned int w = 0;
         unsigned int h = 0;
         Pixmap cursor_pm = None;
@@ -84,8 +80,8 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
             imlib_context_push(ctx);
             imlib_context_set_display(dpy);
-            imlib_context_set_visual(DefaultVisual(dpy, DefaultScreen(dpy)));
-            imlib_context_set_colormap(dinfo->screens[0].colormap);
+            imlib_context_set_visual(DefaultVisualOfScreen(screen));
+            imlib_context_set_colormap(DefaultColormapOfScreen(screen));
 
             img = imlib_load_image_without_cache(data.filename);
             if (img) {
@@ -115,7 +111,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
                     XInitImage(&ximage);
 
-                    cursor_pm = XCreatePixmap(dpy, dinfo->screens[0].root, w, h, 32);
+                    cursor_pm = XCreatePixmap(dpy, RootWindowOfScreen(screen), w, h, 32);
                     gc = XCreateGC(dpy, cursor_pm, 0, 0);
                     XPutImage(dpy, cursor_pm, gc, &ximage, 0, 0, 0, 0, w, h);
                     XFreeGC(dpy, gc);
@@ -134,7 +130,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
                 w = img->width;
                 h = img->height;
 
-                cursor_pm = XCreatePixmap(dpy, dinfo->screens[0].root, w, h, img->depth);
+                cursor_pm = XCreatePixmap(dpy, RootWindowOfScreen(screen), w, h, img->depth);
                 gc = XCreateGC(dpy, cursor_pm, 0, NULL);
                 XPutImage(dpy, cursor_pm, gc, img, 0, 0, 0, 0, w, h);
                 XFreeGC(dpy, gc);
@@ -174,7 +170,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
 static void module_free() {
 
     if (data.cursor)
-        XFreeCursor(data.dinfo->display, data.cursor);
+        XFreeCursor(data.display, data.cursor);
 
     free(data.filename);
     data.filename = NULL;

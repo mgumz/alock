@@ -1,6 +1,6 @@
 /*
  * alock - input_frame.c
- * Copyright (c) 2014 - 2015 Arkadiusz Bokowy
+ * Copyright (c) 2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -35,7 +35,7 @@ struct colorPixel {
 };
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     Window window;
     struct colorPixel color_input;
     struct colorPixel color_check;
@@ -96,19 +96,19 @@ static void module_loadxrdb(XrmDatabase xrdb) {
 
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
+static int module_init(Display *dpy) {
 
-    Display *dpy = dinfo->display;
-    Colormap colormap = dinfo->screens[0].colormap;
+    Screen *screen = DefaultScreenOfDisplay(dpy);
+    Colormap colormap = DefaultColormapOfScreen(screen);
     XSetWindowAttributes xswa;
     XColor color;
 
-    data.dinfo = dinfo;
+    data.display = dpy;
 
     xswa.override_redirect = True;
     xswa.colormap = colormap;
-    data.window = XCreateWindow(dpy, dinfo->screens[0].root,
-            0, 0, dinfo->screens[0].width, dinfo->screens[0].height, 0,
+    data.window = XCreateWindow(dpy, RootWindowOfScreen(screen),
+            0, 0, WidthOfScreen(screen), HeightOfScreen(screen), 0,
             CopyFromParent, InputOutput, CopyFromParent, CWOverrideRedirect | CWColormap, &xswa);
 
     debug("selected colors: `%s`, `%s`, `%s`", data.color_input.name,
@@ -123,8 +123,8 @@ static int module_init(struct aDisplayInfo *dinfo) {
 #if HAVE_X11_EXTENSIONS_SHAPE_H
     XRectangle rect = {
         0, 0,
-        dinfo->screens[0].width - 2 * data.width,
-        dinfo->screens[0].height - 2 * data.width,
+        WidthOfScreen(screen) - 2 * data.width,
+        HeightOfScreen(screen) - 2 * data.width,
     };
     XShapeCombineRectangles(dpy, data.window, ShapeBounding,
             data.width, data.width, &rect, 1, ShapeSubtract, 0);
@@ -135,7 +135,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
 static void module_free(void) {
 
-    XDestroyWindow(data.dinfo->display, data.window);
+    XDestroyWindow(data.display, data.window);
 
     free(data.color_input.name);
     data.color_input.name = NULL;
@@ -168,7 +168,7 @@ static KeySym module_keypress(KeySym key) {
 static void module_setstate(enum aInputState state) {
     debug("setstate: %d", state);
 
-    Display *dpy = data.dinfo->display;
+    Display *dpy = data.display;
     XGCValues gcvals;
     int height, width;
 
@@ -194,8 +194,9 @@ static void module_setstate(enum aInputState state) {
         gcvals.foreground = data.color_input.pixel;
     }
 
-    height = data.dinfo->screens[0].height;
-    width = data.dinfo->screens[0].width;
+    Screen *screen = DefaultScreenOfDisplay(dpy);
+    width = WidthOfScreen(screen);
+    height = HeightOfScreen(screen);
 
     GC gc = XCreateGC(dpy, data.window, 0, 0);
     XChangeGC(dpy, gc, GCForeground, &gcvals);

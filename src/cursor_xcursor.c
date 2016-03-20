@@ -1,7 +1,7 @@
 /*
  * alock - cursor_xcursor.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -20,7 +20,7 @@
 
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     char *filename;
     Cursor cursor;
 } data = { 0 };
@@ -47,15 +47,12 @@ static void module_loadargs(const char *args) {
 }
 
 
-static int module_init(struct aDisplayInfo *dinfo) {
+static int module_init(Display *dpy) {
 
-    if (!dinfo)
-        return -1;
-
-    data.dinfo = dinfo;
+    data.display = dpy;
 
     if (data.filename)
-        data.cursor = XcursorFilenameLoadCursor(dinfo->display, data.filename);
+        data.cursor = XcursorFilenameLoadCursor(dpy, data.filename);
 
     if (data.cursor == 0) {
         fprintf(stderr, "[xcursor]: unable to load cursor file\n");
@@ -68,7 +65,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
 static void module_free() {
 
     if (data.cursor)
-        XFreeCursor(data.dinfo->display, data.cursor);
+        XFreeCursor(data.display, data.cursor);
 
     free(data.filename);
     data.filename = NULL;

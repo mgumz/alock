@@ -1,7 +1,7 @@
 /*
  * alock - bg_none.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -18,40 +18,39 @@
 
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     Window *windows;
 } data = { 0 };
 
 
-static int module_init(struct aDisplayInfo *dinfo) {
+static int module_init(Display *dpy) {
 
-    if (!dinfo)
-        return -1;
+    XSetWindowAttributes xswa = { .override_redirect = True };
+    int i;
 
-    data.dinfo = dinfo;
-    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
+    data.display = dpy;
+    data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
 
-    XSetWindowAttributes xswa;
-    int scr;
-
-    xswa.override_redirect = True;
-    for (scr = 0; scr < dinfo->screen_nb; scr++)
-        data.windows[scr] = XCreateWindow(dinfo->display, dinfo->screens[scr].root,
-                0, 0, 1, 1, 0,
-                CopyFromParent, InputOutput, CopyFromParent,
+    for (i = 0; i < ScreenCount(dpy); i++)
+        data.windows[i] = XCreateWindow(dpy, RootWindow(dpy, i),
+                0, 0, 1, 1, 0, CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect, &xswa);
 
     return 0;
 }
 
 static void module_free() {
-    if (data.windows) {
-        int scr;
-        for (scr = 0; scr < data.dinfo->screen_nb; scr++)
-            XDestroyWindow(data.dinfo->display, data.windows[scr]);
-        free(data.windows);
-        data.windows = NULL;
-    }
+
+    if (!data.windows)
+        return;
+
+    int i;
+
+    for (i = 0; i < ScreenCount(data.display); i++)
+        XDestroyWindow(data.display, data.windows[i]);
+
+    free(data.windows);
+    data.windows = NULL;
 }
 
 static Window module_getwindow(int screen) {

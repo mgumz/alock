@@ -28,21 +28,6 @@
 #endif
 
 
-/* stores snapshot of screen intrinsic properties */
-struct aScreenInfo {
-    Colormap colormap;
-    Window root;
-    int width;
-    int height;
-};
-
-/* stores snapshot of display intrinsic properties */
-struct aDisplayInfo {
-    Display *display;
-    struct aScreenInfo *screens;
-    int screen_nb;
-};
-
 /* possible states of the input module */
 enum aInputState {
     AINPUT_STATE_NONE,
@@ -52,12 +37,13 @@ enum aInputState {
     AINPUT_STATE_ERROR,
 };
 
+
 /* module base interface */
 struct aModule {
     const char *name;
     void (*loadargs)(const char *args);
     void (*loadxrdb)(XrmDatabase database);
-    int (*init)(struct aDisplayInfo *dinfo);
+    int (*init)(Display *display);
     void (*free)();
 };
 
@@ -82,6 +68,7 @@ struct aModuleInput {
     KeySym (*keypress)(KeySym key);
     void (*setstate)(enum aInputState state);
 };
+
 
 /* module container structure */
 struct aModules {
@@ -136,7 +123,7 @@ extern struct aModuleInput alock_input_frame;
 /* dummy functions for module interface */
 void module_dummy_loadargs(const char *args);
 void module_dummy_loadxrdb(XrmDatabase database);
-int module_dummy_init(struct aDisplayInfo *dinfo);
+int module_dummy_init(Display *display);
 void module_dummy_free(void);
 
 
