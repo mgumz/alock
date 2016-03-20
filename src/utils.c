@@ -9,9 +9,7 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#include "alock.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,8 +20,6 @@
 #if ENABLE_XRENDER
 #include <X11/extensions/Xrender.h>
 #endif
-
-#include "alock.h"
 
 
 /* Get system time-stamp in milliseconds without discontinuities. */

@@ -17,11 +17,11 @@
  *
  */
 
+#include "alock.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <X11/cursorfont.h>
-
-#include "alock.h"
 
 
 struct CursorFontName {

@@ -12,11 +12,11 @@
  *
  */
 
+#include "alock.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xcursor/Xcursor.h>
-
-#include "alock.h"
 
 
 static struct moduleData {

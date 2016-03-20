@@ -17,11 +17,11 @@
  *
  */
 
+#include "alock.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <Imlib2.h>
-
-#include "alock.h"
 
 
 enum aImageOption {

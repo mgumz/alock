@@ -17,9 +17,7 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#include "alock.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +27,6 @@
 #if HAVE_X11_EXTENSIONS_SHAPE_H
 #include <X11/extensions/shape.h>
 #endif
-
-#include "alock.h"
 
 
 struct colorPixel {

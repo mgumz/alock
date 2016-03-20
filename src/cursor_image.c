@@ -15,9 +15,7 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#include "alock.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -27,8 +25,6 @@
 #elif ENABLE_XPM
 #include <X11/xpm.h>
 #endif
-
-#include "alock.h"
 
 
 static struct moduleData {
