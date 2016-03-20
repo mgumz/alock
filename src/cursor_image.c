@@ -138,7 +138,9 @@ static int module_init(Display *dpy) {
             }
         }
 #else
-#warning compiling this file without having either imlib2 or xpm is pretty useless since no image can be loaded.
+/* NOTE: Compiling this file without having either Imlib2 or XPM is pretty
+ *       useless since no image can be loaded in such a case. */
+#error This module requires Imlib2 or XPM.
 #endif
 
         if (!cursor_pm) {

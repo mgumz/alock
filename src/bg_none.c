@@ -16,6 +16,7 @@
 
 
 static Window module_getwindow(int screen) {
+    (void)screen;
     return None;
 }
 
