@@ -14,49 +14,9 @@
 
 #include "alock.h"
 
-#include <stdlib.h>
-
-
-static struct moduleData {
-    Display *display;
-    Window *windows;
-} data = { 0 };
-
-
-static int module_init(Display *dpy) {
-
-    XSetWindowAttributes xswa = { .override_redirect = True };
-    int i;
-
-    data.display = dpy;
-    data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
-
-    for (i = 0; i < ScreenCount(dpy); i++)
-        data.windows[i] = XCreateWindow(dpy, RootWindow(dpy, i),
-                0, 0, 1, 1, 0, CopyFromParent, InputOutput, CopyFromParent,
-                CWOverrideRedirect, &xswa);
-
-    return 0;
-}
-
-static void module_free() {
-
-    if (!data.windows)
-        return;
-
-    int i;
-
-    for (i = 0; i < ScreenCount(data.display); i++)
-        XDestroyWindow(data.display, data.windows[i]);
-
-    free(data.windows);
-    data.windows = NULL;
-}
 
 static Window module_getwindow(int screen) {
-    if (!data.windows)
-        return None;
-    return data.windows[screen];
+    return None;
 }
 
 
@@ -64,8 +24,8 @@ struct aModuleBackground alock_bg_none = {
     { "none",
         module_dummy_loadargs,
         module_dummy_loadxrdb,
-        module_init,
-        module_free,
+        module_dummy_init,
+        module_dummy_free,
     },
     module_getwindow,
 };
