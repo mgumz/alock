@@ -15,10 +15,10 @@
  *
  */
 
+#include "alock.h"
+
 #include <stdlib.h>
 #include <string.h>
-
-#include "alock.h"
 
 
 static struct moduleData {

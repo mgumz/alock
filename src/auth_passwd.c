@@ -12,11 +12,9 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 #define _XOPEN_SOURCE
+
+#include "alock.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -30,8 +28,6 @@
 #if __linux && HAVE_SHADOW_H
 #include <shadow.h>
 #endif
-
-#include "alock.h"
 
 
 static struct passwd *pwd_entry = NULL;

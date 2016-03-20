@@ -12,9 +12,9 @@
  *
  */
 
-#include <stdlib.h>
-
 #include "alock.h"
+
+#include <stdlib.h>
 
 
 static struct moduleData {

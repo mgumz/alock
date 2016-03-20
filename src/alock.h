@@ -12,6 +12,10 @@
 #ifndef ALOCK_ALOCK_H_
 #define ALOCK_ALOCK_H_
 
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>

@@ -11,17 +11,13 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#include "alock.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <gcrypt.h>
-
-#include "alock.h"
 
 
 #define HASH_DIGEST_MAX_LEN 64

@@ -9,9 +9,7 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#include "alock.h"
 
 #include <ctype.h>
 #include <getopt.h>
@@ -30,8 +28,6 @@
 #if HAVE_X11_EXTENSIONS_XF86MISC_H
 #include <X11/extensions/xf86misc.h>
 #endif
-
-#include "alock.h"
 
 
 static struct aModuleAuth *alock_modules_auth[] = {
