@@ -68,8 +68,8 @@ static int module_authenticate(const char *pass) {
     if (pass == NULL || pwd_entry == NULL)
         return -1;
 
-    /* simpler, and should work with crypt() algorithms using longer
-       salt strings (like the md5-based one on freebsd).  --marekm */
+    /* Simpler, and should work with crypt() algorithms using longer
+     * salt strings (like the md5-based one on freebsd).  --marekm */
     return strcmp(crypt(pass, pwd_entry->pw_passwd), pwd_entry->pw_passwd);
 }
 
