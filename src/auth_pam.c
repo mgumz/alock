@@ -61,8 +61,8 @@ static int alock_auth_pam_conv(int num_msg,
     return PAM_SUCCESS;
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
-    (void)dinfo;
+static int module_init(Display *display) {
+    (void)display;
 
     struct passwd *pwd;
 

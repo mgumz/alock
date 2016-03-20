@@ -1,7 +1,7 @@
 /*
  * alock - bg_blank.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -22,7 +22,7 @@
 
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     Window *windows;
     char *colorname;
 } data = { 0 };
@@ -59,20 +59,17 @@ static void module_loadxrdb(XrmDatabase xrdb) {
 
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
+static int module_init(Display *dpy) {
 
-    if (!dinfo)
-        return -1;
+    int i;
 
-    Display *dpy = dinfo->display;
-    int scr;
+    data.display = dpy;
+    data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
 
-    data.dinfo = dinfo;
-    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
+    for (i = 0; i < ScreenCount(dpy); i++) {
 
-    for (scr = 0; scr < dinfo->screen_nb; scr++) {
-
-        Colormap colormap = dinfo->screens[scr].colormap;
+        Screen *screen = ScreenOfDisplay(dpy, i);
+        Colormap colormap = DefaultColormapOfScreen(screen);
         XSetWindowAttributes xswa;
         XColor color;
 
@@ -82,8 +79,8 @@ static int module_init(struct aDisplayInfo *dinfo) {
         xswa.colormap = colormap;
         xswa.background_pixel = color.pixel;
 
-        data.windows[scr] = XCreateWindow(dpy, dinfo->screens[scr].root,
-                0, 0, dinfo->screens[scr].width, dinfo->screens[scr].height, 0,
+        data.windows[i] = XCreateWindow(dpy, RootWindowOfScreen(screen),
+                0, 0, WidthOfScreen(screen), HeightOfScreen(screen), 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect | CWColormap | CWBackPixel,
                 &xswa);
@@ -96,9 +93,9 @@ static int module_init(struct aDisplayInfo *dinfo) {
 static void module_free() {
 
     if (data.windows) {
-        int scr;
-        for (scr = 0; scr < data.dinfo->screen_nb; scr++)
-            XDestroyWindow(data.dinfo->display, data.windows[scr]);
+        int i;
+        for (i = 0; i < ScreenCount(data.display); i++)
+            XDestroyWindow(data.display, data.windows[i]);
         free(data.windows);
         data.windows = NULL;
     }

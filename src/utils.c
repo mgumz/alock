@@ -274,8 +274,8 @@ void module_dummy_loadxrdb(XrmDatabase database) {
 }
 
 /* Dummy function for module interface. */
-int module_dummy_init(struct aDisplayInfo *dinfo) {
-    (void)dinfo;
+int module_dummy_init(Display *display) {
+    (void)display;
     debug("dummy init");
     return 0;
 }

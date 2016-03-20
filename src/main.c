@@ -76,41 +76,13 @@ static struct aModuleInput *alock_modules_input[] = {
 };
 
 
-/* Update/initialize display info structure. */
-static int updateDisplayInfo(struct aDisplayInfo *dinfo) {
-
-    Display *dpy = dinfo->display;
-    XWindowAttributes xwa;
-    Window root;
-    int i;
-
-    dinfo->screen_nb = XScreenCount(dpy);
-    dinfo->screens = (struct aScreenInfo *)realloc(dinfo->screens,
-            sizeof(*dinfo->screens) * dinfo->screen_nb);
-
-    for (i = 0; i < dinfo->screen_nb; i++) {
-        root = XRootWindow(dpy, i);
-        XGetWindowAttributes(dpy, root, &xwa);
-        dinfo->screens[i].colormap = XDefaultColormap(dpy, i);
-        dinfo->screens[i].root = root;
-        dinfo->screens[i].width = xwa.width;
-        dinfo->screens[i].height = xwa.height;
-    }
-
-    return dinfo->screen_nb;
-}
-
-/* Free resources allocated by the display_info_update function. */
-static void freeDisplayInfo(struct aDisplayInfo *dinfo) {
-    free(dinfo->screens);
-}
-
 /* Register alock instance. This function returns 0 on success or -1 when
  * another instance is already registered. Note, that this function does
  * not guarantee 100% assurance, it is NOT multi-process safe! */
-static int registerInstance(struct aDisplayInfo *dinfo) {
+static int registerInstance(Display *display) {
 
-    Atom atom = XInternAtom(dinfo->display, "ALOCK_INSTANCE_PID", False);
+    Window root = DefaultRootWindow(display);
+    Atom atom = XInternAtom(display, "ALOCK_INSTANCE_PID", False);
     pid_t pid = 0;
 
     { /* detect previous instance */
@@ -122,7 +94,7 @@ static int registerInstance(struct aDisplayInfo *dinfo) {
         pid_t *ret_data;
         int rv;
 
-        rv = XGetWindowProperty(dinfo->display, dinfo->screens[0].root, atom,
+        rv = XGetWindowProperty(display, root, atom,
                 0L, 1L, False, XA_CARDINAL, &ret_type, &ret_fmt,
                 &ret_nb, &ret_bleft, (unsigned char **)&ret_data);
         if (rv == Success && ret_type != None && ret_data) {
@@ -138,20 +110,24 @@ static int registerInstance(struct aDisplayInfo *dinfo) {
 
     debug("registering instance");
     pid = getpid();
-    XChangeProperty(dinfo->display, dinfo->screens[0].root, atom, XA_CARDINAL,
+    XChangeProperty(display, root, atom, XA_CARDINAL,
             sizeof(pid_t) * 8, PropModeReplace, (unsigned char *)&pid, 1);
-    XFlush(dinfo->display);
+    XFlush(display);
 
     return 0;
 }
 
 /* Unregister alock instance. */
-static void unregisterInstance(struct aDisplayInfo *dinfo) {
-    Atom atom = XInternAtom(dinfo->display, "ALOCK_INSTANCE_PID", True);
+static void unregisterInstance(Display *display) {
+
+    Window root = DefaultRootWindow(display);
+    Atom atom = XInternAtom(display, "ALOCK_INSTANCE_PID", True);
+
     if (atom != None) {
         debug("unregistering instance");
-        XDeleteProperty(dinfo->display, dinfo->screens[0].root, atom);
+        XDeleteProperty(display, root, atom);
     }
+
 }
 
 #if WITH_XBLIGHT
@@ -200,28 +176,27 @@ static void setBacklightBrightness(float value) {
 
 /* Lock current display and grab pointer and keyboard. On successful
  * lock this function returns 0, otherwise -1. */
-static int lockDisplay(struct aDisplayInfo *dinfo, struct aModules *modules) {
+static int lockDisplay(Display *display, struct aModules *modules) {
 
-    Display *dpy = dinfo->display;
     Window window;
     Cursor cursor;
     int i;
 
-    /* select input event and raise background window */
-    for (i = 0; i < dinfo->screen_nb; i++) {
+    /* select input event and raise background windows */
+    for (i = 0; i < ScreenCount(display); i++) {
         window = modules->background->getwindow(i);
-        XSelectInput(dpy, window, KeyPressMask);
-        XMapWindow(dpy, window);
-        XRaiseWindow(dpy, window);
+        XSelectInput(display, window, KeyPressMask);
+        XMapWindow(display, window);
+        XRaiseWindow(display, window);
         /* receive notification about root window geometry change */
-        XSelectInput(dpy, dinfo->screens[i].root, StructureNotifyMask);
+        XSelectInput(display, RootWindow(display, i), StructureNotifyMask);
     }
 
     /* grab pointer and keyboard from the first (default) screen */
-    window = modules->background->getwindow(0);
+    window = DefaultRootWindow(display);
     cursor = modules->cursor->getcursor();
 
-    if (XGrabPointer(dpy, window, False, None, GrabModeAsync, GrabModeAsync, None,
+    if (XGrabPointer(display, window, False, None, GrabModeAsync, GrabModeAsync, None,
                 cursor, CurrentTime) != GrabSuccess) {
         fprintf(stderr, "error: grab pointer failed\n");
         return -1;
@@ -229,10 +204,10 @@ static int lockDisplay(struct aDisplayInfo *dinfo, struct aModules *modules) {
 
     /* try to grab 2 times, another process (windowmanager) may have grabbed
      * the keyboard already */
-    if (XGrabKeyboard(dpy, window, True, GrabModeAsync, GrabModeAsync,
+    if (XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync,
                 CurrentTime) != GrabSuccess) {
         sleep(1);
-        if (XGrabKeyboard(dpy, window, True, GrabModeAsync, GrabModeAsync,
+        if (XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync,
                     CurrentTime) != GrabSuccess) {
             fprintf(stderr, "error: grab keyboard failed\n");
             return -1;
@@ -242,9 +217,8 @@ static int lockDisplay(struct aDisplayInfo *dinfo, struct aModules *modules) {
     return 0;
 }
 
-static void eventLoop(struct aDisplayInfo *dinfo, struct aModules *modules) {
+static void eventLoop(Display *display, struct aModules *modules) {
 
-    Display *dpy = dinfo->display;
     XEvent ev;
     KeySym ks;
     char cbuf[10];
@@ -261,7 +235,7 @@ static void eventLoop(struct aDisplayInfo *dinfo, struct aModules *modules) {
 
         if (keypress_time) {
             /* check for any key press event (or root window state change) */
-            if (XCheckMaskEvent(dpy, KeyPressMask | StructureNotifyMask, &ev) == False) {
+            if (XCheckMaskEvent(display, KeyPressMask | StructureNotifyMask, &ev) == False) {
 
                 /* user fell asleep while typing (5 seconds inactivity) */
                 if (alock_mtime() - keypress_time > 5000) {
@@ -283,7 +257,7 @@ static void eventLoop(struct aDisplayInfo *dinfo, struct aModules *modules) {
 #endif /* WITH_XBLIGHT */
 
             /* block until any key press event arrives */
-            XMaskEvent(dpy, KeyPressMask | StructureNotifyMask, &ev);
+            XMaskEvent(display, KeyPressMask | StructureNotifyMask, &ev);
 
 #if WITH_XBLIGHT
             /* restore original backlight brightness value */
@@ -425,7 +399,7 @@ int main(int argc, char **argv) {
         {0, 0, 0, 0},
     };
 
-    struct aDisplayInfo dinfo;
+    Display *display;
     struct aModules modules;
     int retval;
 
@@ -452,104 +426,103 @@ int main(int argc, char **argv) {
                     " [-cursor type:options] [-input type:options]\n", argv[0]);
             return EXIT_SUCCESS;
 
-        case 'm':
-            { /* list available modules */
+        case 'm': { /* list available modules */
 
-                struct aModuleAuth **ia;
-                struct aModuleBackground **ib;
-                struct aModuleCursor **ic;
-                struct aModuleInput **ii;
+            struct aModuleAuth **ia;
+            struct aModuleBackground **ib;
+            struct aModuleCursor **ic;
+            struct aModuleInput **ii;
 
-                printf("authentication modules:\n");
-                for (ia = alock_modules_auth; *ia; ++ia)
-                    printf("  %s\n", (*ia)->m.name);
+            printf("authentication modules:\n");
+            for (ia = alock_modules_auth; *ia; ++ia)
+                printf("  %s\n", (*ia)->m.name);
 
-                printf("background modules:\n");
-                for (ib = alock_modules_background; *ib; ++ib)
-                    printf("  %s\n", (*ib)->m.name);
+            printf("background modules:\n");
+            for (ib = alock_modules_background; *ib; ++ib)
+                printf("  %s\n", (*ib)->m.name);
 
-                printf("cursor modules:\n");
-                for (ic = alock_modules_cursor; *ic; ++ic)
-                    printf("  %s\n", (*ic)->m.name);
+            printf("cursor modules:\n");
+            for (ic = alock_modules_cursor; *ic; ++ic)
+                printf("  %s\n", (*ic)->m.name);
 
-                printf("input modules:\n");
-                for (ii = alock_modules_input; *ii; ++ii)
-                    printf("  %s\n", (*ii)->m.name);
+            printf("input modules:\n");
+            for (ii = alock_modules_input; *ii; ++ii)
+                printf("  %s\n", (*ii)->m.name);
 
-            }
             return EXIT_SUCCESS;
+        }
 
-        case 'a':
-            { /* authentication module */
+        case 'a': { /* authentication module */
 
-                struct aModuleAuth **i;
-                for (i = alock_modules_auth; *i; ++i)
-                    if (strstr(optarg, (*i)->m.name) == optarg) {
-                        args_auth = optarg;
-                        modules.auth = *i;
-                        break;
-                    }
-
-                if (*i == NULL) {
-                    fprintf(stderr, "alock: authentication module `%s` not found\n", optarg);
-                    return EXIT_FAILURE;
+            struct aModuleAuth **i;
+            for (i = alock_modules_auth; *i; ++i)
+                if (strstr(optarg, (*i)->m.name) == optarg) {
+                    args_auth = optarg;
+                    modules.auth = *i;
+                    break;
                 }
+
+            if (*i == NULL) {
+                fprintf(stderr, "alock: authentication module `%s` not found\n", optarg);
+                return EXIT_FAILURE;
             }
+
             break;
+        }
 
-        case 'b':
-            { /* background module */
+        case 'b': { /* background module */
 
-                struct aModuleBackground **i;
-                for (i = alock_modules_background; *i; ++i)
-                    if (strstr(optarg, (*i)->m.name) == optarg) {
-                        args_background = optarg;
-                        modules.background = *i;
-                        break;
-                    }
-
-                if (*i == NULL) {
-                    fprintf(stderr, "alock: background module `%s` not found\n", optarg);
-                    return EXIT_FAILURE;
+            struct aModuleBackground **i;
+            for (i = alock_modules_background; *i; ++i)
+                if (strstr(optarg, (*i)->m.name) == optarg) {
+                    args_background = optarg;
+                    modules.background = *i;
+                    break;
                 }
+
+            if (*i == NULL) {
+                fprintf(stderr, "alock: background module `%s` not found\n", optarg);
+                return EXIT_FAILURE;
             }
+
             break;
+        }
 
-        case 'c':
-            { /* cursor module */
+        case 'c': { /* cursor module */
 
-                struct aModuleCursor **i;
-                for (i = alock_modules_cursor; *i; ++i)
-                    if (strstr(optarg, (*i)->m.name) == optarg) {
-                        args_cursor = optarg;
-                        modules.cursor = *i;
-                        break;
-                    }
-
-                if (*i == NULL) {
-                    fprintf(stderr, "alock: cursor module `%s` not found\n", optarg);
-                    return EXIT_FAILURE;
+            struct aModuleCursor **i;
+            for (i = alock_modules_cursor; *i; ++i)
+                if (strstr(optarg, (*i)->m.name) == optarg) {
+                    args_cursor = optarg;
+                    modules.cursor = *i;
+                    break;
                 }
+
+            if (*i == NULL) {
+                fprintf(stderr, "alock: cursor module `%s` not found\n", optarg);
+                return EXIT_FAILURE;
             }
+
             break;
+        }
 
-        case 'i':
-            { /* input module */
+        case 'i': { /* input module */
 
-                struct aModuleInput **i;
-                for (i = alock_modules_input; *i; ++i)
-                    if (strstr(optarg, (*i)->m.name) == optarg) {
-                        args_input = optarg;
-                        modules.input = *i;
-                        break;
-                    }
-
-                if (*i == NULL) {
-                    fprintf(stderr, "alock: input module `%s` not found\n", optarg);
-                    return EXIT_FAILURE;
+            struct aModuleInput **i;
+            for (i = alock_modules_input; *i; ++i)
+                if (strstr(optarg, (*i)->m.name) == optarg) {
+                    args_input = optarg;
+                    modules.input = *i;
+                    break;
                 }
+
+            if (*i == NULL) {
+                fprintf(stderr, "alock: input module `%s` not found\n", optarg);
+                return EXIT_FAILURE;
             }
+
             break;
+        }
 
         default:
             fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
@@ -559,24 +532,15 @@ int main(int argc, char **argv) {
     /* required for correct input handling */
     setlocale(LC_ALL, "");
 
-    dinfo.display = XOpenDisplay(NULL);
-    dinfo.screens = NULL;
-    if (dinfo.display == NULL) {
+    if ((display = XOpenDisplay(NULL)) == NULL) {
         fprintf(stderr, "error: unable to connect to the X display\n");
         return EXIT_FAILURE;
     }
 
-    if (!updateDisplayInfo(&dinfo)) {
-        fprintf(stderr, "error: display initialization failed\n");
-        XCloseDisplay(dinfo.display);
-        return EXIT_FAILURE;
-    }
-
     /* make sure, that only one instance of alock is running */
-    if (registerInstance(&dinfo)) {
+    if (registerInstance(display)) {
         fprintf(stderr, "error: another instance seems to be running\n");
-        freeDisplayInfo(&dinfo);
-        XCloseDisplay(dinfo.display);
+        XCloseDisplay(display);
         return EXIT_FAILURE;
     }
 
@@ -590,7 +554,7 @@ int main(int argc, char **argv) {
         int rv = 0;
 
         XrmInitialize();
-        XrmDatabase xrdb = XrmGetStringDatabase(XResourceManagerString(dinfo.display));
+        XrmDatabase xrdb = XrmGetStringDatabase(XResourceManagerString(display));
 
         modules.auth->m.loadxrdb(xrdb);
         modules.background->m.loadxrdb(xrdb);
@@ -613,7 +577,7 @@ int main(int argc, char **argv) {
         modules.cursor->m.loadargs(args_cursor);
         modules.input->m.loadargs(args_input);
 
-        if (modules.auth->m.init(&dinfo)) {
+        if (modules.auth->m.init(display)) {
             fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
                     modules.auth->m.name, args_auth);
             rv |= 1;
@@ -626,17 +590,17 @@ int main(int argc, char **argv) {
             perror("alock: root privilege drop failed");
 #endif
 
-        if (modules.background->m.init(&dinfo)) {
+        if (modules.background->m.init(display)) {
             fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
                     modules.background->m.name, args_background);
             rv |= 1;
         }
-        if (modules.cursor->m.init(&dinfo)) {
+        if (modules.cursor->m.init(display)) {
             fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
                     modules.cursor->m.name, args_cursor);
             rv |= 1;
         }
-        if (modules.input->m.init(&dinfo)) {
+        if (modules.input->m.init(display)) {
             fprintf(stderr, "alock: failed init of [%s] with [%s]\n",
                     modules.input->m.name, args_input);
             rv |= 1;
@@ -651,10 +615,10 @@ int main(int argc, char **argv) {
     int xf86misc_major = -1;
     int xf86misc_minor = -1;
 
-    if (XF86MiscQueryVersion(dinfo.display, &xf86misc_major, &xf86misc_minor) == True) {
+    if (XF86MiscQueryVersion(display, &xf86misc_major, &xf86misc_minor) == True) {
 
         if (xf86misc_major >= 0 && xf86misc_minor >= 5 &&
-                XF86MiscSetGrabKeysState(dinfo.display, False) == MiscExtGrabStateLocked) {
+                XF86MiscSetGrabKeysState(display, False) == MiscExtGrabStateLocked) {
 
             fprintf(stderr, "error: unable to disable Xorg hotkeys to remove grabs\n");
             goto return_failure;
@@ -666,11 +630,11 @@ int main(int argc, char **argv) {
 
     /* raise our background window and grab input, if this action has failed,
      * we are not able to lock the screen, then we're fucked... */
-    if (lockDisplay(&dinfo, &modules))
+    if (lockDisplay(display, &modules))
         goto return_failure;
 
     debug("entering main event loop");
-    eventLoop(&dinfo, &modules);
+    eventLoop(display, &modules);
 
     retval = EXIT_SUCCESS;
     goto return_success;
@@ -682,8 +646,8 @@ return_success:
 
 #if HAVE_X11_EXTENSIONS_XF86MISC_H
     if (xf86misc_major >= 0 && xf86misc_minor >= 5) {
-        XF86MiscSetGrabKeysState(dinfo.display, True);
-        XFlush(dinfo.display);
+        XF86MiscSetGrabKeysState(display, True);
+        XFlush(display);
     }
 #endif
 
@@ -692,9 +656,8 @@ return_success:
     modules.cursor->m.free();
     modules.input->m.free();
 
-    unregisterInstance(&dinfo);
-    freeDisplayInfo(&dinfo);
-    XCloseDisplay(dinfo.display);
+    unregisterInstance(display);
+    XCloseDisplay(display);
 
 #if WITH_DUNST
     /* resume notification daemon */

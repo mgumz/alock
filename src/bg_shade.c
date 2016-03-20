@@ -1,7 +1,7 @@
 /*
  * alock - bg_shade.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -26,7 +26,7 @@
 
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     Window *windows;
     char *colorname;
     unsigned int shade;
@@ -87,12 +87,7 @@ static void module_loadxrdb(XrmDatabase xrdb) {
 
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
-
-    if (!dinfo)
-        return -1;
-
-    Display *dpy = dinfo->display;
+static int module_init(Display *dpy) {
 
     if (!alock_check_xrender(dpy))
         return -1;
@@ -103,27 +98,29 @@ static int module_init(struct aDisplayInfo *dinfo) {
     if (data.blur > 100)
         fprintf(stderr, "[shade]: blur not in range [0, 100]\n");
 
-    data.dinfo = dinfo;
-    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
+    data.display = dpy;
+    data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
 
     {
         Pixmap src_pm = None;
         Pixmap dst_pm = None;
         XColor color;
-        int scr;
+        int i;
 
-        for (scr = 0; scr < dinfo->screen_nb; scr++) {
+        for (i = 0; i < ScreenCount(dpy); i++) {
 
-            Window root = dinfo->screens[scr].root;
-            Colormap colormap = dinfo->screens[scr].colormap;
-            int width = dinfo->screens[scr].width;
-            int height = dinfo->screens[scr].height;
+            Screen *screen = ScreenOfDisplay(dpy, i);
+            Window root = RootWindowOfScreen(screen);
+            Colormap colormap = DefaultColormapOfScreen(screen);
+            int width = WidthOfScreen(screen);
+            int height = HeightOfScreen(screen);
 
             alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
 
             { /* xrender stuff */
-                int depth = DefaultDepth(dpy, scr);
-                GC gc = DefaultGC(dpy, scr);
+
+                int depth = DefaultDepthOfScreen(screen);
+                GC gc = DefaultGCOfScreen(screen);
 
                 { /* grab whats on the screen */
                     XImage *image = XGetImage(dpy, root, 0, 0, width, height, AllPlanes, ZPixmap);
@@ -146,7 +143,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
                     XFreeGC(dpy, tintgc);
                 }
 
-                Visual *vis = DefaultVisual(dpy, scr);
+                Visual *vis = DefaultVisualOfScreen(screen);
                 alock_shade_pixmap(dpy, vis, src_pm, dst_pm, data.shade, 0, 0, 0, 0, width, height);
                 XCopyArea(dpy, dst_pm, src_pm, gc, 0, 0, width, height, 0, 0);
                 alock_blur_pixmap(dpy, vis, src_pm, dst_pm, data.blur, 0, 0, 0, 0, width, height);
@@ -159,7 +156,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
                 xswa.colormap = colormap;
                 xswa.background_pixmap = dst_pm;
 
-                data.windows[scr] = XCreateWindow(dpy, root,
+                data.windows[i] = XCreateWindow(dpy, root,
                         0, 0, width, height, 0,
                         CopyFromParent, InputOutput, CopyFromParent,
                         CWOverrideRedirect | CWColormap | CWBackPixmap,
@@ -177,9 +174,9 @@ static int module_init(struct aDisplayInfo *dinfo) {
 static void module_free() {
 
     if (data.windows) {
-        int scr;
-        for (scr = 0; scr < data.dinfo->screen_nb; scr++)
-            XDestroyWindow(data.dinfo->display, data.windows[scr]);
+        int i;
+        for (i = 0; i < ScreenCount(data.display); i++)
+            XDestroyWindow(data.display, data.windows[i]);
         free(data.windows);
         data.windows = NULL;
     }

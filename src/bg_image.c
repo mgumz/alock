@@ -1,7 +1,7 @@
 /*
  * alock - bg_image.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -32,7 +32,7 @@ enum aImageOption {
 };
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     Pixmap *pixmaps;
     Window *windows;
     char *colorname;
@@ -105,35 +105,32 @@ static void module_loadxrdb(XrmDatabase xrdb) {
 
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
-
-    if (!dinfo)
-        return -1;
+static int module_init(Display *dpy) {
 
     if (!data.filename) {
         fprintf(stderr, "[image]: file name not specified\n");
         return -1;
     }
 
-    Display *dpy = dinfo->display;
-
     if (!alock_check_xrender(dpy))
         data.shade = 0;
 
-    data.windows = (Window *)malloc(sizeof(Window) * dinfo->screen_nb);
-    data.pixmaps = (Pixmap *)malloc(sizeof(Pixmap) * dinfo->screen_nb);
+    data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
+    data.pixmaps = (Pixmap *)malloc(sizeof(Pixmap) * ScreenCount(dpy));
 
     {
         XSetWindowAttributes xswa;
         XColor color;
-        int scr;
+        int i;
 
-        for (scr = 0; scr < dinfo->screen_nb; scr++) {
+        for (i = 0; i < ScreenCount(dpy); i++) {
 
-            Window root = dinfo->screens[scr].root;
-            Colormap colormap = dinfo->screens[scr].colormap;
-            const int rwidth = dinfo->screens[scr].width;
-            const int rheight = dinfo->screens[scr].height;
+            Screen *screen = ScreenOfDisplay(dpy, i);
+            Colormap colormap = DefaultColormapOfScreen(screen);
+            Window root = RootWindowOfScreen(screen);
+            const int depth = DefaultDepthOfScreen(screen);
+            const int rwidth = WidthOfScreen(screen);
+            const int rheight = HeightOfScreen(screen);
             alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
 
             { /* get image and set it as the background pixmap for the window */
@@ -143,8 +140,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
                 context = imlib_context_new();
                 imlib_context_push(context);
                 imlib_context_set_display(dpy);
-                imlib_context_set_visual(DefaultVisual(dpy,
-                                         DefaultScreen(dpy)));
+                imlib_context_set_visual(DefaultVisualOfScreen(screen));
                 imlib_context_set_colormap(colormap);
 
                 image = imlib_load_image_without_cache(data.filename);
@@ -153,11 +149,9 @@ static int module_init(struct aDisplayInfo *dinfo) {
                     int w;
                     int h;
 
-                    data.pixmaps[scr] = XCreatePixmap(dpy, root,
-                                       rwidth, rheight,
-                                       DefaultDepth(dpy, scr));
+                    data.pixmaps[i] = XCreatePixmap(dpy, root, rwidth, rheight, depth);
 
-                    imlib_context_set_drawable(data.pixmaps[scr]);
+                    imlib_context_set_drawable(data.pixmaps[i]);
                     imlib_context_set_image(image);
 
                     w = imlib_image_get_width();
@@ -169,7 +163,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
                         gcval.foreground = color.pixel;
                         gc = XCreateGC(dpy, root, GCForeground, &gcval);
-                        XFillRectangle(dpy, data.pixmaps[scr], gc, 0, 0, rwidth, rheight);
+                        XFillRectangle(dpy, data.pixmaps[i], gc, 0, 0, rwidth, rheight);
                         XFreeGC(dpy, gc);
                     }
 
@@ -177,10 +171,8 @@ static int module_init(struct aDisplayInfo *dinfo) {
                         GC gc;
                         XGCValues gcval;
 
-                        Pixmap tmp_pixmap = XCreatePixmap(dpy, root, w, h,
-                                                          DefaultDepth(dpy, scr));
-                        Pixmap shaded_pixmap = XCreatePixmap(dpy, root, w, h,
-                                                          DefaultDepth(dpy, scr));
+                        Pixmap tmp_pixmap = XCreatePixmap(dpy, root, w, h, depth);
+                        Pixmap shaded_pixmap = XCreatePixmap(dpy, root, w, h, depth);
                         gcval.foreground = color.pixel;
                         gc = XCreateGC(dpy, root, GCForeground, &gcval);
                         XFillRectangle(dpy, shaded_pixmap, gc, 0, 0, w, h);
@@ -188,7 +180,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
                         imlib_context_set_drawable(tmp_pixmap);
                         imlib_render_image_on_drawable(0, 0);
 
-                        Visual *vis = DefaultVisual(dpy, scr);
+                        Visual *vis = DefaultVisualOfScreen(screen);
                         alock_shade_pixmap(dpy, vis, tmp_pixmap, shaded_pixmap, data.shade, 0, 0, 0, 0, w, h);
 
                         imlib_free_image_and_decache();
@@ -199,7 +191,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
                         XFreePixmap(dpy, shaded_pixmap);
                         XFreePixmap(dpy, tmp_pixmap);
 
-                        imlib_context_set_drawable(data.pixmaps[scr]);
+                        imlib_context_set_drawable(data.pixmaps[i]);
                         imlib_context_set_image(image);
                     }
 
@@ -211,15 +203,14 @@ static int module_init(struct aDisplayInfo *dinfo) {
                         GC gc;
                         XGCValues gcval;
 
-                        tile = XCreatePixmap(dpy, root,
-                                             w, h, DefaultDepth(dpy, scr));
+                        tile = XCreatePixmap(dpy, root, w, h, depth);
 
                         imlib_render_image_on_drawable(0, 0);
 
                         gcval.fill_style = FillTiled;
                         gcval.tile = tile;
                         gc = XCreateGC(dpy, tile, GCFillStyle|GCTile, &gcval);
-                        XFillRectangle(dpy, data.pixmaps[scr], gc, 0, 0, rwidth, rheight);
+                        XFillRectangle(dpy, data.pixmaps[i], gc, 0, 0, rwidth, rheight);
 
                         XFreeGC(dpy, gc);
                         XFreePixmap(dpy, tile);
@@ -244,15 +235,15 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
             xswa.override_redirect = True;
             xswa.colormap = colormap;
-            xswa.background_pixmap = data.pixmaps[scr];
+            xswa.background_pixmap = data.pixmaps[i];
 
-            data.windows[scr] = XCreateWindow(dpy, root,
+            data.windows[i] = XCreateWindow(dpy, root,
                     0, 0, rwidth, rheight, 0,
                     CopyFromParent, InputOutput, CopyFromParent,
                     CWOverrideRedirect | CWColormap | CWBackPixmap,
                     &xswa);
 
-            XMapWindow(dpy, data.windows[scr]);
+            XMapWindow(dpy, data.windows[i]);
 
         }
     }
@@ -263,10 +254,10 @@ static int module_init(struct aDisplayInfo *dinfo) {
 static void module_free() {
 
     if (data.windows) {
-        int scr;
-        for (scr = 0; scr < data.dinfo->screen_nb; scr++) {
-            XDestroyWindow(data.dinfo->display, data.windows[scr]);
-            XFreePixmap(data.dinfo->display, data.pixmaps[scr]);
+        int i;
+        for (i = 0; i < ScreenCount(data.display); i++) {
+            XDestroyWindow(data.display, data.windows[i]);
+            XFreePixmap(data.display, data.pixmaps[i]);
         }
         free(data.windows);
         free(data.pixmaps);

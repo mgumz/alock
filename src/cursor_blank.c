@@ -15,24 +15,21 @@
 
 
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     Cursor cursor;
 } data = { 0 };
 
-static int module_init(struct aDisplayInfo *dinfo) {
+static int module_init(Display *dpy) {
 
-    if (!dinfo)
-        return -1;
-
-    Display *dpy = dinfo->display;
+    Screen *screen = DefaultScreenOfDisplay(dpy);
     char no_data[8] = { 0 };
     XColor black;
     Pixmap blank;
 
-    data.dinfo = dinfo;
-    alock_alloc_color(dpy, dinfo->screens[0].colormap, NULL, "black", &black);
+    data.display = dpy;
+    alock_alloc_color(dpy, DefaultColormapOfScreen(screen), NULL, "black", &black);
 
-    blank = XCreateBitmapFromData(dpy, dinfo->screens[0].root, no_data, 8, 8);
+    blank = XCreateBitmapFromData(dpy, RootWindowOfScreen(screen), no_data, 8, 8);
     data.cursor = XCreatePixmapCursor(dpy, blank, blank, &black, &black, 0, 0);
 
     return 0;
@@ -40,13 +37,16 @@ static int module_init(struct aDisplayInfo *dinfo) {
 
 static void module_free() {
 
+    Display *dpy = data.display;
+    Screen *screen = DefaultScreenOfDisplay(dpy);
+
     if (data.cursor)
-        XFreeCursor(data.dinfo->display, data.cursor);
+        XFreeCursor(dpy, data.cursor);
 
     /* Cursor was not visible, so it can be anywhere by now. Help to locate
      * it, by placing it in a center of the screen. */
-    XWarpPointer(data.dinfo->display, None, data.dinfo->screens[0].root, 0, 0, 0, 0,
-            data.dinfo->screens[0].width / 2, data.dinfo->screens[0].height / 2);
+    XWarpPointer(dpy, None, RootWindowOfScreen(screen), 0, 0, 0, 0,
+            WidthOfScreen(screen) / 2, HeightOfScreen(screen) / 2);
 
 }
 

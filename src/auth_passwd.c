@@ -33,8 +33,8 @@
 static struct passwd *pwd_entry = NULL;
 
 
-static int module_init(struct aDisplayInfo *dinfo) {
-    (void)dinfo;
+static int module_init(Display *display) {
+    (void)display;
 
     errno = 0;
     pwd_entry = getpwuid(getuid());

@@ -1,7 +1,7 @@
 /*
  * alock - cursor_glyph.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -112,7 +112,7 @@ static const struct CursorFontName cursor_names[] = {
 
 /* default glyph: XC_X_cursor */
 static struct moduleData {
-    struct aDisplayInfo *dinfo;
+    Display *display;
     char *colorname_bg;
     char *colorname_fg;
     unsigned int shape;
@@ -194,17 +194,13 @@ static void module_loadxrdb(XrmDatabase xrdb) {
 
 }
 
-static int module_init(struct aDisplayInfo *dinfo) {
+static int module_init(Display *dpy) {
 
-    if (!dinfo)
-        return -1;
-
-    Display *dpy = dinfo->display;
-    Colormap colormap = dinfo->screens[0].colormap;
+    Colormap colormap = DefaultColormap(dpy, DefaultScreen(dpy));
     XColor color_bg;
     XColor color_fg;
 
-    data.dinfo = dinfo;
+    data.display = dpy;
     alock_alloc_color(dpy, colormap, data.colorname_bg, "black", &color_bg);
     alock_alloc_color(dpy, colormap, data.colorname_fg, "white", &color_fg);
 
@@ -221,7 +217,7 @@ static int module_init(struct aDisplayInfo *dinfo) {
 static void module_free() {
 
     if (data.cursor)
-        XFreeCursor(data.dinfo->display, data.cursor);
+        XFreeCursor(data.display, data.cursor);
 
     free(data.colorname_bg);
     data.colorname_bg = NULL;
