@@ -280,7 +280,7 @@ static void eventLoop(Display *display, struct aModules *modules) {
 
             keypress_time = alock_mtime();
             clen = XLookupString(&ev.xkey, cbuf, sizeof(cbuf), &ks, NULL);
-            debug("key input: %lx, %d, `%s`", ks, clen, cbuf);
+            debug("key input: %lx, %d, `%.*s`", ks, clen, clen, cbuf);
 
             /* translate key press symbol */
             ks = modules->input->keypress(ks);
