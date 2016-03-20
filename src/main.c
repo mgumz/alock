@@ -182,17 +182,19 @@ static int lockDisplay(Display *display, struct aModules *modules) {
     Cursor cursor;
     int i;
 
-    /* select input event and raise background windows */
     for (i = 0; i < ScreenCount(display); i++) {
-        window = modules->background->getwindow(i);
-        XSelectInput(display, window, KeyPressMask);
-        XMapWindow(display, window);
-        XRaiseWindow(display, window);
+
+        /* raise background window */
+        if ((window = modules->background->getwindow(i)) != None) {
+            XMapWindow(display, window);
+            XRaiseWindow(display, window);
+        }
+
         /* receive notification about root window geometry change */
         XSelectInput(display, RootWindow(display, i), StructureNotifyMask);
     }
 
-    /* grab pointer and keyboard from the first (default) screen */
+    /* grab pointer and keyboard from the default screen */
     window = DefaultRootWindow(display);
     cursor = modules->cursor->getcursor();
 
@@ -330,30 +332,31 @@ static void eventLoop(Display *display, struct aModules *modules) {
 
             /* input confirmation and authentication test */
             case XK_Linefeed:
-            case XK_Return:
-                {
-                    char rbuf[sizeof(pass)];
-                    int rv;
+            case XK_Return: {
 
-                    modules->input->setstate(AINPUT_STATE_CHECK);
+                char rbuf[sizeof(pass)];
+                int rv;
 
-                    wcstombs(rbuf, pass, sizeof(rbuf));
-                    rv = modules->auth->authenticate(rbuf);
+                modules->input->setstate(AINPUT_STATE_CHECK);
 
-                    memset(rbuf, 0, sizeof(rbuf));
-                    memset(pass, 0, sizeof(pass));
-                    pass_pos = pass_len = 0;
+                wcstombs(rbuf, pass, sizeof(rbuf));
+                rv = modules->auth->authenticate(rbuf);
 
-                    if (rv == 0) { /* successful authentication */
-                        modules->input->setstate(AINPUT_STATE_VALID);
-                        return;
-                    }
+                memset(rbuf, 0, sizeof(rbuf));
+                memset(pass, 0, sizeof(pass));
+                pass_pos = pass_len = 0;
 
-                    modules->input->setstate(AINPUT_STATE_ERROR);
-                    modules->input->setstate(AINPUT_STATE_INIT);
-                    keypress_time = alock_mtime();
+                if (rv == 0) { /* successful authentication */
+                    modules->input->setstate(AINPUT_STATE_VALID);
+                    return;
                 }
+
+                modules->input->setstate(AINPUT_STATE_ERROR);
+                modules->input->setstate(AINPUT_STATE_INIT);
+                keypress_time = alock_mtime();
+
                 break;
+            }
 
             /* input new character at the current input position */
             default:
