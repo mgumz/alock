@@ -9,9 +9,12 @@ the user now wants to type in the password. Such a behavior might seem to be
 annoying at the first glance, however this approach is chosen due to security
 reasons.
 
-Note, that 'alock' does not provide any fancy animations like 'xlock' and
-'xscreensaver' and probably never will. It's just for locking the current X
-session.
+Note, that this application does not provide any fancy animations like
+[xlock](http://www.tux.org/~bagleyd/xlockmore.html) or
+[xscreensaver](https://www.jwz.org/xscreensaver/) and probably never will. It
+is just for locking current X session (with few flavors - see [usage](#usage)
+section below). If this application is too much for you, you may give a try
+[i3lock](http://i3wm.org/i3lock/).
 
 
 Installation
@@ -72,8 +75,8 @@ Available modules
 List of authentication modules:
 
 * none - no authentication at all (not recommended)
-* pam - authenticate against the users system-password using the 'pam-login' module
-* passwd - authenticate against the users system-password
+* pam - authenticate using the 'pam-login' module
+* passwd - authenticate using system password database
 * hash - authenticate using arbitrary hash comparison
 
 List of background modules:
