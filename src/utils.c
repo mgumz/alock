@@ -25,7 +25,12 @@
 /* Get system time-stamp in milliseconds without discontinuities. */
 unsigned long alock_mtime() {
     struct timespec t;
+#ifdef CLOCK_BOOTTIME
     clock_gettime(CLOCK_BOOTTIME, &t);
+#else
+#warning Suspend-aware monotonic clock not available!
+    clock_gettime(CLOCK_MONOTONIC, &t);
+#endif
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
 }
 
