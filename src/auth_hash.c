@@ -4,7 +4,7 @@
  *
  * This file is a part of an alock.
  *
- * This projected is licensed under the terms of the MIT license.
+ * This project is licensed under the terms of the MIT license.
  *
  * This authentication module provides:
  *  -auth hash:type=<type>,hash=<hash>,file=<filename>

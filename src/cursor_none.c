@@ -5,7 +5,7 @@
  *
  * This file is a part of an alock.
  *
- * This projected is licensed under the terms of the MIT license.
+ * This project is licensed under the terms of the MIT license.
  *
  * This cursor module provides:
  *  -cursor none
