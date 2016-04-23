@@ -5,7 +5,7 @@
  *
  * This file is a part of an alock.
  *
- * This projected is licensed under the terms of the MIT license.
+ * This project is licensed under the terms of the MIT license.
  *
  * This background module provides:
  *  -bg image:file=<file>,color=<color>,shade=<int>,scale,center,tiled
