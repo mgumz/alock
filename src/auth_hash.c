@@ -1,6 +1,6 @@
 /*
  * alock - auth_hash.c
- * Copyright (c) 2014 - 2015 Arkadiusz Bokowy
+ * Copyright (c) 2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -13,10 +13,10 @@
 
 #include "alock.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <gcrypt.h>
 
 
@@ -121,15 +121,16 @@ static void module_loadargs(const char *args) {
 
             /* allocate enough memory to contain all kind of hashes */
             free(data.user_hash);
-            data.user_hash = (char *)malloc(HASH_DIGEST_MAX_LEN * 2 + 1);
+            data.user_hash = (char *)calloc(1, HASH_DIGEST_MAX_LEN * 2 + 1);
 
-            fgets(data.user_hash, HASH_DIGEST_MAX_LEN * 2 + 1, f);
+            if (fgets(data.user_hash, HASH_DIGEST_MAX_LEN * 2 + 1, f) != NULL) {
+                /* strip trailing new line character, if any */
+                len = strlen(data.user_hash);
+                if (len > 0 && data.user_hash[len - 1] == '\n')
+                    data.user_hash[len - 1] = '\0';
+            }
+
             fclose(f);
-
-            /* strip trailing new line character, if any */
-            len = strlen(data.user_hash);
-            if (len > 0 && data.user_hash[len - 1] == '\n')
-                data.user_hash[len - 1] = '\0';
         }
     }
 
