@@ -18,7 +18,7 @@
 #include <time.h>
 #include <X11/Xutil.h>
 #if ENABLE_XRENDER
-#include <X11/extensions/Xrender.h>
+# include <X11/extensions/Xrender.h>
 #endif
 
 

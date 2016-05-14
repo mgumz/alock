@@ -25,8 +25,8 @@
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
-#if HAVE_X11_EXTENSIONS_XF86MISC_H
-#include <X11/extensions/xf86misc.h>
+#if HAVE_XMISC
+# include <X11/extensions/xf86misc.h>
 #endif
 
 
@@ -614,7 +614,7 @@ int main(int argc, char **argv) {
 
     }
 
-#if HAVE_X11_EXTENSIONS_XF86MISC_H
+#if HAVE_XMISC
     int xf86misc_major = -1;
     int xf86misc_minor = -1;
 
@@ -629,7 +629,7 @@ int main(int argc, char **argv) {
 
         fprintf(stderr, "info: disabled AllowDeactivateGrabs and AllowClosedownGrabs\n");
     }
-#endif
+#endif /* HAVE_XMISC */
 
     /* raise our background window and grab input, if this action has failed,
      * we are not able to lock the screen, then we're fucked... */
@@ -647,7 +647,7 @@ return_failure:
 
 return_success:
 
-#if HAVE_X11_EXTENSIONS_XF86MISC_H
+#if HAVE_XMISC
     if (xf86misc_major >= 0 && xf86misc_minor >= 5) {
         XF86MiscSetGrabKeysState(display, True);
         XFlush(display);

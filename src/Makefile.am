@@ -4,8 +4,6 @@
 bin_PROGRAMS = alock
 
 alock_SOURCES = \
-	main.c \
-	utils.c \
 	auth_none.c \
 	input_none.c \
 	input_frame.c \
@@ -13,20 +11,26 @@ alock_SOURCES = \
 	bg_blank.c \
 	cursor_none.c \
 	cursor_blank.c \
-	cursor_glyph.c
+	cursor_glyph.c \
+	utils.c \
+	main.c
 
 alock_CFLAGS = \
 	@X11_CFLAGS@ \
 	@XCURSOR_CFLAGS@ \
+	@XEXT_CFLAGS@ \
 	@XPM_CFLAGS@ \
 	@XRENDER_CFLAGS@ \
+	@XXF86MISC_CFLAGS@ \
 	@IMLIB2_CFLAGS@
 
 alock_LDADD = \
 	@X11_LIBS@ \
 	@XCURSOR_LIBS@ \
+	@XEXT_LIBS@ \
 	@XPM_LIBS@ \
 	@XRENDER_LIBS@ \
+	@XXF86MISC_LIBS@ \
 	@IMLIB2_LIBS@
 
 if ENABLE_PAM

@@ -21,9 +21,9 @@
 #include <string.h>
 #include <X11/extensions/Xrender.h>
 #if ENABLE_IMLIB2
-#include <Imlib2.h>
+# include <Imlib2.h>
 #elif ENABLE_XPM
-#include <X11/xpm.h>
+# include <X11/xpm.h>
 #endif
 
 
