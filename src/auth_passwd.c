@@ -26,7 +26,7 @@
 #include <sys/types.h>
 
 #if __linux && HAVE_SHADOW_H
-#include <shadow.h>
+# include <shadow.h>
 #endif
 
 

@@ -24,8 +24,8 @@
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
-#if HAVE_X11_EXTENSIONS_SHAPE_H
-#include <X11/extensions/shape.h>
+#if HAVE_XEXT
+# include <X11/extensions/shape.h>
 #endif
 
 
@@ -120,7 +120,7 @@ static int module_init(Display *dpy) {
     alock_alloc_color(dpy, colormap, data.color_error.name, "red", &color);
     data.color_error.pixel = color.pixel;
 
-#if HAVE_X11_EXTENSIONS_SHAPE_H
+#if HAVE_XEXT
     XRectangle rect = {
         0, 0,
         WidthOfScreen(screen) - 2 * data.width,

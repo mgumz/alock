@@ -13,7 +13,7 @@
 #define ALOCK_ALOCK_H_
 
 #if HAVE_CONFIG_H
-#include "../config.h"
+# include "../config.h"
 #endif
 
 #include <stdio.h>
@@ -159,4 +159,4 @@ int alock_grayscale_image(XImage *image,
         unsigned int width,
         unsigned int height);
 
-#endif  /* ALOCK_ALOCK_H_ */
+#endif /* ALOCK_ALOCK_H_ */

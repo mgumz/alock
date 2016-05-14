@@ -1,5 +1,5 @@
 # alock - configure.ac
-# Copyright (c) 2014-2016 Arkadiusz Bokowy
+# Copyright (c) 2014 - 2016 Arkadiusz Bokowy
 
 AC_INIT([alock], [0.2.2], [arkadiusz.bokowy@gmail.com])
 AC_CONFIG_HEADERS([config.h])
@@ -20,17 +20,15 @@ AM_COND_IF([ENABLE_DEBUG], [
 
 PKG_CHECK_MODULES([X11], [x11])
 
+# check for the Misc X Extension library
+PKG_CHECK_MODULES([XEXT], [xext],
+	[AC_DEFINE([HAVE_XEXT], [1], [Define to 1 if you have X Ext library])],
+	[#skip])
 
-# check support for the Xshape extension
-AC_CHECK_HEADERS([X11/extensions/shape.h], [
-	AC_CHECK_LIB([Xext], [XShapeQueryVersion])
-])
-
-# check support for the Xf86misc extension
-AC_CHECK_HEADERS([X11/extensions/xf86misc.h], [
-	AC_CHECK_LIB([Xxf86misc], [XF86MiscSetGrabKeysState])
-], [], [#include <X11/Xlib.h>])
-
+# check for the XFree86 Misc Extension library
+PKG_CHECK_MODULES([XXF86MISC], [xxf86misc],
+	[AC_DEFINE([HAVE_XMISC], [1], [Define to 1 if you have X Misc library])],
+	[#skip])
 
 # support for the PAM library
 AC_ARG_ENABLE([pam],
@@ -68,7 +66,7 @@ AM_COND_IF([ENABLE_HASH], [
 	AC_DEFINE([ENABLE_HASH], [1], [Define to 1 if hash is enabled])
 ])
 
-# support for the Xrender extension
+# support for the X Render library
 AC_ARG_ENABLE([xrender],
 	[AS_HELP_STRING([--enable-xrender], [enable Xrender support])])
 AM_CONDITIONAL([ENABLE_XRENDER], [test "x$enable_xrender" = "xyes"])
@@ -79,7 +77,7 @@ AM_COND_IF([ENABLE_XRENDER], [
 	AC_DEFINE([ENABLE_XRENDER], [1], [Define to 1 if Xrender is enabled])
 ])
 
-# support for the Xcursor library
+# support for the X Cursor library
 AC_ARG_ENABLE([xcursor],
 	[AS_HELP_STRING([--enable-xcursor], [enable Xcursor support])])
 AM_CONDITIONAL([ENABLE_XCURSOR], [test "x$enable_xcursor" = "xyes"])
@@ -88,7 +86,7 @@ AM_COND_IF([ENABLE_XCURSOR], [
 	AC_DEFINE([ENABLE_XCURSOR], [1], [Define to 1 if Xcursor is enabled])
 ])
 
-# support for the Xpm library
+# support for the X Pixmap library
 AC_ARG_ENABLE([xpm],
 	[AS_HELP_STRING([--enable-xpm], [enable Xpm support])])
 AM_CONDITIONAL([ENABLE_XPM], [test "x$enable_xpm" = "xyes"])
@@ -106,7 +104,6 @@ AM_COND_IF([ENABLE_IMLIB2], [
 	AC_DEFINE([ENABLE_IMLIB2], [1], [Define to 1 if Imlib2 is enabled])
 ])
 
-
 # disable dunst notification-daemon while screen is locked
 AC_ARG_WITH([dunst],
 	[AS_HELP_STRING([--with-dunst], [notification-daemon integration])])
@@ -114,7 +111,6 @@ AM_CONDITIONAL([WITH_DUNST], [test "x$with_dunst" = "xyes"])
 AM_COND_IF([WITH_DUNST], [
 	AC_DEFINE([WITH_DUNST], [1], [Define to 1 if dunst integration is enabled])
 ])
-
 
 # dim display using xbacklight while screen is locked
 AC_ARG_WITH([xbacklight],
