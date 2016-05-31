@@ -1,7 +1,7 @@
 /*
  * alock - utils.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2015 Arkadiusz Bokowy
+ *               2014 - 2016 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -59,30 +59,24 @@ int alock_alloc_color(Display *display,
     return 1;
 }
 
-/* Check if the X server supports RENDER extension. This code was taken from
- * the cursor.c of libXcursor. */
+/* Check if the X server supports RENDER extension. */
 int alock_check_xrender(Display *display) {
 #if ENABLE_XRENDER
-    static int have_xrender = 0;
-    static int checked_already = 0;
+    static int checked = 0;
+    static int available = 0;
 
-    if (!checked_already) {
-        int major_opcode, first_event, first_error;
-        if (XQueryExtension(display, "RENDER",
-                            &major_opcode,
-                            &first_event, &first_error) == False) {
-            fprintf(stderr, "alock: no xrender-support found\n");
-            have_xrender = 0;
-        }
-        else
-            have_xrender = 1;
+    if (checked)
+        return available;
 
-        checked_already = 1;
-    }
-    return have_xrender;
+    int tmp;
+    checked = 1;
+
+    if ((available = XRenderQueryExtension(display, &tmp, &tmp)) == False)
+        fprintf(stderr, "alock: missing X Render Extension support\n");
+
+    return available;
 #else
     (void)display;
-    fprintf(stderr, "alock: i wasnt compiled to support xrender\n");
     return 0;
 #endif /* ENABLE_XRENDER */
 }
@@ -181,9 +175,9 @@ int alock_blur_pixmap(Display *display,
         /* TODO: copy source pixmap to the destination one */
         return 1;
 
-    // NOTE: It seems that reasonable sigma value is between 0.5 and 4. This
-    //       will translate into the blur up to 12 x 12 pixels wide - radius
-    //       is like 3x times the sigma.
+    /* NOTE: It seems that reasonable sigma value is between 0.5 and 4. This
+     *       will translate into the blur up to 12 x 12 pixels wide - radius
+     *       is like 3x times the sigma. */
     double sigma = (double)blur / 30 + 0.5;
     int radius = sigma * sqrt(2 * -log(1.0 / 255));
     int size = radius * 2 + 1;
