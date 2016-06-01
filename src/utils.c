@@ -11,10 +11,11 @@
 
 #include "alock.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <X11/Xutil.h>
 #if ENABLE_XRENDER
@@ -239,21 +240,48 @@ int alock_grayscale_image(XImage *image,
         unsigned int height) {
 
     union {
-        struct {
-            unsigned char red;
-            unsigned char green;
-            unsigned char blue;
-            unsigned char alpha;
-        } v;
+        struct __attribute__ ((packed)) {
+            uint8_t red   : 5;
+            uint8_t green : 6;
+            uint8_t blue  : 5;
+        } v16;
+        struct __attribute__ ((packed)) {
+            uint8_t red;
+            uint8_t green;
+            uint8_t blue;
+        } v24;
         unsigned long value;
     } pixel;
+
+    int depth = image->depth;
     int _x, _y;
+
+    if (depth != 16 && depth != 24) {
+        fprintf(stderr, "alock: screen depth %d is not supported\n", depth);
+        return 0;
+    }
+
+    /* NOTE: Color conversion is based on the colorimetric strategy. The
+     *       principle is, that the luminance of the grayscale image should
+     *       match the luminance of the original color image. */
 
     for (_x = x; _x < (signed)width; _x++)
         for (_y = y; _y < (signed)height; _y++) {
             pixel.value = XGetPixel(image, _x, _y);
-            pixel.v.red = pixel.v.green = pixel.v.blue = (
-                    pixel.v.red + pixel.v.green + pixel.v.blue) / 3;
+
+            if (depth == 24)
+                pixel.v24.red = pixel.v24.green = pixel.v24.blue =
+                        0.2126 * pixel.v24.red +
+                        0.7152 * pixel.v24.green +
+                        0.0722 * pixel.v24.blue;
+            else {
+                pixel.v16.green =
+                        0.2126 * (pixel.v16.red << 1) +
+                        0.7152 * pixel.v16.green +
+                        0.0722 * (pixel.v16.blue << 1);
+                pixel.v16.red = pixel.v16.blue = pixel.v16.green >> 1;
+            }
+
             XPutPixel(image, _x, _y, pixel.value);
         }
 
