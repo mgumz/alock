@@ -188,8 +188,15 @@ static int lockDisplay(Display *display, struct aModules *modules) {
 
         /* raise background window */
         if ((window = modules->background->getwindow(i)) != None) {
+
+            Window window_input;
+
+            if ((window_input = modules->input->getwindow(i)) != None)
+                XReparentWindow(display, window_input, window, 0, 0);
+
             XMapWindow(display, window);
             XRaiseWindow(display, window);
+
         }
 
         /* receive notification about root window geometry change */
@@ -657,9 +664,9 @@ return_success:
 #endif
 
     modules.auth->m.free();
-    modules.background->m.free();
     modules.cursor->m.free();
     modules.input->m.free();
+    modules.background->m.free();
 
     unregisterInstance(display);
     XCloseDisplay(display);
