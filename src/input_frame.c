@@ -147,8 +147,9 @@ static void module_free(void) {
 }
 
 static Window module_getwindow(int screen) {
-    (void)screen;
-    return data.window;
+    if (screen == DefaultScreen(data.display))
+        return data.window;
+    return None;
 }
 
 static KeySym module_keypress(KeySym key) {
