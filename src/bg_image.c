@@ -115,6 +115,7 @@ static int module_init(Display *dpy) {
     if (!alock_check_xrender(dpy))
         data.shade = 0;
 
+    data.display = dpy;
     data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
     data.pixmaps = (Pixmap *)malloc(sizeof(Pixmap) * ScreenCount(dpy));
 
