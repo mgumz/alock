@@ -15,6 +15,7 @@
 #include <getopt.h>
 #include <locale.h>
 #include <signal.h>
+#include <spawn.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -29,6 +30,8 @@
 # include <X11/extensions/xf86misc.h>
 #endif
 
+
+extern char **environ;
 
 static struct aModuleAuth *alock_modules_auth[] = {
 #if ENABLE_PAM
@@ -155,7 +158,10 @@ static float getBacklightBrightness(void) {
 /* Set current backlight brightness to the given value. */
 static void setBacklightBrightness(float value) {
 
-    char str[16];
+    char _value[16];
+    char xbacklight[] = "xbacklight";
+    char *argv[] = { xbacklight, "-set", _value, NULL };
+    int status;
     pid_t pid;
 
     /* We're going to use the approach based on the explicit fork and exec
@@ -163,14 +169,10 @@ static void setBacklightBrightness(float value) {
      * control to be returned to our own process immediately - we're not
      * interested in the return value of the child process very much. */
 
-    if ((pid = fork()) == 0) {
-        sprintf(str, "%f", value);
-        execlp("xbacklight", "xbacklight", "-set", str, NULL);
-        return;
-    }
+    sprintf(_value, "%f", value);
+    if (posix_spawnp(&pid, xbacklight, NULL, NULL, argv, environ) == 0)
+        waitpid(pid, &status, WNOHANG);
 
-    int status;
-    waitpid(pid, &status, WNOHANG);
 }
 #endif /* WITH_XBLIGHT */
 
