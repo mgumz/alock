@@ -18,6 +18,7 @@ AM_COND_IF([ENABLE_DEBUG], [
 ])
 
 
+AC_SEARCH_LIBS([clock_gettime], [rt])
 PKG_CHECK_MODULES([X11], [x11])
 
 # check for the Misc X Extension library
