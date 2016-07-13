@@ -566,7 +566,8 @@ int main(int argc, char **argv) {
         int rv = 0;
 
         XrmInitialize();
-        XrmDatabase xrdb = XrmGetStringDatabase(XResourceManagerString(display));
+        const char *data = XResourceManagerString(display);
+        XrmDatabase xrdb = XrmGetStringDatabase(data != NULL ? data : "");
 
         modules.auth->m.loadxrdb(xrdb);
         modules.background->m.loadxrdb(xrdb);
