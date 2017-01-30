@@ -1,14 +1,15 @@
 /*
  * alock - auth_pam.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2015 Arkadiusz Bokowy
+ *               2014 - 2017 Arkadiusz Bokowy
+ *               2017 Michael Raitza
  *
  * This file is a part of an alock.
  *
  * This project is licensed under the terms of the MIT license.
  *
  * This authentication module provides:
- *  -auth pam
+ *  -auth pam:module=<module>
  *
  */
 
@@ -26,6 +27,7 @@
 
 static const char *username = NULL;
 static const char *password = NULL;
+static char *module = NULL;
 
 
 static int alock_auth_pam_conv(int num_msg,
@@ -88,7 +90,7 @@ static int module_authenticate(const char *pass) {
     int retval;
 
     password = pass;
-    retval = pam_start("login", username, &conv, &pam_handle);
+    retval = pam_start(module, username, &conv, &pam_handle);
 
     if (retval == PAM_SUCCESS)
         retval = pam_set_item(pam_handle, PAM_TTY, ttyname(0));
@@ -99,13 +101,49 @@ static int module_authenticate(const char *pass) {
     return !(retval == PAM_SUCCESS);
 }
 
+static void module_cmd_list(void) {
+    printf("list of available PAM module options:\n"
+           "  module=NAME\tModule name to use under /etc/pam.d/ to authenticate\n");
+}
+
+static void module_loadargs(const char *args) {
+
+    /* setup a default PAM module */
+    module = strdup("system-auth");
+
+    if (!args || strstr(args, "pam:") != args)
+        return;
+
+    char *arguments = strdup(&args[4]);
+    char *arg;
+    char *tmp;
+
+    for (tmp = arguments; tmp; ) {
+        arg = strsep(&tmp, ",");
+        if (strcmp(arg, "list") == 0) {
+            module_cmd_list();
+            exit(EXIT_SUCCESS);
+        }
+        if (strstr(arg, "module=") == arg) {
+            free(module);
+            module = strdup(&arg[7]);
+        }
+    }
+
+    free(arguments);
+}
+
+static void module_free(void) {
+    free(module);
+    module = NULL;
+}
 
 struct aModuleAuth alock_auth_pam = {
     { "pam",
-        module_dummy_loadargs,
+        module_loadargs,
         module_dummy_loadxrdb,
         module_init,
-        module_dummy_free,
+        module_free,
     },
     module_authenticate,
 };
