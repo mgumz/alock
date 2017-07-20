@@ -9,7 +9,7 @@
  * This project is licensed under the terms of the MIT license.
  *
  * This authentication module provides:
- *  -auth pam:module=<module>
+ *  -auth pam:service=<service>
  *
  */
 
@@ -27,7 +27,7 @@
 
 static const char *username = NULL;
 static const char *password = NULL;
-static char *module = NULL;
+static char *service = NULL;
 
 
 static int alock_auth_pam_conv(int num_msg,
@@ -90,7 +90,7 @@ static int module_authenticate(const char *pass) {
     int retval;
 
     password = pass;
-    retval = pam_start(module, username, &conv, &pam_handle);
+    retval = pam_start(service, username, &conv, &pam_handle);
 
     if (retval == PAM_SUCCESS)
         retval = pam_set_item(pam_handle, PAM_TTY, ttyname(0));
@@ -103,13 +103,13 @@ static int module_authenticate(const char *pass) {
 
 static void module_cmd_list(void) {
     printf("list of available PAM module options:\n"
-           "  module=NAME\tModule name to use under /etc/pam.d/ to authenticate\n");
+           "  service=NAME\tService name to use under /etc/pam.d/ to authenticate\n");
 }
 
 static void module_loadargs(const char *args) {
 
-    /* setup a default PAM module */
-    module = strdup("system-auth");
+    /* setup a default PAM service */
+    service = strdup(PAM_DEFAULT_SERVICE);
 
     if (!args || strstr(args, "pam:") != args)
         return;
@@ -124,9 +124,9 @@ static void module_loadargs(const char *args) {
             module_cmd_list();
             exit(EXIT_SUCCESS);
         }
-        if (strstr(arg, "module=") == arg) {
-            free(module);
-            module = strdup(&arg[7]);
+        if (strstr(arg, "service=") == arg) {
+            free(service);
+            service = strdup(&arg[7]);
         }
     }
 
@@ -134,8 +134,8 @@ static void module_loadargs(const char *args) {
 }
 
 static void module_free(void) {
-    free(module);
-    module = NULL;
+    free(service);
+    service = NULL;
 }
 
 struct aModuleAuth alock_auth_pam = {
