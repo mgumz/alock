@@ -39,6 +39,10 @@ Integration with external applications (experimental features):
 	(passphrase input). This feature has to be explicitly enabled via the
 	`ALock.backlight: true` X Resource.
 
+In order to specify the build-in default PAM service, use `PAM_DEFAULT_SERVICE`
+environment variable (or pass it as a configuration argument). If this variable
+is empty or not specified, the `system-auth` service will be used.
+
 
 Usage
 -----

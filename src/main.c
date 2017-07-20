@@ -1,7 +1,7 @@
 /*
  * alock - alock.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2016 Arkadiusz Bokowy
+ *               2014 - 2017 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <wchar.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <X11/Xatom.h>
 #include <X11/Xos.h>
 #include <X11/Xproto.h>
