@@ -341,6 +341,7 @@ static void eventLoop(Display *display, struct aModules *modules) {
                 break;
 
             /* input confirmation and authentication test */
+            case XK_KP_Enter:
             case XK_Linefeed:
             case XK_Return: {
 
