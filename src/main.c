@@ -1,7 +1,7 @@
 /*
  * alock - alock.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2017 Arkadiusz Bokowy
+ *               2014 - 2018 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -293,6 +293,21 @@ static void eventLoop(Display *display, struct aModules *modules) {
             keypress_time = alock_mtime();
             clen = XLookupString(&ev.xkey, cbuf, sizeof(cbuf), &ks, NULL);
             debug("key input: %lx, %d, `%.*s`", ks, clen, clen, cbuf);
+
+            /* terminal-like key remapping */
+            if (clen == 1 && iscntrl(cbuf[0]))
+                switch (cbuf[0]) {
+                case 0x03 /* Ctrl-C */ :
+                    ks = XK_Escape;
+                    break;
+                case 0x08 /* Ctrl-H */ :
+                    ks = XK_BackSpace;
+                    break;
+                case 0x0A /* Ctrl-J */ :
+                case 0x0D /* Ctrl-M */ :
+                    ks = XK_Return;
+                    break;
+                }
 
             /* translate key press symbol */
             ks = modules->input->keypress(ks);
