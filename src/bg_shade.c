@@ -1,7 +1,7 @@
 /*
  * alock - bg_shade.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2016 Arkadiusz Bokowy
+ *               2014 - 2018 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -101,71 +101,55 @@ static int module_init(Display *dpy) {
     data.display = dpy;
     data.windows = (Window *)malloc(sizeof(Window) * ScreenCount(dpy));
 
-    {
-        Pixmap src_pm = None;
-        Pixmap dst_pm = None;
+    int i;
+
+    for (i = 0; i < ScreenCount(dpy); i++) {
+
+        Screen *screen = ScreenOfDisplay(dpy, i);
+        Window root = RootWindowOfScreen(screen);
+        Colormap colormap = DefaultColormapOfScreen(screen);
+        GC gc = DefaultGCOfScreen(screen);
+        int width = WidthOfScreen(screen);
+        int height = HeightOfScreen(screen);
+        int depth = DefaultDepthOfScreen(screen);
+
+        /* grab whats on the screen */
+        XImage *image = XGetImage(dpy, root, 0, 0, width, height, AllPlanes, ZPixmap);
+        if (data.monochrome)  /* optional monochrome conversion */
+            alock_grayscale_image(image, 0, 0, width, height);
+        Pixmap src_pm = XCreatePixmap(dpy, root, width, height, depth);
+        XPutImage(dpy, src_pm, gc, image, 0, 0, 0, 0, width, height);
+        XDestroyImage(image);
+
         XColor color;
-        int i;
+        alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
+        XGCValues tintval = { .foreground = color.pixel };
 
-        for (i = 0; i < ScreenCount(dpy); i++) {
+        Pixmap dst_pm = XCreatePixmap(dpy, root, width, height, depth);
+        GC tintgc = XCreateGC(dpy, dst_pm, GCForeground, &tintval);
+        XFillRectangle(dpy, dst_pm, tintgc, 0, 0, width, height);
+        XFreeGC(dpy, tintgc);
 
-            Screen *screen = ScreenOfDisplay(dpy, i);
-            Window root = RootWindowOfScreen(screen);
-            Colormap colormap = DefaultColormapOfScreen(screen);
-            int width = WidthOfScreen(screen);
-            int height = HeightOfScreen(screen);
+        Visual *vis = DefaultVisualOfScreen(screen);
+        alock_shade_pixmap(dpy, vis, src_pm, dst_pm, data.shade, 0, 0, 0, 0, width, height);
+        XCopyArea(dpy, dst_pm, src_pm, gc, 0, 0, width, height, 0, 0);
+        alock_blur_pixmap(dpy, vis, src_pm, dst_pm, data.blur, 0, 0, 0, 0, width, height);
 
-            alock_alloc_color(dpy, colormap, data.colorname, "black", &color);
+        /* create final window */
+        XSetWindowAttributes xswa = {
+            .background_pixmap = dst_pm,
+            .override_redirect = True,
+            .colormap = colormap,
+        };
+        data.windows[i] = XCreateWindow(dpy, root,
+                0, 0, width, height, 0,
+                CopyFromParent, InputOutput, CopyFromParent,
+                CWOverrideRedirect | CWColormap | CWBackPixmap,
+                &xswa);
 
-            { /* xrender stuff */
+        XFreePixmap(dpy, src_pm);
+        XFreePixmap(dpy, dst_pm);
 
-                int depth = DefaultDepthOfScreen(screen);
-                GC gc = DefaultGCOfScreen(screen);
-
-                { /* grab whats on the screen */
-                    XImage *image = XGetImage(dpy, root, 0, 0, width, height, AllPlanes, ZPixmap);
-                    if (data.monochrome) /* optional monochrome conversion */
-                        alock_grayscale_image(image, 0, 0, width, height);
-                    src_pm = XCreatePixmap(dpy, root, width, height, depth);
-                    XPutImage(dpy, src_pm, gc, image, 0, 0, 0, 0, width, height);
-                    XDestroyImage(image);
-                }
-
-                dst_pm = XCreatePixmap(dpy, root, width, height, depth);
-
-                { /* tint the dst */
-                    GC tintgc;
-                    XGCValues tintval;
-
-                    tintval.foreground = color.pixel;
-                    tintgc = XCreateGC(dpy, dst_pm, GCForeground, &tintval);
-                    XFillRectangle(dpy, dst_pm, tintgc, 0, 0, width, height);
-                    XFreeGC(dpy, tintgc);
-                }
-
-                Visual *vis = DefaultVisualOfScreen(screen);
-                alock_shade_pixmap(dpy, vis, src_pm, dst_pm, data.shade, 0, 0, 0, 0, width, height);
-                XCopyArea(dpy, dst_pm, src_pm, gc, 0, 0, width, height, 0, 0);
-                alock_blur_pixmap(dpy, vis, src_pm, dst_pm, data.blur, 0, 0, 0, 0, width, height);
-            }
-
-            { /* create final window */
-                XSetWindowAttributes xswa;
-
-                xswa.override_redirect = True;
-                xswa.colormap = colormap;
-                xswa.background_pixmap = dst_pm;
-
-                data.windows[i] = XCreateWindow(dpy, root,
-                        0, 0, width, height, 0,
-                        CopyFromParent, InputOutput, CopyFromParent,
-                        CWOverrideRedirect | CWColormap | CWBackPixmap,
-                        &xswa);
-                XFreePixmap(dpy, src_pm);
-                XFreePixmap(dpy, dst_pm);
-            }
-
-        }
     }
 
     return 0;
