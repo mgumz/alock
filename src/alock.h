@@ -1,7 +1,7 @@
 /*
  * alock - alock.h
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2016 Arkadiusz Bokowy
+ *               2014 - 2018 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -13,7 +13,7 @@
 #define ALOCK_ALOCK_H_
 
 #if HAVE_CONFIG_H
-# include "../config.h"
+# include "config.h"
 #endif
 
 #include <stdio.h>
@@ -22,9 +22,9 @@
 
 
 #if DEBUG
-#define debug(M, ...) fprintf(stderr, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+# define debug(M, ARGS ...) fprintf(stderr, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ## ARGS)
 #else
-#define debug(M, ...)
+# define debug(M, ARGS ...) do {} while (0)
 #endif
 
 

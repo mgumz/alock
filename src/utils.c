@@ -1,7 +1,7 @@
 /*
  * alock - utils.c
  * Copyright (c) 2005 - 2007 Mathias Gumz <akira at fluxbox dot org>
- *               2014 - 2016 Arkadiusz Bokowy
+ *               2014 - 2018 Arkadiusz Bokowy
  *
  * This file is a part of an alock.
  *
@@ -18,6 +18,9 @@
 #include <string.h>
 #include <time.h>
 #include <X11/Xutil.h>
+#if ENABLE_IMLIB2
+# include <Imlib2.h>
+#endif
 #if ENABLE_XRENDER
 # include <X11/extensions/Xrender.h>
 #endif
@@ -171,10 +174,33 @@ int alock_blur_pixmap(Display *display,
         int dst_x, int dst_y,
         unsigned int width,
         unsigned int height) {
-#if ENABLE_XRENDER
+
     if (!blur)
         /* TODO: copy source pixmap to the destination one */
         return 1;
+
+#if ENABLE_IMLIB2
+
+    Imlib_Context ctx = imlib_context_new();
+
+    imlib_context_push(ctx);
+    imlib_context_set_display(display);
+    imlib_context_set_visual(visual);
+
+    imlib_context_set_drawable(src_pm);
+    imlib_context_set_image(imlib_create_image_from_drawable(None, src_x, src_y, width, height, 0));
+
+    debug("Blur size: %d", blur / 10);
+    imlib_image_blur(blur / 10);
+
+    imlib_context_set_drawable(dst_pm);
+    imlib_render_image_on_drawable_at_size(dst_x, dst_y, width, height);
+
+    imlib_context_pop();
+    imlib_context_free(ctx);
+    return 1;
+
+#elif ENABLE_XRENDER
 
     /* NOTE: It seems that reasonable sigma value is between 0.5 and 4. This
      *       will translate into the blur up to 12 x 12 pixels wide - radius
@@ -183,6 +209,7 @@ int alock_blur_pixmap(Display *display,
     int radius = sigma * sqrt(2 * -log(1.0 / 255));
     int size = radius * 2 + 1;
 
+    debug("Gaussian kernel size: %dx%d", size, size);
     XFixed *params = malloc(sizeof(XFixed) * (2 + size * size));
 
     { /* calculate sampled Gaussian kernel */
@@ -225,11 +252,12 @@ int alock_blur_pixmap(Display *display,
 
     free(params);
     return 1;
+
 #else
     (void)display;
     (void)visual;
     return 0;
-#endif /* ENABLE_XRENDER */
+#endif
 }
 
 /* Convert given color image to the grayscale intensity one. Note, that this
